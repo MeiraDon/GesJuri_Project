@@ -1,0 +1,292 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+<div class="row g-3">
+    <!-- Type de client -->
+    <div class="col-12 mb-3">
+        <label class="form-label">Type de client*</label>
+        <InputSelect class="form-select" @bind-Value="Temoin.TypeClient" @bind-Value:after="OnTypeClientAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Personne Physique">Personne Physique</option>
+            <option value="Personne Morale">Personne Morale</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Temoin.TypeClient)" />
+    </div>
+
+    <!-- Champs conditionnels selon le type de client -->
+    @if (Temoin.TypeClient == "Personne Morale")
+    {
+        <div class="col-12 col-md-6">
+            <label class="form-label">Raison sociale*</label>
+            <InputText class="form-control" @bind-Value="Temoin.NomRaisonsociale" />
+            <ValidationMessage For="@(() => Temoin.NomRaisonsociale)" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label">Représentant*</label>
+            <InputText class="form-control" @bind-Value="Temoin.NomRepresentant" />
+            <ValidationMessage For="@(() => Temoin.NomRepresentant)" />
+        </div>
+    }
+    else
+    {
+        <!-- Personne Physique -->
+        <div class="col-12 col-md-6">
+            <label class="form-label">Nom*</label>
+            <InputText class="form-control" @bind-Value="Temoin.Nom" />
+            <ValidationMessage For="@(() => Temoin.Nom)" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label">Prénoms*</label>
+            <InputText class="form-control" @bind-Value="Temoin.Prenoms" />
+            <ValidationMessage For="@(() => Temoin.Prenoms)" />
+        </div>
+    }
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Sexe*</label>
+        <InputSelect class="form-select" @bind-Value="Temoin.Sexe">
+            <option value="">Sélectionner...</option>
+            <option value="Masculin">Masculin</option>
+            <option value="Féminin">Féminin</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Temoin.Sexe)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Date de naissance</label>
+        <InputDate class="form-control" @bind-Value="Temoin.DateNaiss" />
+        <ValidationMessage For="@(() => Temoin.DateNaiss)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Pays de naissance*</label>
+        <InputText class="form-control" @bind-Value="Temoin.PaysNaiss" />
+        <ValidationMessage For="@(() => Temoin.PaysNaiss)" />
+    </div>
+
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Lieu de naissance</label>
+        <InputText class="form-control" @bind-Value="Temoin.LieuNaiss" />
+        <ValidationMessage For="@(() => Temoin.LieuNaiss)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Nationalité</label>
+        <InputText class="form-control" @bind-Value="Temoin.Nationalite" />
+        <ValidationMessage For="@(() => Temoin.Nationalite)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Ville*</label>
+        <InputText class="form-control" @bind-Value="Temoin.VilleCommune" />
+        <ValidationMessage For="@(() => Temoin.VilleCommune)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Adresse complète*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Temoin.Adressecomplet" />
+        <ValidationMessage For="@(() => Temoin.Adressecomplet)" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Pays de résidence*</label>
+        <InputText class="form-control" @bind-Value="Temoin.PaysResidn" />
+        <ValidationMessage For="@(() => Temoin.PaysResidn)" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Boîte postale</label>
+        <InputText class="form-control" @bind-Value="Temoin.BPClt" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Bureau</label>
+        <InputText class="form-control"
+                   type="tel"
+                   @bind-Value="Temoin.TelBur"
+                   placeholder="Ex: +22890123456" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Cellulaire*</label>
+        <InputText class="form-control"
+                   type="tel"
+                   @bind-Value="Temoin.TelCel"
+                   placeholder="Ex: +22890123456" />
+        <ValidationMessage For="@(() => Temoin.TelCel)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Domicile</label>
+        <InputText class="form-control"
+                   type="tel"
+                   @bind-Value="Temoin.TelDom"
+                   placeholder="Ex: +22890123456" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Profession*</label>
+        <InputText class="form-control" @bind-Value="Temoin.ProfessionClt" />
+        <ValidationMessage For="@(() => Temoin.ProfessionClt)" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Situation matrimoniale*</label>
+        <InputSelect class="form-select" @bind-Value="Temoin.SituationMatrim" @bind-Value:after="OnSituationAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Célibataire">Célibataire</option>
+            <option value="Marié(e)">Marié(e)</option>
+            <option value="Divorcé(e)">Divorcé(e)</option>
+            <option value="Veuf(ve)">Veuf(ve)</option>
+            <option value="Séparé(e)">Séparé(e)</option>
+            <option value="Concubinage">Concubinage</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Temoin.SituationMatrim)" />
+    </div>
+
+    @if (Temoin.SituationMatrim == "Marié(e)")
+    {
+        <div class="col-12">
+            <div class="border rounded p-3 bg-light">
+                <h6 class="mb-3"><i class="bi bi-heart-fill text-danger me-2"></i>Informations sur le mariage</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Nom du conjoint</label>
+                        <InputText class="form-control" @bind-Value="Temoin.NomConjoint" />
+                        <ValidationMessage For="@(() => Temoin.NomConjoint)" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Date du mariage</label>
+                        <InputDate class="form-control" @bind-Value="Temoin.DateMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Lieu du mariage</label>
+                        <InputText class="form-control" @bind-Value="Temoin.LieuMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Régime matrimonial</label>
+                        <InputSelect class="form-select" @bind-Value="Temoin.RegimeMatrim">
+                            <option value="">Sélectionner...</option>
+                            <option value="Communauté réduite">Communauté réduite</option>
+                            <option value="Séparation de biens">Séparation de biens</option>
+                            <option value="Communauté universelle">Communauté universelle</option>
+                            <option value="Participation aux acquêts">Participation aux acquêts</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Pièce d'identité -->
+    <div class="col-12">
+        <div class="border rounded p-3">
+            <h6 class="mb-3"><i class="bi bi-person-badge-fill text-primary me-2"></i>Pièce d'identité</h6>
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Type de pièce*</label>
+                    <InputSelect class="form-select" @bind-Value="Temoin.TypePieceID">
+                        <option value="">Sélectionner...</option>
+                        <option value="CNI">CNI</option>
+                        <option value="Passeport">Passeport</option>
+                        <option value="Permis">Permis de Conduire</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Temoin.TypePieceID)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">N° de pièce*</label>
+                    <InputText class="form-control" @bind-Value="Temoin.NumPieceID" />
+                    <ValidationMessage For="@(() => Temoin.NumPieceID)" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Date de délivrance*</label>
+                    <InputDate class="form-control" @bind-Value="Temoin.DateDelivPiece" />
+                    <ValidationMessage For="@(() => Temoin.DateDelivPiece)" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Lieu de délivrance*</label>
+                    <InputText class="form-control"
+                               @bind-Value="Temoin.LieuDelivPiece"
+                               placeholder="Ex: Lomé, Aneho, Paris..." />
+                    <ValidationMessage For="@(() => Temoin.LieuDelivPiece)" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Délivré par</label>
+                    <InputText class="form-control"
+                               @bind-Value="Temoin.PersonDelivPiece"
+                               placeholder="Ex: Préfecture de Police, Mairie..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copie de pièce jointe -->
+    <div class="col-12">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox"
+                   @bind="Temoin.CopiePieceJointe" id="copiePieceJointe" />
+            <label class="form-check-label" for="copiePieceJointe">
+                Copie de la pièce d'identité jointe
+            </label>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired]
+    public ClientModelViewModel Temoin { get; set; } = null!;
+
+
+    [Parameter]
+    public string Titre { get; set; } = "Témoin";
+
+    protected override void OnInitialized()
+    {
+        // Initialiser les valeurs par défaut si nécessaire
+        if (string.IsNullOrEmpty(Temoin.TypeClient))
+        {
+            Temoin.TypeClient = "Personne Physique";
+        }
+
+        if (string.IsNullOrEmpty(Temoin.SituationMatrim))
+        {
+            Temoin.SituationMatrim = "Célibataire";
+        }
+    }
+
+    private Task OnTypeClientAfter()
+    {
+        var value = Temoin.TypeClient;
+
+        if (value == "Personne Morale")
+        {
+            Temoin.Nom = "";
+            Temoin.Prenoms = "";
+            Temoin.Sexe = "";
+        }
+        else
+        {
+            Temoin.NomRaisonsociale = "";
+            Temoin.NomRepresentant = "";
+        }
+
+        return Task.CompletedTask;
+    }
+
+
+    private Task OnSituationAfter()
+    {
+        if (Temoin.SituationMatrim != "Marié(e)")
+        {
+            Temoin.NomConjoint = "";
+            Temoin.DateMariage = null;
+            Temoin.LieuMariage = "";
+            Temoin.RegimeMatrim = "";
+        }
+
+        return Task.CompletedTask;
+    }
+
+}

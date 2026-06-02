@@ -1,0 +1,1652 @@
+﻿@page "/saisirPage/{IdAjout:int}"
+@rendermode InteractiveServer
+
+<PageTitle>Saisie</PageTitle>
+
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Components.Shared
+@using GesCPSI_Project.ViewModels
+
+@inject IClientAct ClientActService
+@inject ITypesAct TypesActService
+@inject IAjoutAct AjoutActService
+@inject IRolesClientAct RolesClientActService
+@inject IClient ClientService
+@inject ICautionnement CautionnementService
+@inject IPret PretService
+@inject ICharge ChargeService
+@inject IAutorisation AutorisationService
+@inject IEntiteJur EntiteJurService
+@inject IUser UserService
+@inject IBanque BanqueService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<div class="container py-4" lang="fr">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+                <div>
+                    <h1 class="h4 mb-1">Saisie – Acte de cautionnement</h1>
+                    <div class="text-muted">Renseignez les informations étape par étape.</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-primary">Étape @((int)step + 1)/7</span>
+                    <span class="text-muted small">@GetStepLabel(step)</span>
+                </div>
+            </div>
+
+            <MudPaper Class="pa-3 mb-3" Elevation="0" Style="border:1px dashed rgba(0,51,102,.2); border-radius:10px;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <MudText Typo="Typo.subtitle2" Class="mb-0">
+                        Banque liée à l’acte
+                    </MudText>
+
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                        @GetBanqueActeLabel()
+                    </MudChip>
+                </div>
+
+                @if (boaBank is not null)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                        Cette application crée uniquement des actes pour la banque BOA.
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">
+                        La banque BOA n’est pas configurée dans le référentiel.
+                    </MudText>
+                }
+            </MudPaper>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <EditForm EditContext="@CurrentContext" OnSubmit="@(_ => Task.CompletedTask)">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <div class="progress" style="height: 10px;" aria-label="Progression">
+                                <div class="progress-bar" role="progressbar"
+                                     style="@($"width: {GetProgressPercent()}%")"
+                                     aria-valuenow="@GetProgressPercent()" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        @* =================== PARTICIPANTS (NOUVEAU) =================== *@
+                        @if (step == WizardStep.Participants)
+                        {
+                            <ClientHeader Title="Participants" Subtitle="Choisissez ou créez les personnes (Débiteur / Caution / Témoins)"
+                                          IconCss="bi bi-people big-bold-icon" />
+
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    @RenderParticipantCard(ParticipantRole.Debiteur, "Débiteur", "bi bi-person")
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    @RenderParticipantCard(ParticipantRole.Caution, "Caution", "bi bi-person-lock")
+                                </div>
+                                @if (showTemoins)
+                                {
+                                    <div class="col-12 col-lg-6">
+                                        @RenderParticipantCard(ParticipantRole.Temoin1, "Témoin 1", "bi bi-person-check")
+                                    </div>
+
+                                    <div class="col-12 col-lg-6">
+                                        @RenderParticipantCard(ParticipantRole.Temoin2, "Témoin 2", "bi bi-person-check")
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="alert alert-info mt-3 mb-0">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                Astuce : recherchez par <b>nom</b>, <b>téléphone</b> ou <b>pièce</b> (Type + Numéro).
+                            </div>
+                        }
+
+                        @* =================== CAUTIONNEMENT =================== *@
+                        @if (step == WizardStep.Cautionnement)
+                        {
+                            <ClientHeader Title="Cautionnement" Subtitle="Informations juridiques de l'acte de cautionnement"
+                                          IconCss="bi bi-file-earmark-text big-bold-icon" />
+                            <CascadingValue Value="cautionnementContext" IsFixed="true">
+                                <GesCPSI_Project.Components.Forms.CautionnementForm Cautionnement="@model.Cautionnement" />
+                            </CascadingValue>
+                        }
+
+                        @* =================== PRET =================== *@
+                        @if (step == WizardStep.Pret)
+                        {
+                            <ClientHeader Title="Prêt" Subtitle="Informations sur le prêt bancaire"
+                                          IconCss="bi bi-cash-coin big-bold-icon" />
+                            <CascadingValue Value="pretContext" IsFixed="true">
+                                <GesCPSI_Project.Components.Forms.PretForm Pret="@model.Pret" />
+                            </CascadingValue>
+                        }
+
+                        @* =================== AUTORISATION =================== *@
+                        @if (step == WizardStep.Autorisation)
+                        {
+                            <ClientHeader Title="Autorisation de débit" Subtitle="Autorisation de prélèvement bancaire"
+                                          IconCss="bi bi-credit-card big-bold-icon" />
+                            <CascadingValue Value="autorisationContext" IsFixed="true">
+                                <GesCPSI_Project.Components.Forms.AutorisationForm Autorisation="@model.Autorisation" />
+                            </CascadingValue>
+                        }
+
+                        @* =================== CHARGE =================== *@
+                        @if (step == WizardStep.Charge)
+                        {
+                            <ClientHeader Title="Charges" Subtitle="Frais et taxes associés à l'acte"
+                                          IconCss="bi bi-receipt big-bold-icon" />
+                            <CascadingValue Value="chargeContext" IsFixed="true">
+                                <GesCPSI_Project.Components.Forms.ChargeForm Charge="@model.Charge" />
+                            </CascadingValue>
+                        }
+
+                        @* =================== ENTITE JURIDIQUE =================== *@
+                        @if (step == WizardStep.EntiteJuridique)
+                        {
+                            <ClientHeader Title="Entité Juridique" Subtitle="Informations sur l'officier public"
+                                          IconCss="bi bi-building big-bold-icon" />
+                            <CascadingValue Value="entiteJurContext" IsFixed="true">
+                                <GesCPSI_Project.Components.Forms.EntiteJurForm EntiteJuridique="@model.EntiteJuridique" />
+                            </CascadingValue>
+                        }
+
+                        @* =================== RECAP =================== *@
+                        @if (step == WizardStep.Recap)
+                        {
+                            <ClientHeader Title="Récapitulatif" Subtitle="Vérifiez avant de valider"
+                                          IconCss="bi bi-clipboard-check big-bold-icon" />
+
+                            <ValidationSummary />
+
+                            <div class="row g-3">
+
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div class="fw-semibold">
+                                                <i class="bi bi-people me-2"></i>Participants
+                                            </div>
+                                            <span class="badge text-bg-light">
+                                                Acte : @(currentActeId ?? ActeId ?? 0)
+                                            </span>
+                                        </div>
+
+                                        <div class="row g-2 mt-2">
+                                            <div class="col-12 col-lg-6">
+                                                @RenderParticipantRecap("Débiteur", participants[ParticipantRole.Debiteur])
+                                            </div>
+                                            <div class="col-12 col-lg-6">
+                                                @RenderParticipantRecap("Caution", participants[ParticipantRole.Caution])
+                                            </div>
+                                            @if (showTemoins)
+                                            {
+                                                <div class="col-12 col-lg-6">
+                                                    @RenderParticipantRecap("Témoin 1", participants[ParticipantRole.Temoin1])
+                                                </div>
+
+                                                <div class="col-12 col-lg-6">
+                                                    @RenderParticipantRecap("Témoin 2", participants[ParticipantRole.Temoin2])
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- =================== CAUTIONNEMENT =================== -->
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-semibold mb-2">Cautionnement</div>
+                                        <dl class="row mb-0">
+                                            <dt class="col-4 text-muted">N° cautionnement</dt>
+                                            <dd class="col-8 mb-1">@model.Cautionnement.NumeroCautionmt</dd>
+                                            <dt class="col-4 text-muted">Montant</dt>
+                                            <dd class="col-8 mb-1">@model.Cautionnement.MontantCautionne.ToString("N0") FCFA</dd>
+                                            <dt class="col-4 text-muted">Date signature</dt>
+                                            <dd class="col-8 mb-1">@model.Cautionnement.DateSignatureCautionmt.ToString("dd/MM/yyyy")</dd>
+                                            <dt class="col-4 text-muted">Date expiration</dt>
+                                            <dd class="col-8 mb-0">@model.Cautionnement.DateExpirationCautionmt.ToString("dd/MM/yyyy")</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+                                <!-- =================== PRET =================== -->
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-semibold mb-2">Prêt</div>
+                                        <dl class="row mb-0">
+                                            <dt class="col-4 text-muted">Référence</dt>
+                                            <dd class="col-8 mb-1">@model.Pret.ReferenceConvention</dd>
+
+                                            <dt class="col-4 text-muted">Montant</dt>
+                                            <dd class="col-8 mb-1">@model.Pret.MontantConcours.ToString("N0") FCFA</dd>
+
+                                            <dt class="col-4 text-muted">Durée</dt>
+                                            <dd class="col-8 mb-1">@model.Pret.DureMoisPret mois</dd>
+
+                                            <dt class="col-4 text-muted">Date signature</dt>
+                                            <dd class="col-8 mb-0">@model.Pret.DateSignaturePret.ToString("dd/MM/yyyy")</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+                                <!-- =================== AUTORISATION =================== -->
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-semibold mb-2">Autorisation de débit</div>
+                                        <dl class="row mb-0">
+                                            <dt class="col-4 text-muted">N° autorisation</dt>
+                                            <dd class="col-8 mb-1">@model.Autorisation.NumeroAutorisation</dd>
+
+                                            <dt class="col-4 text-muted">Date</dt>
+                                            <dd class="col-8 mb-1">@model.Autorisation.DateAutorisation.ToString("dd/MM/yyyy")</dd>
+
+                                            <dt class="col-4 text-muted">Lieu</dt>
+                                            <dd class="col-8 mb-1">@model.Autorisation.LieuAutorisation</dd>
+
+                                            <dt class="col-4 text-muted">Montant max autorisé</dt>
+                                            <dd class="col-8 mb-1">@model.Autorisation.MontantMaxAutorise.ToString("N0") FCFA</dd>
+
+                                            <dt class="col-4 text-muted">Conditions</dt>
+                                            <dd class="col-8 mb-0">@model.Autorisation.ConditionsAutorisation</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+                                <!-- =================== CHARGES =================== -->
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-semibold mb-2">Charges</div>
+                                        <dl class="row mb-0">
+                                            <dt class="col-4 text-muted">Type</dt>
+                                            <dd class="col-8 mb-1">@model.Charge.TypeCharge</dd>
+
+                                            <dt class="col-4 text-muted">Montant</dt>
+                                            <dd class="col-8 mb-1">@model.Charge.MontantCharge.ToString("N0") FCFA</dd>
+
+                                            <dt class="col-4 text-muted">Date</dt>
+                                            <dd class="col-8 mb-1">@model.Charge.DateCharge.ToString("dd/MM/yyyy")</dd>
+
+                                            <dt class="col-4 text-muted">Payé par</dt>
+                                            <dd class="col-8 mb-1">@model.Charge.PayePar</dd>
+
+                                            <dt class="col-4 text-muted">Statut</dt>
+                                            <dd class="col-8 mb-0">@model.Charge.StatutCharge</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+                                <!-- =================== ENTITE JURIDIQUE =================== -->
+                                <div class="col-12">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-semibold mb-2">Entité juridique</div>
+                                        <dl class="row mb-0">
+                                            <dt class="col-4 text-muted">Date acte</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.DateActeJuridique.ToString("dd/MM/yyyy")</dd>
+
+                                            <dt class="col-4 text-muted">Référence</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.Reference</dd>
+
+                                            <dt class="col-4 text-muted">Nom huissier</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.NomHuissier</dd>
+
+                                            <dt class="col-4 text-muted">Ville huissier</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.VilleHuissier</dd>
+
+                                            <dt class="col-4 text-muted">N° dossier</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.NumeroDossier</dd>
+
+                                            <dt class="col-4 text-muted">Responsable</dt>
+                                            <dd class="col-8 mb-1">@model.EntiteJuridique.Responsable</dd>
+
+                                            <dt class="col-4 text-muted">Fonction</dt>
+                                            <dd class="col-8 mb-0">@model.EntiteJuridique.FonctionResponsable</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            @if (!string.IsNullOrWhiteSpace(successMessage))
+                            {
+                                <div class="alert alert-success mt-3 mb-0" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>@successMessage
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(errorMessage))
+                            {
+                                <div class="alert alert-danger mt-3 mb-0" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                                </div>
+                            }
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary"
+                                    @onclick="OnBack" disabled="@(step == WizardStep.Participants)"> 
+                                <i class="bi bi-arrow-left me-2"></i>Précédent
+                            </button>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-danger"
+                                        @onclick="OnReset" disabled="@isBusy">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                                </button>
+
+                                @if (step != WizardStep.Recap)
+                                {
+                                    <button type="button" class="btn btn-primary" disabled="@isBusy" @onclick="OnNext">
+                                        Suivant<i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-success"
+                                            @onclick="OnSubmit" disabled="@isBusy">
+                                        <i class="bi bi-check me-2"></i>Valider
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </EditForm>
+
+                </div>
+            </div>
+
+            <div class="text-muted small mt-3">
+                Astuce : vous pouvez revenir en arrière à tout moment pour corriger les informations.
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int IdAjout { get; set; }
+
+    private AjoutActModel? acte;
+    private bool showTemoins = true;
+
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "acteId")]
+    public int? ActeId { get; set; }
+
+    private CautionnementSaisieViewModel model = new();
+
+    private bool isBusy;
+    private string? successMessage;
+    private string? errorMessage;
+    private AjoutActModel? ajoutAct;
+
+    private int? currentActeId;
+
+    private List<BanqueModel> banques = new();
+    private int? selectedBanqueId;
+    private BanqueModel? boaBank;
+
+    [Parameter, SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private static DateTime NowUtc() => DateTime.UtcNow;
+
+    
+
+    // ======== PARTICIPANTS (IDs ONLY) ========
+    private enum ParticipantRole { Debiteur, Caution, Temoin1, Temoin2 }
+
+    private ParticipantRole? ParseRole(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return null;
+
+        var r = role.Trim().ToLowerInvariant();
+        return r switch
+        {
+            "debiteur" or "débiteur" => ParticipantRole.Debiteur,
+            "caution" => ParticipantRole.Caution,
+            "temoin1" or "témoin1" or "témoin 1" or "temoin 1" => ParticipantRole.Temoin1,
+            "temoin2" or "témoin2" or "témoin 2" or "temoin 2" => ParticipantRole.Temoin2,
+            _ => null
+        };
+    }
+
+    private sealed class ParticipantState
+    {
+        public int? ClientId { get; set; }
+        public string Search { get; set; } = "";
+        public bool IsSearching { get; set; }
+        public List<ClientModel> Results { get; set; } = new();
+        public ClientModel? Selected { get; set; }
+        public string? InfoMessage { get; set; }
+    }
+
+    private readonly Dictionary<ParticipantRole, ParticipantState> participants = new()
+    {
+        [ParticipantRole.Debiteur] = new ParticipantState(),
+        [ParticipantRole.Caution] = new ParticipantState(),
+        [ParticipantRole.Temoin1] = new ParticipantState(),
+        [ParticipantRole.Temoin2] = new ParticipantState(),
+    };
+
+    // ======== EditContexts (on garde ton style) ========
+    private EditContext editContext = default!;
+    private EditContext cautionnementContext = default!;
+    private EditContext pretContext = default!;
+    private EditContext autorisationContext = default!;
+    private EditContext chargeContext = default!;
+    private EditContext entiteJurContext = default!;
+
+    private WizardStep step = WizardStep.Participants;
+
+    private enum WizardStep
+    {
+        Participants = 0,
+        Cautionnement = 1,
+        Pret = 2,
+        Autorisation = 3,
+        Charge = 4,
+        EntiteJuridique = 5,
+        Recap = 6
+    }
+
+    [Parameter, SupplyParameterFromQuery(Name = "clientId")]
+    public int? ReturnClientId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "role")]
+    public string? ReturnRole { get; set; }
+
+
+    private void ClearReturnQueryFromUrl()
+    {
+        // On reconstruit une URL sans clientId/role
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+
+        // garde acteId si présent (édition), supprime role/clientId
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        query.Remove("clientId");
+        query.Remove("role");
+
+        var baseUrl = $"{uri.Scheme}://{uri.Host}{(uri.IsDefaultPort ? "" : ":" + uri.Port)}{uri.AbsolutePath}";
+        var newQuery = query.ToString();
+
+        var cleanUrl = string.IsNullOrWhiteSpace(newQuery) ? baseUrl : $"{baseUrl}?{newQuery}";
+        NavigationManager.NavigateTo(cleanUrl, replace: true);
+    }
+
+
+    private async Task ApplyReturnClientAsync()
+    {
+        // Si on ne vient pas de ClientPage => rien
+        if (!ReturnClientId.HasValue || ReturnClientId.Value <= 0)
+            return;
+
+        var parsedRole = ParseRole(ReturnRole);
+        if (parsedRole is null)
+            return;
+
+        try
+        {
+            var client = await ClientService.GetByIdAsync(ReturnClientId.Value);
+            if (client is null)
+            {
+                Snackbar.Add("Client introuvable au retour.", Severity.Warning);
+                return;
+            }
+
+            // Auto-remplir la carte
+            SelectClient(parsedRole.Value, client);
+
+            // (Optionnel) si acte déjà créé, on persiste tout de suite la liaison ClientAct
+            if (currentActeId.HasValue || ActeId.HasValue)
+            {
+                await EnsureActeAsync();
+
+                if (!currentActeId.HasValue)
+                    throw new InvalidOperationException("Acte non initialisé après EnsureActeAsync().");
+
+                await UpsertClientActeAsync(currentActeId.Value, parsedRole.Value, client.IdClt);
+            }
+
+            // Nettoyage de l’URL: enlever clientId/role pour éviter re-trigger au refresh
+            ClearReturnQueryFromUrl();
+
+            Snackbar.Add($"Client assigné automatiquement au rôle {GetRoleLabel(parsedRole.Value)}.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur auto-assignation: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string GetBanqueActeLabel()
+    {
+        if (boaBank is not null)
+            return $"{boaBank.NomRaisonSocialBnq} ({boaBank.SigleBnq})";
+
+        var banque = banques.FirstOrDefault(b => b.IdBnq == selectedBanqueId);
+        if (banque is not null)
+            return $"{banque.NomRaisonSocialBnq} ({banque.SigleBnq})";
+
+        return "BOA non configurée";
+    }
+
+    private async Task<int?> GetBoaBankIdAsync()
+    {
+        if (boaBank is not null)
+            return boaBank.IdBnq;
+
+        banques = await BanqueService.GetAllAsync() ?? new List<BanqueModel>();
+
+        boaBank = banques.FirstOrDefault(b =>
+            string.Equals(b.SigleBnq?.Trim(), "BOA", StringComparison.OrdinalIgnoreCase) ||
+            (b.NomRaisonSocialBnq?.Contains("BOA", StringComparison.OrdinalIgnoreCase) ?? false)
+        );
+
+        return boaBank?.IdBnq;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            editContext = new EditContext(model);
+
+            cautionnementContext = new EditContext(model.Cautionnement);
+            pretContext = new EditContext(model.Pret);
+            autorisationContext = new EditContext(model.Autorisation);
+            chargeContext = new EditContext(model.Charge);
+            entiteJurContext = new EditContext(model.EntiteJuridique);
+
+            acte = await AjoutActService.GetByIdAsync(IdAjout);
+            if (acte is null)
+                throw new InvalidOperationException($"Type d'acte introuvable pour IdAjout={IdAjout}.");
+
+            showTemoins = !string.Equals(acte.CategorieClient, "Personne Morale", StringComparison.OrdinalIgnoreCase);
+
+
+            banques = await BanqueService.GetAllAsync() ?? new List<BanqueModel>();
+
+            boaBank = banques.FirstOrDefault(b =>
+                string.Equals(b.SigleBnq?.Trim(), "BOA", StringComparison.OrdinalIgnoreCase) ||
+                (b.NomRaisonSocialBnq?.Contains("BOA", StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+
+            if (boaBank is null)
+            {
+                throw new InvalidOperationException("La banque BOA est introuvable. Veuillez d’abord enregistrer BOA dans /banque.");
+            }
+
+            selectedBanqueId = boaBank.IdBnq;
+
+            if (IdAjout > 0)
+                ajoutAct = await AjoutActService.GetByIdAsync(IdAjout);
+
+            if (ActeId.HasValue)
+                await LoadExistingActe(ActeId.Value);
+            // ===== 5. 🔥 NOUVEAU : auto-assignation après retour ClientPage =====
+            await ApplyReturnClientAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur init page: {ex.Message}";
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+    }
+
+    private EditContext CurrentContext => step switch
+    {
+        WizardStep.Participants => editContext, // Participants = validation custom
+        WizardStep.Cautionnement => cautionnementContext,
+        WizardStep.Pret => pretContext,
+        WizardStep.Autorisation => autorisationContext,
+        WizardStep.Charge => chargeContext,
+        WizardStep.EntiteJuridique => entiteJurContext,
+        WizardStep.Recap => editContext,
+        _ => editContext
+    };
+
+    private int GetProgressPercent()
+    {
+        var p = ((int)step + 1) / 7.0;
+        return (int)Math.Round(p * 100);
+    }
+
+    private string GetStepLabel(WizardStep s) => s switch
+    {
+        WizardStep.Participants => "Participants",
+        WizardStep.Cautionnement => "Cautionnement",
+        WizardStep.Pret => "Prêt",
+        WizardStep.Autorisation => "Autorisation",
+        WizardStep.Charge => "Charges",
+        WizardStep.EntiteJuridique => "Entité juridique",
+        WizardStep.Recap => "Récap",
+        _ => ""
+    };
+
+    // =================== UI HELPERS ===================
+
+    private RenderFragment RenderParticipantCard(ParticipantRole role, string title, string iconCss) => @<div class="border rounded p-3 h-100" style="border-color: rgba(0,51,102,.15);">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+        <div class="fw-semibold">
+            <i class="@iconCss me-2"></i>@title
+        </div>
+
+        @if (participants[role].Selected is not null)
+                {
+        <span class="badge text-bg-success">
+            <i class="bi bi-check2 me-1"></i>Assigné
+        </span>
+                }
+                else
+                {
+        <span class="badge text-bg-light">Non assigné</span>
+                }
+    </div>
+
+@if (participants[role].Selected is not null)
+    {
+    <div class="bg-light rounded p-2 mb-2">
+        <div class="fw-semibold">@DisplayClientName(participants[role].Selected!)</div>
+        <div class="small text-muted">
+            <span class="me-2"><i class="bi bi-telephone me-1"></i>@(participants[role].Selected!.TelCel)</span>
+            <span><i class="bi bi-person-vcard me-1"></i>@(participants[role].Selected!.TypePieceID) @(participants[role].Selected!.NumPieceID)</span>
+        </div>
+        <div class="d-flex gap-2 mt-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ClearParticipant(role)" disabled="@isBusy">
+                <i class="bi bi-x-lg me-1"></i>Changer
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => OpenClientEditPage(role)" disabled="@isBusy">
+                <i class="bi bi-pencil me-1"></i>Modifier client
+            </button>
+        </div>
+    </div>
+    }
+
+    <div class="mb-2">
+        <MudTextField @bind-Value="participants[role].Search"
+                      Label="Rechercher un client (nom / téléphone / pièce)"
+                      Variant="Variant.Outlined" Dense="true"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@isBusy"
+                   OnClick="() => SearchClientsAsync(role)">
+            Rechercher
+        </MudButton>
+
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Disabled="@isBusy"
+                   OnClick="() => OpenCreateClientDialogAsync(role)">
+            Créer (Dialog)
+        </MudButton>
+
+        <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" Disabled="@isBusy"
+                   OnClick="() => OpenCreateClientPage(role)">
+            Créer (Page)
+        </MudButton>
+    </div>
+
+@if (!string.IsNullOrWhiteSpace(participants[role].InfoMessage))
+    {
+    <div class="alert alert-warning mt-2 mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>@participants[role].InfoMessage
+    </div>
+    }
+
+@if (participants[role].IsSearching)
+    {
+    <div class="text-muted small mt-2">
+        <i class="bi bi-arrow-repeat me-2"></i>Recherche en cours...
+    </div>
+    }
+
+@if (participants[role].Results?.Any() == true)
+    {
+    <div class="mt-2">
+        <div class="small text-muted mb-1">Résultats</div>
+
+        <div class="list-group">
+            @foreach (var c in participants[role].Results.Take(10))
+                        {
+            <div class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                <div>
+                    <div class="fw-semibold">@DisplayClientName(c)</div>
+                    <div class="small text-muted">
+                        <span class="me-2"><i class="bi bi-telephone me-1"></i>@c.TelCel</span>
+                        <span><i class="bi bi-person-vcard me-1"></i>@c.TypePieceID @c.NumPieceID</span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-success" @onclick="() => SelectClient(role, c)" disabled="@isBusy">
+                    <i class="bi bi-check me-1"></i>Sélectionner
+                </button>
+            </div>
+                        }
+        </div>
+
+        @if (participants[role].Results.Count > 10)
+                {
+        <div class="small text-muted mt-1">
+            Affichage limité à 10 résultats. Affinez votre recherche.
+        </div>
+                }
+    </div>
+    }
+</div>;
+
+private RenderFragment RenderParticipantRecap(string title, ParticipantState ps) => @<div class="border rounded p-2 h-100">
+    <div class="fw-semibold mb-1">@title</div>
+@if (ps.Selected is null)
+{
+        <div class="text-muted small">Non assigné</div>
+}
+else
+{
+        <div class="fw-semibold">@DisplayClientName(ps.Selected)</div>
+        <div class="small text-muted">
+            <span class="me-2"><i class="bi bi-telephone me-1"></i>@ps.Selected.TelCel</span>
+            <span><i class="bi bi-person-vcard me-1"></i>@ps.Selected.TypePieceID @ps.Selected.NumPieceID</span>
+        </div>
+}
+</div>;
+
+private static string DisplayClientName(ClientModel c)
+{
+    // Personne morale : raison sociale + représentant (si dispo)
+    if (!string.IsNullOrWhiteSpace(c.NomRaisonsociale))
+    {
+        var rep = string.IsNullOrWhiteSpace(c.NomRepresentant) ? "" : $" — Rep: {c.NomRepresentant}";
+        return $"{c.NomRaisonsociale}{rep}";
+    }
+
+    // Personne physique
+    return $"{c.Nom} {c.Prenoms}".Trim();
+}
+
+// =================== PARTICIPANTS ACTIONS ===================
+
+private void ClearParticipant(ParticipantRole role)
+{
+    participants[role].ClientId = null;
+    participants[role].Selected = null;
+    participants[role].Results.Clear();
+    participants[role].InfoMessage = null;
+}
+
+private async Task SearchClientsAsync(ParticipantRole role)
+{
+    var ps = participants[role];
+    ps.InfoMessage = null;
+    ps.Results.Clear();
+
+    var q = (ps.Search ?? "").Trim();
+    if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+    {
+        ps.InfoMessage = "Saisissez au moins 2 caractères.";
+        return;
+    }
+
+    try
+    {
+        ps.IsSearching = true;
+
+        var all = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+        var qq = q.ToLowerInvariant();
+
+        ps.Results = all.Where(c =>
+                (DisplayClientName(c).ToLowerInvariant().Contains(qq)) ||
+                (!string.IsNullOrWhiteSpace(c.TelCel) && c.TelCel.ToLowerInvariant().Contains(qq)) ||
+                (!string.IsNullOrWhiteSpace(c.TelBur) && c.TelBur.ToLowerInvariant().Contains(qq)) ||
+                (!string.IsNullOrWhiteSpace(c.TypePieceID) && c.TypePieceID.ToLowerInvariant().Contains(qq)) ||
+                (!string.IsNullOrWhiteSpace(c.NumPieceID) && c.NumPieceID.ToLowerInvariant().Contains(qq))
+            )
+            .OrderBy(c => DisplayClientName(c))
+            .ToList();
+
+        if (ps.Results.Count == 0)
+            ps.InfoMessage = "Client introuvable.";
+    }
+    catch (Exception ex)
+    {
+        ps.InfoMessage = $"Erreur recherche: {ex.Message}";
+    }
+    finally
+    {
+        ps.IsSearching = false;
+    }
+}
+
+private void SelectClient(ParticipantRole role, ClientModel client)
+{
+    participants[role].Selected = client;
+    participants[role].ClientId = client.IdClt;
+    participants[role].Results.Clear();
+    participants[role].InfoMessage = null;
+}
+
+private async Task OpenCreateClientDialogAsync(ParticipantRole role)
+{
+    // ⚠️ Tu peux garder ce code : il suppose un composant dialog réutilisable.
+    // Exemple attendu: ClientCreateDialog.razor (un seul formulaire client) avec paramètres:
+    // - Title
+    // - RoleLabel (préselection)
+    // - OnSaved: EventCallback<ClientModel>
+    try
+    {
+        var roleLabel = GetRoleLabel(role);
+
+        var parameters = new DialogParameters
+        {
+            ["RoleLabel"] = roleLabel
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ClientCreateDialog>($"Créer un client – {roleLabel}", parameters, options);
+        var result = await dialog.Result;
+
+        // ✅ sécurité null
+        if (result is null || result.Canceled)
+            return;
+
+        if (!result.Canceled && result.Data is ClientModel created)
+        {
+            SelectClient(role, created);
+
+            // Bonus: si on a déjà un acte brouillon, on peut sauvegarder l'association immédiatement
+            if (currentActeId.HasValue || ActeId.HasValue)
+            {
+                await EnsureActeAsync();
+
+                if (!currentActeId.HasValue)
+                    throw new InvalidOperationException("Acte non initialisé après EnsureActeAsync().");
+
+                await UpsertClientActeAsync(currentActeId.Value, role, created.IdClt);
+                Snackbar.Add($"Client créé et assigné ({roleLabel}).", Severity.Success);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Snackbar.Add($"Erreur dialog création client: {ex.Message}", Severity.Error);
+    }
+}
+
+private void OpenCreateClientPage(ParticipantRole role)
+{
+    // Option 2 : page dédiée client + retour ici.
+    // On passe returnUrl + role dans la query.
+    // Ex: /clientPage?returnUrl=/saisirPage/3?acteId=101&role=Debiteur
+    var roleKey = role.ToString(); // Debiteur/Caution/Temoin1/Temoin2
+    var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+
+    // Si acteId existe déjà : passe-le, sinon la page créera juste le client (liaison se fera après)
+    var acte = currentActeId ?? ActeId;
+
+    NavigationManager.NavigateTo($"/clientPage/{IdAjout}?returnUrl={returnUrl}&role={roleKey}&acteId={acte}", forceLoad: true);
+}
+
+private void OpenClientEditPage(ParticipantRole role)
+{
+    var ps = participants[role];
+    if (ps.ClientId is null || ps.ClientId.Value <= 0)
+    {
+        Snackbar.Add("Aucun client à modifier pour ce rôle.", Severity.Warning);
+        return;
+    }
+
+    var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+    NavigationManager.NavigateTo($"/clientPage/{IdAjout}?clientId={ps.ClientId.Value}&returnUrl={returnUrl}&role={role}", forceLoad: true);
+}
+
+private static string GetRoleLabel(ParticipantRole role) => role switch
+{
+    ParticipantRole.Debiteur => "Debiteur",
+    ParticipantRole.Caution => "Caution",
+    ParticipantRole.Temoin1 => "Temoin1",
+    ParticipantRole.Temoin2 => "Temoin2",
+    _ => "Client"
+};
+
+// =================== NAVIGATION WIZARD ===================
+
+private void OnBack()
+{
+    successMessage = null;
+    errorMessage = null;
+
+    if (step == WizardStep.Participants)
+    {
+        NavigationManager.NavigateTo("/choisirAct", true);
+        return;
+    }
+
+    step = step switch
+    {
+        WizardStep.Cautionnement => WizardStep.Participants,
+        WizardStep.Pret => WizardStep.Cautionnement,
+        WizardStep.Autorisation => WizardStep.Pret,
+        WizardStep.Charge => WizardStep.Autorisation,
+        WizardStep.EntiteJuridique => WizardStep.Charge,
+        WizardStep.Recap => WizardStep.EntiteJuridique,
+        _ => step
+    };
+
+    StateHasChanged();
+}
+
+private async Task OnNext()
+{
+    successMessage = null;
+    errorMessage = null;
+
+    bool isValid = step switch
+    {
+        WizardStep.Participants => ValidateParticipants(),
+        WizardStep.Cautionnement => cautionnementContext.Validate(),
+        WizardStep.Pret => pretContext.Validate(),
+        WizardStep.Autorisation => autorisationContext.Validate(),
+        WizardStep.Charge => chargeContext.Validate(),
+        WizardStep.EntiteJuridique => entiteJurContext.Validate(),
+        _ => true
+    };
+
+    if (!isValid)
+    {
+        errorMessage = "Veuillez compléter correctement cette étape.";
+        return;
+    }
+
+    try
+    {
+        isBusy = true;
+        await SaveStepAsync();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Erreur sauvegarde étape : {ex.Message}";
+        Snackbar.Add(errorMessage, Severity.Error);
+        return;
+    }
+    finally
+    {
+        isBusy = false;
+    }
+
+    step = step switch
+    {
+        WizardStep.Participants => WizardStep.Cautionnement,
+        WizardStep.Cautionnement => WizardStep.Pret,
+        WizardStep.Pret => WizardStep.Autorisation,
+        WizardStep.Autorisation => WizardStep.Charge,
+        WizardStep.Charge => WizardStep.EntiteJuridique,
+        WizardStep.EntiteJuridique => WizardStep.Recap,
+        _ => step
+    };
+
+    await InvokeAsync(StateHasChanged);
+}
+
+private void OnReset()
+{
+    isBusy = true;
+    successMessage = null;
+    errorMessage = null;
+
+    model = new CautionnementSaisieViewModel();
+    editContext = new EditContext(model);
+
+    cautionnementContext = new EditContext(model.Cautionnement);
+    pretContext = new EditContext(model.Pret);
+    autorisationContext = new EditContext(model.Autorisation);
+    chargeContext = new EditContext(model.Charge);
+    entiteJurContext = new EditContext(model.EntiteJuridique);
+
+    foreach (var k in participants.Keys.ToList())
+        participants[k] = new ParticipantState();
+
+    step = WizardStep.Participants;
+    currentActeId = null;
+
+    isBusy = false;
+    StateHasChanged();
+}
+
+private bool ValidateParticipants()
+{
+    if (participants[ParticipantRole.Debiteur].ClientId is null)
+        return false;
+
+    if (participants[ParticipantRole.Caution].ClientId is null)
+        return false;
+
+    if (showTemoins)
+    {
+        if (participants[ParticipantRole.Temoin1].ClientId is null)
+            return false;
+
+        if (participants[ParticipantRole.Temoin2].ClientId is null)
+            return false;
+    }
+
+    return true;
+}
+
+// =================== SAVE / LOAD ===================
+
+private async Task EnsureActeAsync()
+{
+    if (currentActeId.HasValue && currentActeId.Value > 0)
+        return;
+
+    if (ActeId.HasValue && ActeId.Value > 0)
+    {
+        currentActeId = ActeId.Value;
+        return;
+    }
+
+    var boaId = await GetBoaBankIdAsync();
+    if (!boaId.HasValue)
+        throw new InvalidOperationException("La banque BOA n'est pas configurée. Impossible de créer un acte.");
+
+    selectedBanqueId = boaId.Value;
+
+    // Création d’un acte brouillon à la première sauvegarde (step Participants)
+    var userId = 1; // TODO: récupérer depuis auth / Keycloak
+    var nomActe = ajoutAct?.NomAct ?? "Cautionnement";
+
+    var acte = new TypesActModel
+    {
+        NomTypesActe = nomActe,
+        DateCreation = NowUtc(),
+        DateMaj = NowUtc(),
+        Statut = "Brouillon",
+        IdAjout = IdAjout,
+        IdUser = userId,
+        IdBnq = boaId.Value
+    };
+
+    var res = await TypesActService.AddAsync(acte);
+    if (!res.IsSuccess || res.Data is null)
+        throw new InvalidOperationException(res.ErrorMessage ?? "Création acte impossible.");
+
+    currentActeId = res.Data.IdActe;
+    Snackbar.Add($"Brouillon créé (Acte #{currentActeId}).", Severity.Info);
+}
+
+private async Task SaveStepAsync()
+{
+    await EnsureActeAsync();
+
+    if (!currentActeId.HasValue)
+        throw new InvalidOperationException("Aucun acte courant disponible après EnsureActeAsync().");
+
+    var acteId = currentActeId.Value;
+
+    var boaId = await GetBoaBankIdAsync();
+    if (!boaId.HasValue)
+        throw new InvalidOperationException("La banque BOA n'est pas configurée.");
+
+    selectedBanqueId = boaId.Value;
+
+    // Toujours mettre à jour la banque si l'utilisateur change
+    var acte = await TypesActService.GetByIdAsync(acteId);
+    if (acte is not null)
+    {
+        acte.IdBnq = boaId.Value;
+        acte.DateMaj = NowUtc();
+
+        // await TypesActService.UpdateAsync(acte);
+        var updateActe = await TypesActService.UpdateAsync(acte);
+        if (!updateActe.IsSuccess)
+            throw new InvalidOperationException(updateActe.ErrorMessage ?? "Erreur mise à jour acte.");
+    }
+
+    switch (step)
+    {
+        case WizardStep.Participants:
+            await SaveParticipantsAsync(acteId);
+            break;
+
+        case WizardStep.Cautionnement:
+            await UpsertCautionnementAsync(acteId);
+            break;
+
+        case WizardStep.Pret:
+            await UpsertPretAsync(acteId);
+            break;
+
+        case WizardStep.Autorisation:
+            await UpsertAutorisationAsync(acteId);
+            break;
+
+        case WizardStep.Charge:
+            await UpsertChargeAsync(acteId);
+            break;
+
+        case WizardStep.EntiteJuridique:
+            await UpsertEntiteJurAsync(acteId);
+            // avant recap, on s'assure d'avoir le snapshot affichable
+            await EnsureParticipantSnapshotsAsync();
+            break;
+    }
+}
+
+private async Task SaveParticipantsAsync(int acteId)
+{
+    var debiteurId = participants[ParticipantRole.Debiteur].ClientId
+        ?? throw new InvalidOperationException("Le débiteur est obligatoire.");
+
+    var cautionId = participants[ParticipantRole.Caution].ClientId
+        ?? throw new InvalidOperationException("La caution est obligatoire.");
+
+    await UpsertClientActeAsync(acteId, ParticipantRole.Debiteur, debiteurId);
+    await UpsertClientActeAsync(acteId, ParticipantRole.Caution, cautionId);
+
+    if (showTemoins)
+    {
+        var temoin1Id = participants[ParticipantRole.Temoin1].ClientId
+            ?? throw new InvalidOperationException("Le témoin 1 est obligatoire.");
+
+        var temoin2Id = participants[ParticipantRole.Temoin2].ClientId
+            ?? throw new InvalidOperationException("Le témoin 2 est obligatoire.");
+
+        await UpsertClientActeAsync(acteId, ParticipantRole.Temoin1, temoin1Id);
+        await UpsertClientActeAsync(acteId, ParticipantRole.Temoin2, temoin2Id);
+    }
+
+    await EnsureParticipantSnapshotsAsync();
+    Snackbar.Add("Participants enregistrés.", Severity.Success);
+}
+
+
+
+
+private Dictionary<string, int>? _roleCache;
+
+private async Task<int> GetRoleIdAsync(ParticipantRole role)
+{
+    _roleCache ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+    var label = GetRoleLabel(role);
+    if (_roleCache.TryGetValue(label, out var cached))
+        return cached;
+
+    var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+    var r = roles.FirstOrDefault(x => string.Equals(x.Libelle?.Trim(), label, StringComparison.OrdinalIgnoreCase));
+
+    if (r is null)
+        throw new InvalidOperationException($"Rôle introuvable en base: {label}");
+
+    _roleCache[label] = r.IdRole;
+    return r.IdRole;
+}
+
+private async Task UpsertClientActeAsync(int acteId, ParticipantRole role, int clientId)
+{
+    var roleId = await GetRoleIdAsync(role);
+
+    var all = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId && x.IdRole == roleId);
+
+    if (existing is null)
+    {
+        var ca = new ClientActModel
+        {
+            IdActe = acteId,
+            IdClt = clientId,
+            IdRole = roleId,
+            DescriptionRole = GetRoleLabel(role)
+        };
+
+        var res = await ClientActService.AddAsync(ca);
+        if (!res.IsSuccess)
+            throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout ClientAct.");
+        return;
+    }
+
+    if (existing.IdClt == clientId &&
+        string.Equals(existing.DescriptionRole, GetRoleLabel(role), StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    var updated = new ClientActModel
+    {
+        IdCltActe = existing.IdCltActe,
+        IdActe = existing.IdActe,
+        IdRole = existing.IdRole,
+        IdClt = clientId,
+        DescriptionRole = GetRoleLabel(role)
+    };
+
+    var upd = await ClientActService.UpdateAsync(updated);
+    if (!upd.IsSuccess)
+        throw new InvalidOperationException(upd.ErrorMessage ?? "Erreur update ClientAct.");
+}
+
+
+
+private async Task EnsureParticipantSnapshotsAsync()
+{
+    foreach (var role in participants.Keys)
+    {
+        var ps = participants[role];
+        if (ps.ClientId.HasValue && ps.Selected is null)
+        {
+            var c = await ClientService.GetByIdAsync(ps.ClientId.Value);
+            ps.Selected = c;
+        }
+    }
+}
+
+// ======== UPSERT ENTITES JURIDIQUES (1-1 par acte) ========
+
+static DateTime ToUtc(DateTime dt)
+{
+    if (dt.Kind == DateTimeKind.Utc) return dt;
+    if (dt.Kind == DateTimeKind.Local) return dt.ToUniversalTime();
+    return DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime();
+}
+
+private async Task UpsertCautionnementAsync(int acteId)
+{
+    var nomActe = ajoutAct?.NomAct ?? "Cautionnement";
+
+    var all = await CautionnementService.GetAllAsync() ?? new List<CautionnementModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId);
+
+    var entity = new CautionnementModel
+    {
+        IdCautionnement = existing?.IdCautionnement ?? 0,
+        IdActe = acteId,
+        NomTypesActe = nomActe,
+
+        NumeroCautionmt = model.Cautionnement.NumeroCautionmt ?? string.Empty,
+        MontantCautionne = model.Cautionnement.MontantCautionne,
+        MontantLettreCautionmt = model.Cautionnement.MontantLettreCautionmt ?? string.Empty,
+        DateSignatureCautionmt = ToUtc(model.Cautionnement.DateSignatureCautionmt),
+        DateEffetCautionmt = ToUtc(model.Cautionnement.DateEffetCautionmt),
+        DateExpirationCautionmt = ToUtc(model.Cautionnement.DateExpirationCautionmt),
+        LieuSignatureCautionmt = model.Cautionnement.LieuSignatureCautionmt ?? string.Empty,
+        EtatCautionmt = model.Cautionnement.EtatCautionmt ?? string.Empty,
+        ConditionsRevocationCautionmt = model.Cautionnement.ConditionsRevocationCautionmt ?? string.Empty,
+        ObligationsBanque = model.Cautionnement.ObligationsBanque ?? string.Empty,
+        ObligationsCaution = model.Cautionnement.ObligationsCaution ?? string.Empty,
+        ClauseSubrogation = model.Cautionnement.ClauseSubrogation ?? string.Empty,
+        ClauseNonNovation = model.Cautionnement.ClauseNonNovation ?? string.Empty,
+        ElectionDomicile = model.Cautionnement.ElectionDomicile ?? string.Empty,
+        ReglementDifferend = model.Cautionnement.ReglementDifferend ?? string.Empty
+    };
+
+    if (existing is null)
+    {
+        var res = await CautionnementService.AddAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout cautionnement.");
+    }
+    else
+    {
+        var res = await CautionnementService.UpdateAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur update cautionnement.");
+    }
+}
+
+private async Task UpsertPretAsync(int acteId)
+{
+    var all = await PretService.GetAllAsync() ?? new List<PretModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId);
+
+    var entity = new PretModel
+    {
+        IdPret = existing?.IdPret ?? 0,
+        IdActe = acteId,
+
+        ReferenceConvention = model.Pret.ReferenceConvention ?? string.Empty,
+        MontantConcours = model.Pret.MontantConcours,
+        Taux = model.Pret.Taux,
+        MontantLettrePret = model.Pret.MontantLettrePret ?? string.Empty,
+        Accessoires = model.Pret.Accessoires ?? string.Empty,
+        ObjetPret = model.Pret.ObjetPret ?? string.Empty,
+        DateSignaturePret = ToUtc(model.Pret.DateSignaturePret),
+        DureMoisPret = model.Pret.DureMoisPret,
+        DateDebutRemboursemnt = ToUtc(model.Pret.DateDebutRemboursemnt),
+        DatePremiereEcheance = ToUtc(model.Pret.DatePremiereEcheance),
+        MontantPremiereEcheance = model.Pret.MontantPremiereEcheance,
+        DateDerniereEcheance = ToUtc(model.Pret.DateDerniereEcheance),
+        MontantDerniereEcheance = model.Pret.MontantDerniereEcheance,
+        EtatPret = model.Pret.EtatPret ?? string.Empty
+    };
+
+    if (existing is null)
+    {
+        var res = await PretService.AddAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout prêt.");
+    }
+    else
+    {
+        var res = await PretService.UpdateAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur update prêt.");
+    }
+}
+
+private async Task UpsertAutorisationAsync(int acteId)
+{
+    var all = await AutorisationService.GetAllAsync() ?? new List<AutorisationModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId);
+
+    var entity = new AutorisationModel
+    {
+        IdAutorisation = existing?.IdAutorisation ?? 0,
+        IdActe = acteId,
+
+        NumeroAutorisation = model.Autorisation.NumeroAutorisation ?? string.Empty,
+        DateAutorisation = ToUtc(model.Autorisation.DateAutorisation),
+        LieuAutorisation = model.Autorisation.LieuAutorisation ?? string.Empty,
+        MontantMaxAutorise = model.Autorisation.MontantMaxAutorise,
+        ConditionsAutorisation = model.Autorisation.ConditionsAutorisation ?? string.Empty
+    };
+
+    if (existing is null)
+    {
+        var res = await AutorisationService.AddAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout autorisation.");
+    }
+    else
+    {
+        var res = await AutorisationService.UpdateAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur update autorisation.");
+    }
+}
+
+private async Task UpsertChargeAsync(int acteId)
+{
+    var all = await ChargeService.GetAllAsync() ?? new List<ChargeModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId);
+
+    var entity = new ChargeModel
+    {
+        IdCharge = existing?.IdCharge ?? 0,
+        IdActe = acteId,
+
+        TypeCharge = model.Charge.TypeCharge ?? string.Empty,
+        MontantCharge = model.Charge.MontantCharge,
+        DateCharge = ToUtc(model.Charge.DateCharge),
+        PayePar = model.Charge.PayePar ?? string.Empty,
+        StatutCharge = model.Charge.StatutCharge ?? string.Empty
+    };
+
+    if (existing is null)
+    {
+        var res = await ChargeService.AddAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout charge.");
+    }
+    else
+    {
+        var res = await ChargeService.UpdateAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur update charge.");
+    }
+}
+
+private async Task UpsertEntiteJurAsync(int acteId)
+{
+    var all = await EntiteJurService.GetAllAsync() ?? new List<EntiteJurModel>();
+    var existing = all.FirstOrDefault(x => x.IdActe == acteId);
+
+    var entity = new EntiteJurModel
+    {
+        IdEntiteJur = existing?.IdEntiteJur ?? 0,
+        IdActe = acteId,
+
+        DateActeJuridique = ToUtc(model.EntiteJuridique.DateActeJuridique),
+        Reference = model.EntiteJuridique.Reference ?? string.Empty,
+        NomHuissier = model.EntiteJuridique.NomHuissier ?? string.Empty,
+        VilleHuissier = model.EntiteJuridique.VilleHuissier ?? string.Empty,
+        NumeroDossier = model.EntiteJuridique.NumeroDossier ?? string.Empty,
+        Responsable = model.EntiteJuridique.Responsable ?? string.Empty,
+        FonctionResponsable = model.EntiteJuridique.FonctionResponsable ?? string.Empty,
+        NomDossier = model.EntiteJuridique.NomDossier ?? string.Empty,
+    };
+
+    if (existing is null)
+    {
+        var res = await EntiteJurService.AddAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur ajout entité juridique.");
+    }
+    else
+    {
+        var res = await EntiteJurService.UpdateAsync(entity);
+        if (!res.IsSuccess) throw new InvalidOperationException(res.ErrorMessage ?? "Erreur update entité juridique.");
+    }
+}
+
+// =================== LOAD EXISTING ACTE ===================
+
+private async Task LoadExistingActe(int acteId)
+{
+    try
+    {
+        isBusy = true;
+
+        var acte = await TypesActService.GetByIdAsync(acteId);
+        if (acte is null) return;
+
+        currentActeId = acte.IdActe;
+        selectedBanqueId = acte.IdBnq ?? boaBank?.IdBnq;
+
+        await LoadParticipantsForActe(acteId);
+        await LoadActeDetails(acteId);
+
+        await EnsureParticipantSnapshotsAsync();
+        StateHasChanged();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Erreur lors du chargement de l'acte : {ex.Message}";
+    }
+    finally
+    {
+        isBusy = false;
+    }
+}
+
+private async Task LoadParticipantsForActe(int acteId)
+{
+    var clientActes = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+    var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+
+    var filtered = clientActes.Where(ca => ca.IdActe == acteId).ToList();
+
+    foreach (var ca in filtered)
+    {
+        var role = roles.FirstOrDefault(r => r.IdRole == ca.IdRole)?.Libelle?.Trim() ?? "";
+        var pr = role.ToLowerInvariant();
+
+        if (pr is "débiteur" or "debiteur")
+            participants[ParticipantRole.Debiteur].ClientId = ca.IdClt;
+        else if (pr is "caution")
+            participants[ParticipantRole.Caution].ClientId = ca.IdClt;
+        else if (pr is "témoin1" or "temoin1" or "temoins1")
+            participants[ParticipantRole.Temoin1].ClientId = ca.IdClt;
+        else if (pr is "témoin2" or "temoin2" or "temoins2")
+            participants[ParticipantRole.Temoin2].ClientId = ca.IdClt;
+    }
+}
+
+private async Task LoadActeDetails(int acteId)
+{
+    // Cautionnement
+    var cautionnements = await CautionnementService.GetAllAsync() ?? new List<CautionnementModel>();
+    var c = cautionnements.FirstOrDefault(x => x.IdActe == acteId);
+
+    model.Cautionnement = c is null ? new CautionnementViewModel() : new CautionnementViewModel
+    {
+        NumeroCautionmt = c.NumeroCautionmt,
+        MontantCautionne = c.MontantCautionne,
+        MontantLettreCautionmt = c.MontantLettreCautionmt,
+        DateSignatureCautionmt = ToUtc(c.DateSignatureCautionmt),
+        DateEffetCautionmt = ToUtc(c.DateEffetCautionmt),
+        DateExpirationCautionmt = ToUtc(c.DateExpirationCautionmt),
+        LieuSignatureCautionmt = c.LieuSignatureCautionmt,
+        EtatCautionmt = c.EtatCautionmt,
+        ConditionsRevocationCautionmt = c.ConditionsRevocationCautionmt,
+        ObligationsBanque = c.ObligationsBanque,
+        ObligationsCaution = c.ObligationsCaution,
+        ClauseSubrogation = c.ClauseSubrogation,
+        ClauseNonNovation = c.ClauseNonNovation,
+        ElectionDomicile = c.ElectionDomicile,
+        ReglementDifferend = c.ReglementDifferend
+    };
+
+    // Prêt
+    var prets = await PretService.GetAllAsync() ?? new List<PretModel>();
+    var p = prets.FirstOrDefault(x => x.IdActe == acteId);
+
+    model.Pret = p is null ? new PretViewModel() : new PretViewModel
+    {
+        ReferenceConvention = p.ReferenceConvention,
+        MontantConcours = p.MontantConcours,
+        Taux = p.Taux,
+        MontantLettrePret = p.MontantLettrePret,
+        Accessoires = p.Accessoires,
+        ObjetPret = p.ObjetPret,
+        DateSignaturePret = ToUtc(p.DateSignaturePret),
+        DureMoisPret = p.DureMoisPret,
+        DateDebutRemboursemnt = ToUtc(p.DateDebutRemboursemnt),
+        DatePremiereEcheance = ToUtc(p.DatePremiereEcheance),
+        MontantPremiereEcheance = p.MontantPremiereEcheance,
+        DateDerniereEcheance = ToUtc(p.DateDerniereEcheance),
+        MontantDerniereEcheance = p.MontantDerniereEcheance,
+        EtatPret = p.EtatPret
+    };
+
+    // Autorisation
+    var autos = await AutorisationService.GetAllAsync() ?? new List<AutorisationModel>();
+    var a = autos.FirstOrDefault(x => x.IdActe == acteId);
+    model.Autorisation = a is null ? new AutorisationViewModel() : new AutorisationViewModel
+    {
+        NumeroAutorisation = a.NumeroAutorisation,
+        DateAutorisation = ToUtc(a.DateAutorisation),
+        LieuAutorisation = a.LieuAutorisation,
+        MontantMaxAutorise = a.MontantMaxAutorise,
+        ConditionsAutorisation = a.ConditionsAutorisation
+    };
+
+    // Charge
+    var charges = await ChargeService.GetAllAsync() ?? new List<ChargeModel>();
+    var ch = charges.FirstOrDefault(x => x.IdActe == acteId);
+    model.Charge = ch is null ? new ChargeViewModel() : new ChargeViewModel
+    {
+        TypeCharge = ch.TypeCharge,
+        MontantCharge = ch.MontantCharge,
+        DateCharge = ToUtc(ch.DateCharge),
+        PayePar = ch.PayePar,
+        StatutCharge = ch.StatutCharge
+    };
+
+    // Entité juridique
+    var ents = await EntiteJurService.GetAllAsync() ?? new List<EntiteJurModel>();
+    var e = ents.FirstOrDefault(x => x.IdActe == acteId);
+    model.EntiteJuridique = e is null ? new EntiteJurViewModel() : new EntiteJurViewModel
+    {
+        DateActeJuridique = ToUtc(e.DateActeJuridique),
+        Reference = e.Reference,
+        NomHuissier = e.NomHuissier,
+        VilleHuissier = e.VilleHuissier,
+        NumeroDossier = e.NumeroDossier,
+        Responsable = e.Responsable,
+        FonctionResponsable = e.FonctionResponsable,
+        NomDossier = e.NomDossier
+
+    };
+
+    // Refresh EditContexts (car on a remplacé des sous-objets)
+    cautionnementContext = new EditContext(model.Cautionnement);
+    pretContext = new EditContext(model.Pret);
+    autorisationContext = new EditContext(model.Autorisation);
+    chargeContext = new EditContext(model.Charge);
+    entiteJurContext = new EditContext(model.EntiteJuridique);
+}
+
+// =================== SUBMIT FINAL ===================
+
+private async Task OnSubmit()
+{
+    try
+    {
+        isBusy = true;
+        errorMessage = null;
+        successMessage = null;
+
+        if (!ValidateParticipants()
+            || !cautionnementContext.Validate()
+            || !pretContext.Validate()
+            || !autorisationContext.Validate()
+            || !chargeContext.Validate()
+            || !entiteJurContext.Validate())
+        {
+            errorMessage = "Veuillez corriger toutes les erreurs de validation avant de soumettre.";
+            return;
+        }
+
+        await EnsureActeAsync();
+
+        if (!currentActeId.HasValue)
+            throw new InvalidOperationException("Aucun acte courant disponible après EnsureActeAsync().");
+
+        var acteId = currentActeId.Value;
+
+        await SaveParticipantsAsync(acteId);
+        await UpsertCautionnementAsync(acteId);
+        await UpsertPretAsync(acteId);
+        await UpsertAutorisationAsync(acteId);
+        await UpsertChargeAsync(acteId);
+        await UpsertEntiteJurAsync(acteId);
+
+        var acte = await TypesActService.GetByIdAsync(acteId);
+        if (acte is not null)
+        {
+            acte.Statut = "EnAttenteEnvoi";
+            acte.DateMaj = NowUtc();
+
+            // await TypesActService.UpdateAsync(acte);
+            var upd = await TypesActService.UpdateAsync(acte);
+            if (!upd.IsSuccess)
+                throw new InvalidOperationException(upd.ErrorMessage ?? "Erreur update acte.");
+        }
+
+        successMessage = "L'acte a été validé avec succès et est maintenant en attente d'envoi au responsable.";
+        await Task.Delay(1200);
+
+        // ✅ Retour vers listAct + demande refresh
+        var back = string.IsNullOrWhiteSpace(ReturnUrl) ? "/listAct" : ReturnUrl;
+        var sep = back.Contains('?') ? "&" : "?";
+        NavigationManager.NavigateTo($"{back}{sep}refresh=1", forceLoad: true);
+        return;
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Erreur lors de l'enregistrement : {ex.Message}";
+        successMessage = null;
+    }
+    finally
+    {
+        isBusy = false;
+        StateHasChanged();
+    }
+    
+}
+}

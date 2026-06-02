@@ -1,0 +1,39 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">Numéro d'autorisation*</label>
+        <InputText class="form-control" @bind-Value="Autorisation.NumeroAutorisation" />
+        <ValidationMessage For="@(() => Autorisation.NumeroAutorisation)" />
+    </div>
+
+    <div class="col-4">
+        <label class="form-label">Montant maximum autorisé*</label>
+        <InputNumber class="form-control" @bind-Value="Autorisation.MontantMaxAutorise" placeholder="Ex: 5 000 000 FCFA" />
+        <ValidationMessage For="@(() => Autorisation.MontantMaxAutorise)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date d'autorisation*</label>
+        <InputDate class="form-control" @bind-Value="Autorisation.DateAutorisation" />
+        <ValidationMessage For="@(() => Autorisation.DateAutorisation)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Lieu d'autorisation*</label>
+        <InputText class="form-control" @bind-Value="Autorisation.LieuAutorisation" placeholder="Ex: Lomé, Agence principale" />
+        <ValidationMessage For="@(() => Autorisation.LieuAutorisation)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Conditions d'autorisation</label>
+        <InputTextArea class="form-control" rows="3" @bind-Value="Autorisation.ConditionsAutorisation" placeholder="Ex: Prélèvement mensuel, plafond par opération, durée de validité, etc." />
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired]
+    public AutorisationViewModel Autorisation { get; set; } = null!;
+}

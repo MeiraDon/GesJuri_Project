@@ -1,0 +1,701 @@
+﻿@page "/listAct"
+@rendermode InteractiveServer
+
+<PageTitle>Gestion des Actes - Tableau de bord</PageTitle>
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using MudBlazor
+
+@inject ITypesAct TypesActService
+@inject IClientAct ClientActService
+@inject IRolesClientAct RolesClientActService
+@inject IClient ClientService
+@inject IAjoutAct AjoutActService
+@inject ICautionnement CautionnementService
+@inject IPret PretService
+@inject ICharge ChargeService
+@inject IAutorisation AutorisationService
+@inject IEntiteJur EntiteJurService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            @* <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
+                <i class="bi bi-folder2-open me-2"></i>Gestion des Actes
+            </MudText> *@
+            
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Gérez, suivez et reprenez vos actes (brouillon / validé).
+            </MudText>
+        </div>
+
+        <div class="d-flex gap-2">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))"
+                       Class="px-4 rounded-pill">
+                Nouvel acte
+            </MudButton>
+
+            <MudTooltip Text="Actualiser la liste">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Color="Color.Secondary"
+                               Disabled="@_loading"
+                               OnClick="ReloadAsync" /> @* Variant="Variant.Outlined" *@
+            </MudTooltip>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-primary-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Total</div>
+                        <div class="h3 fw-bold text-primary mb-0">@_actes.Count</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-success-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">En attente d'envoi</div>
+                        <div class="h3 fw-bold text-success mb-0">@_actes.Count(a => a.Statut == "EnAttenteEnvoi")</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-warning-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Brouillons</div>
+                        <div class="h3 fw-bold text-warning mb-0">@_actes.Count(a => a.Statut == "Brouillon")</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-info-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Ce mois</div>
+                        <div class="h3 fw-bold text-info mb-0">@_actes.Count(a => a.DateCreation.Month == DateTime.Now.Month)</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <MudPaper Class="mb-3" Elevation="1">
+        <MudTabs @bind-ActivePanelIndex="_activeTabIndex" Color="Color.Primary">
+            <MudTabPanel Text="Tous" />
+            <MudTabPanel Text="Brouillons" />
+            <MudTabPanel Text="En attente d'envoi" />
+            <MudTabPanel Text="Envoyés" />
+        </MudTabs>
+
+        <!-- Filters -->
+        <div class="p-3 border-top">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <MudTextField @bind-Value="_search"
+                                  Placeholder="Rechercher (ID, type, débiteur...)"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  FullWidth="true" />
+                </div>
+
+                <div class="col-md-4">
+                    <MudSelect T="string" @bind-Value="_statutFilter"
+                               Variant="Variant.Outlined"
+                               Label="Statut"
+                               Clearable="true"
+                               FullWidth="true">
+                        <MudSelectItem Value="@((string?)null)">Tous les statuts</MudSelectItem>
+                        <MudSelectItem Value="@("Brouillon")">Brouillon</MudSelectItem>
+                        <MudSelectItem Value="@("EnAttenteEnvoi")">En attente d'envoi</MudSelectItem>
+                        <MudSelectItem Value="@("Envoye")">Envoyé</MudSelectItem>
+                    </MudSelect>
+                </div>
+
+                <div class="col-md-4">
+                    <MudSelect T="int?" @bind-Value="_selectedTypeId"
+                               Variant="Variant.Outlined"
+                               Label="Type d'acte"
+                               Clearable="true"
+                               FullWidth="true">
+
+                        <MudSelectItem T="int?" Value="@((int?)null)">Tous les types</MudSelectItem>
+
+                        @foreach (var type in _acteTypes)
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)type.IdAjout)">
+                                @type.NomAct
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetFilters">
+                        Effacer filtres
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <div class="text-center py-5">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <div class="text-muted mt-3">Chargement des actes...</div>
+        </div>
+    }
+    else if (!FilteredActes.Any())
+    {
+        <div class="text-center py-5 my-4">
+            <i class="bi bi-folder-x display-1 text-muted"></i>
+            <div class="h5 fw-bold mt-3">Aucun acte trouvé</div>
+            <div class="text-muted mb-3">Change les filtres ou crée un nouvel acte.</div>
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))">
+                Créer un acte
+            </MudButton>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
+            <MudTable Items="FilteredActes"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      FixedHeader="true"
+                      Height="520px"
+                      Breakpoint="Breakpoint.Sm"
+                      RowsPerPage="10">
+                <HeaderContent>
+                    
+                    <MudTh>Date Création</MudTh>
+                    <MudTh>Dernière Modification</MudTh>
+                    <MudTh>Types Actes</MudTh>
+                    <MudTh>Débiteur</MudTh>
+                    <MudTh>Caution</MudTh>
+                    <MudTh>Statut</MudTh>
+                    <MudTh class="text-end">Actions</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                   
+                    <MudTd>
+
+                        <div class="text-nowrap">@context.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                        <div class="text-muted small">@context.DateCreation.ToLocalTime().ToString("HH:mm")</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="text-nowrap">@context.DateMaj.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                        <div class="text-muted small">@context.DateMaj.ToLocalTime().ToString("HH:mm")</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium">@context.NomTypesActe</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium participant-cell">@GetDebiteurName(context.IdActe)</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium participant-cell">@GetCautionName(context.IdActe)</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@GetStatusColor(context.Statut)"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Small"
+                                 Class="fw-medium">
+                            @((string.IsNullOrWhiteSpace(context.Statut)) ? "Brouillon" : context.Statut)
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd class="text-end">
+                        <div class="d-inline-flex align-items-center gap-1">
+
+                            <MudTooltip Text="Modifier">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => Edit(context))" />
+                            </MudTooltip>
+
+                            
+
+                            <MudTooltip Text="Envoyer au responsable">
+                                <MudIconButton Icon="@Icons.Material.Filled.Send"
+                                               Color="Color.Info"
+                                               Size="Size.Small"
+                                               Disabled="@(_loading || !CanSendActe(context))"
+                                               OnClick="@(() => SendActeAsync(context))" />
+                            </MudTooltip>
+
+                            <MudTooltip Text="Supprimer">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ConfirmDelete(context))" />
+                            </MudTooltip>
+
+                        </div>
+
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    private List<TypesActModel> _actes = new();
+    private bool _loading = true;
+
+    private string _search = "";
+    private string? _statutFilter = null;
+    private int? _selectedTypeId = null;
+    private int _activeTabIndex = 0;
+
+    private List<AjoutActModel> _acteTypes = new();
+
+    private Dictionary<int, string> _debiteurs = new();
+    private Dictionary<int, string> _cautions = new();
+
+    private List<TypesActModel> FilteredActes => GetFilteredActes();
+
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+
+    private bool _disposed;
+    private CancellationTokenSource? _cts = new CancellationTokenSource();
+
+    [Parameter, SupplyParameterFromQuery(Name = "refresh")]
+    public int? Refresh { get; set; }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Refresh == 1)
+        {
+            await LoadDataAsync();
+
+            // ✅ Nettoyage: évite refresh infini au F5
+            NavigationManager.NavigateTo("/listAct", replace: true);
+        }
+    }
+
+    private static string FormatClientDisplay(ClientModel? client)
+    {
+        if (client is null)
+            return "Non spécifié";
+
+        if (string.Equals(client.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+        {
+            var lignes = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(client.NomRaisonsociale))
+                lignes.Add(client.NomRaisonsociale.Trim());
+            else
+                lignes.Add("Personne morale");
+
+            if (!string.IsNullOrWhiteSpace(client.NomRepresentant))
+                lignes.Add($"Représentant : {client.NomRepresentant.Trim()}");
+
+            if (!string.IsNullOrWhiteSpace(client.NumCompte))
+                lignes.Add($"Compte : {client.NumCompte.Trim()}");
+
+            return string.Join("\n", lignes);
+        }
+        else
+        {
+            var lignes = new List<string>();
+
+            var nomComplet = $"{client.Nom} {client.Prenoms}".Trim();
+
+            if (!string.IsNullOrWhiteSpace(nomComplet))
+                lignes.Add(nomComplet);
+            else if (!string.IsNullOrWhiteSpace(client.NomRepresentant))
+                lignes.Add(client.NomRepresentant.Trim());
+            else
+                lignes.Add("Personne physique");
+
+            if (!string.IsNullOrWhiteSpace(client.NumCompte))
+                lignes.Add($"Compte : {client.NumCompte.Trim()}");
+
+            return string.Join("\n", lignes);
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        try { _cts?.Cancel(); } catch { }
+        _cts?.Dispose();
+    }
+
+    private Task SafeStateHasChanged()
+    {
+        if (_disposed) return Task.CompletedTask;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
+
+    private async Task LoadDataAsync()
+    {
+        await _loadLock.WaitAsync();
+        try
+        {
+            _loading = true;
+            await SafeStateHasChanged();
+
+            // ✅ IMPORTANT : séquentiel (pas de WhenAll, pas de tasks EF en parallèle)
+            _actes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
+            _acteTypes = await AjoutActService.GetAllAsync() ?? new List<AjoutActModel>();
+
+            await LoadActeParticipantsAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // normal si tu quittes la page
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            _loadLock.Release();
+            await SafeStateHasChanged();
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        await LoadDataAsync();
+        Snackbar.Add("Liste actualisée", Severity.Success);
+    }
+
+    private async Task LoadActeParticipantsAsync()
+    {
+        var links = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+        var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+        var clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+
+        var roleDebiteurIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle) &&
+                        (string.Equals(r.Libelle.Trim(), "Debiteur", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(r.Libelle.Trim(), "Débiteur", StringComparison.OrdinalIgnoreCase)))
+            .Select(r => r.IdRole)
+            .ToHashSet();
+
+        var roleCautionIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle) &&
+                        string.Equals(r.Libelle.Trim(), "Caution", StringComparison.OrdinalIgnoreCase))
+            .Select(r => r.IdRole)
+            .ToHashSet();
+
+        _debiteurs.Clear();
+        _cautions.Clear();
+
+        foreach (var link in links)
+        {
+            var client = clients.FirstOrDefault(c => c.IdClt == link.IdClt);
+            var display = FormatClientDisplay(client);
+
+            if (roleDebiteurIds.Contains(link.IdRole) && !_debiteurs.ContainsKey(link.IdActe))
+            {
+                _debiteurs[link.IdActe] = display;
+            }
+
+            if (roleCautionIds.Contains(link.IdRole) && !_cautions.ContainsKey(link.IdActe))
+            {
+                _cautions[link.IdActe] = display;
+            }
+        }
+    }
+
+    private List<TypesActModel> GetFilteredActes()
+    {
+        IEnumerable<TypesActModel> filtered = _actes;
+
+        // Tabs
+        filtered = _activeTabIndex switch
+        {
+            1 => filtered.Where(a => a.Statut == "Brouillon"),
+            2 => filtered.Where(a => a.Statut == "EnAttenteEnvoi"),
+            3 => filtered.Where(a => a.Statut == "Envoye"),
+            _ => filtered
+        };
+
+        // Statut
+        if (!string.IsNullOrWhiteSpace(_statutFilter))
+            filtered = filtered.Where(a => a.Statut == _statutFilter);
+
+        // Type
+        if (_selectedTypeId.HasValue)
+            filtered = filtered.Where(a => a.IdAjout == _selectedTypeId.Value);
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var s = _search.Trim().ToLowerInvariant();
+            filtered = filtered.Where(a =>
+                a.IdActe.ToString().Contains(s) ||
+                (a.NomTypesActe ?? "").ToLowerInvariant().Contains(s) ||
+                (a.Statut ?? "").ToLowerInvariant().Contains(s) ||
+                GetDebiteurName(a.IdActe).ToLowerInvariant().Contains(s) ||
+                GetCautionName(a.IdActe).ToLowerInvariant().Contains(s));
+        
+        }
+
+        return filtered.OrderByDescending(a => a.DateMaj).ToList();
+    }
+
+    private string GetDebiteurName(int acteId)
+        => _debiteurs.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+
+    private string GetCautionName(int acteId)
+        => _cautions.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+
+
+
+    private void ResetFilters()
+    {
+        _search = "";
+        _statutFilter = null;
+        _selectedTypeId = null;
+        _activeTabIndex = 0;
+        StateHasChanged();
+    }
+
+    // private void Edit(TypesActModel acte)
+    //     => NavigationManager.NavigateTo($"/saisirPage/{acte.IdAjout}?acteId={acte.IdActe}");
+
+    private void Edit(TypesActModel acte)
+    {
+        var returnUrl = Uri.EscapeDataString("/listAct");
+        NavigationManager.NavigateTo($"/saisirPage/{acte.IdAjout}?acteId={acte.IdActe}&returnUrl={returnUrl}");
+    }
+
+    private async Task DeleteActeCascadeAsync(int acteId)
+    {
+        // 1) supprimer les sous-entités 1-1 liées à l'acte
+        var cautions = await CautionnementService.GetAllAsync() ?? new();
+        var caution = cautions.FirstOrDefault(x => x.IdActe == acteId);
+        if (caution != null) await CautionnementService.DeleteAsync(caution);
+
+        var prets = await PretService.GetAllAsync() ?? new();
+        var pret = prets.FirstOrDefault(x => x.IdActe == acteId);
+        if (pret != null) await PretService.DeleteAsync(pret);
+
+        var autos = await AutorisationService.GetAllAsync() ?? new();
+        var auto = autos.FirstOrDefault(x => x.IdActe == acteId);
+        if (auto != null) await AutorisationService.DeleteAsync(auto);
+
+        var charges = await ChargeService.GetAllAsync() ?? new();
+        var charge = charges.FirstOrDefault(x => x.IdActe == acteId);
+        if (charge != null) await ChargeService.DeleteAsync(charge);
+
+        var ents = await EntiteJurService.GetAllAsync() ?? new();
+        var ent = ents.FirstOrDefault(x => x.IdActe == acteId);
+        if (ent != null) await EntiteJurService.DeleteAsync(ent);
+
+        // 2) supprimer les liaisons ClientAct
+        var links = await ClientActService.GetAllAsync() ?? new();
+        var toDeleteLinks = links.Where(x => x.IdActe == acteId).ToList();
+        foreach (var l in toDeleteLinks)
+            await ClientActService.DeleteAsync(l);
+
+        // 3) supprimer l'acte lui-même
+        await TypesActService.DeleteByIdAsync(acteId);
+    }
+
+    private bool IsAlreadySent(TypesActModel acte)
+    {
+        return string.Equals(acte.Statut, "Envoye", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool CanSendActe(TypesActModel acte)
+    {
+        return string.Equals(acte.Statut, "EnAttenteEnvoi", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task SendActeAsync(TypesActModel acte)
+    {
+        if (_loading)
+            return;
+
+        if (!string.Equals(acte.Statut, "EnAttenteEnvoi", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Seuls les actes validés et complets peuvent être envoyés au responsable.", Severity.Warning);
+            return;
+        }
+
+        var ok = await DialogService.ShowMessageBox(
+            "Envoi de l'acte",
+            $"Voulez-vous marquer l'acte #{acte.IdActe} comme envoyé au responsable ?\n\nL'envoi réel n'est pas encore implémenté.",
+            yesText: "Envoyer",
+            cancelText: "Annuler");
+
+        if (ok != true)
+            return;
+
+        try
+        {
+            _loading = true;
+            await SafeStateHasChanged();
+
+            acte.Statut = "Envoye";
+            acte.DateMaj = DateTime.UtcNow;
+
+            var res = await TypesActService.UpdateAsync(acte);
+            if (!res.IsSuccess)
+            {
+                Snackbar.Add(res.ErrorMessage ?? "Erreur lors de l'envoi de l'acte.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Acte #{acte.IdActe} marqué comme envoyé au responsable.", Severity.Success);
+            Snackbar.Add("Le module d'envoi réel au responsable n'est pas encore implémenté.", Severity.Info);
+
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur envoi : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            await SafeStateHasChanged();
+        }
+    }
+
+    private async Task ConfirmDelete(TypesActModel acte)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Suppression",
+            $"Supprimer définitivement l'acte #{acte.IdActe} ?\n\nCette action est irréversible.",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (ok != true) return;
+
+        try
+        {
+            _loading = true;
+            await SafeStateHasChanged();
+
+            await DeleteActeCascadeAsync(acte.IdActe);
+
+            Snackbar.Add($"Acte #{acte.IdActe} supprimé.", Severity.Success);
+
+            // ✅ refresh local rapide
+            _actes.RemoveAll(a => a.IdActe == acte.IdActe);
+            _debiteurs.Remove(acte.IdActe);
+            _cautions.Remove(acte.IdActe);
+
+            await SafeStateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur suppression : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            await SafeStateHasChanged();
+        }
+    }
+
+    private Color GetStatusColor(string? statut) => statut switch
+    {
+        "Brouillon" => Color.Warning,
+        "EnAttenteEnvoi" => Color.Primary,
+        "Envoye" => Color.Success,
+        _ => Color.Default
+    };
+}
+
+<style>
+    .text-gradient-primary {
+        background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+        /* -webkit-background-clip: text;
+                background-clip: text; */
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hover-lift {
+        transition: all .25s ease;
+    }
+
+        .hover-lift:hover {
+            transform: translateY(-3px);
+        }
+
+    .bg-primary-light {
+        background-color: rgba(59,130,246,.12);
+    }
+
+    .bg-success-light {
+        background-color: rgba(34,197,94,.12);
+    }
+
+    .bg-warning-light {
+        background-color: rgba(245,158,11,.12);
+    }
+
+    .bg-info-light {
+        background-color: rgba(14,165,233,.12);
+    }
+
+    .participant-cell {
+        white-space: pre-line;
+        line-height: 1.35;
+    }
+</style>

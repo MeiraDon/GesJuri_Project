@@ -1,0 +1,68 @@
+﻿@page "/Testfastreportjson"
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Reports
+@inject ActReportJsonService JsonService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Test JSON FastReport</MudText>
+
+    <MudNumericField T="int" Label="Id Acte" @bind-Value="acteId" Class="mb-4" />
+
+    <MudStack Row="true" Spacing="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AfficherJson">
+            Afficher JSON
+        </MudButton>
+
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GenererJsonFichier">
+            Générer fichier JSON
+        </MudButton>
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(json))
+    {
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1">JSON généré</MudText>
+        <pre style="white-space: pre-wrap;">@json</pre>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(jsonPath))
+    {
+        <MudAlert Severity="Severity.Success" Class="mt-3">
+            Fichier JSON créé : @jsonPath
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    private int acteId;
+    private string? json;
+    private string? jsonPath;
+
+    private async Task AfficherJson()
+    {
+        try
+        {
+            json = await JsonService.GetJsonContentAsync(acteId);
+            Snackbar.Add("JSON chargé avec succès.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur JSON : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task GenererJsonFichier()
+    {
+        try
+        {
+            jsonPath = await JsonService.GenerateJsonFileAsync(acteId);
+            Snackbar.Add("Fichier JSON généré avec succès.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur génération fichier JSON : {ex.Message}", Severity.Error);
+        }
+    }
+}

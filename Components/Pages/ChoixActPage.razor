@@ -1,0 +1,100 @@
+﻿@page "/choisirAct"
+@rendermode InteractiveServer
+
+<PageTitle>ChoixAct</PageTitle>
+
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+
+@inject IAjoutAct AjoutActService
+@inject IBanque BanqueService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-8">
+
+    <MudCard Elevation="6" Class="pa-6 mx-auto justify-center" Style="max-width:900px">
+
+        <MudCardHeader Style="background-color:#003366;color:white;">
+            <MudText Typo="Typo.h6">
+                📄 Sélection du type d’acte
+            </MudText>
+        </MudCardHeader>
+
+        <MudCardContent>
+
+            <MudText Typo="Typo.subtitle1" Class="mb-4">
+                Choisissez le type d’acte à créer
+            </MudText>
+
+            <MudSelect T="int"
+                       Label="Type d'acte"
+                       Variant="Variant.Filled"
+                       Dense="true"
+                       Required="true"
+                       @bind-Value="selectedActeId">
+
+                @foreach (var acte in ajoutActList)
+                {
+                    <MudSelectItem Value="@acte.IdAjout">
+                        @acte.NomAct (@acte.CategorieClient)
+                    </MudSelectItem>
+                }
+
+            </MudSelect>
+
+            <MudDivider Class="my-5" />
+
+            <div class="text-end">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.ArrowForward"
+                           Disabled="@(selectedActeId == 0)"
+                           OnClick="Continuer">
+                    Continuer
+                </MudButton>
+            </div>
+
+        </MudCardContent>
+    </MudCard>
+
+    <MudPaper Class="mt-6 pa-2" Elevation="0">
+        <ListClientActPage />
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    private List<AjoutActModel> ajoutActList = new();
+    private int selectedActeId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ChargerActesAsync();
+    }
+
+    private async Task ChargerActesAsync()
+    {
+        try
+        {
+            ajoutActList = await AjoutActService.GetAllAsync() ?? new List<AjoutActModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors du chargement des actes : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Continuer()
+    {
+        if (selectedActeId <= 0)
+        {
+            Snackbar.Add("Veuillez sélectionner un type d’acte.", Severity.Warning);
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/saisirPage/{selectedActeId}");
+    }
+}

@@ -1,0 +1,1118 @@
+﻿@page "/banque"
+@rendermode InteractiveServer
+
+<PageTitle>Banques - GesCPSI</PageTitle>
+
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using GesCPSI_Project.Components.Dialogs
+@inject IBanque BanqueService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager 
+@inject IJSRuntime JSRuntime
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4" Style="min-height: 100vh;">
+
+    <div class="header-section">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 header-row">
+            <div class="d-flex align-items-center gap-3 header-left">
+                <div class="icon-container">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="header-icon" />
+                </div>
+                <div>
+                    <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
+                        Gestion des Banques
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Gérez les institutions bancaires partenaires
+                    </MudText>
+                </div>
+            </div>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenQuickAdd"
+                       Class="px-4 rounded-pill shadow-sm header-cta"
+                       Size="Size.Small">
+                Nouvelle banque
+            </MudButton>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5 stats-row">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <MudPaper Class="stats-card p-4" Elevation="2">
+                <div class="d-flex align-items-center w-100">
+                    <div class="stats-icon bg-primary-light">
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Primary" Size="Size.Small" />
+                    </div>
+                    <div class="ms-3">
+                        <div class="stats-label">Total banques</div>
+                        <div class="stats-value">@banques.Count</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <MudPaper Class="stats-card p-4" Elevation="2">
+                <div class="d-flex align-items-center w-100">
+                    <div class="stats-icon bg-success-light">
+                        <MudIcon Icon="@Icons.Material.Filled.LocationCity" Color="Color.Success" Size="Size.Small" />
+                    </div>
+                    <div class="ms-3">
+                        <div class="stats-label">Villes</div>
+                        <div class="stats-value">@GetDistinctCities()</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <MudPaper Class="stats-card p-4" Elevation="2">
+                <div class="d-flex align-items-center w-100">
+                    <div class="stats-icon bg-warning-light">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Warning" Size="Size.Small" />
+                    </div>
+                    <div class="ms-3">
+                        <div class="stats-label">Capital moyen</div>
+                        <div class="stats-value">@GetAverageCapital()</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <MudPaper Class="stats-card p-4" Elevation="2">
+                <div class="d-flex align-items-center w-100">
+                    <div class="stats-icon bg-info-light">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Small" />
+                    </div>
+                    <div class="ms-3">
+                        <div class="stats-label">Dernier ajout</div>
+                        <div class="stats-value">@GetLastAddedDate()</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <MudCard Class="form-card-compact" Elevation="6" id="form">
+                <MudCardHeader Class="pa-3 compact-header">
+                    <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="compact-header-icon">
+                                <MudIcon Icon="@HeaderIcon" Color="Color.Primary" Size="Size.Small" />
+                            </div>
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-0 text-primary">
+                                @(isEditing ? "Modifier la banque" : "Ajouter une banque")
+                            </MudText>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <MudChip T="string"
+                                     Color="@(isEditing ? Color.Warning : Color.Primary)"
+                                     Variant="Variant.Filled"
+                                     Size="Size.Small"
+                                     Class="px-3 py-1">
+                                @(isEditing ? "Édition" : "Nouveau")
+                            </MudChip>
+                        </div>
+                    </div>
+                </MudCardHeader>
+
+                <MudCardContent Class="pa-3 compact-content">
+                    <EditForm EditContext="@editContext" OnValidSubmit="Save">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-warning alert-sm mb-3" />
+
+                        <MudGrid Spacing="2" Class="compact-grid">
+
+                            <MudItem xs="12">
+                                <div class="compact-section">
+                                    <div class="compact-section-header">
+                                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                                        <span>Informations principales</span>
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Outlined" Class="ms-2">
+                                            Obligatoire
+                                        </MudChip>
+                                    </div>
+
+                                    <MudTextField @bind-Value="banque.NomRaisonSocialBnq"
+                                                  Label="Nom / Raison sociale"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  RequiredError="Champ requis"
+                                                  FullWidth="true"
+                                                  Size="Size.Small"
+                                                  Margin="Margin.Dense"
+                                                  Class="compact-input mb-2" />
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.SigleBnq"
+                                                          Label="Sigle"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.FormeJuridique"
+                                                          Label="Forme juridique"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <div class="compact-section">
+                                    <div class="compact-section-header">
+                                        <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                                        <span>Capital et siège</span>
+                                    </div>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.CapitalSocial"
+                                                          Label="Capital social"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input"
+                                                          Adornment="Adornment.End"
+                                                          AdornmentText="FCFA" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.SiegeSocial"
+                                                          Label="Siège social"
+                                                          Variant="Variant.Outlined"
+                                                          Required="true"
+                                                          RequiredError="Champ requis"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <div class="compact-section">
+                                    <div class="compact-section-header">
+                                        <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" />
+                                        <span>Identifiants légaux</span>
+                                    </div>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.RegistreCommerce"
+                                                          Label="RCCM/NIF"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.Swift"
+                                                          Label="Code SWIFT/BIC"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <div class="compact-section">
+                                    <div class="compact-section-header">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                        <span>Représentation</span>
+                                    </div>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.RepresentantBnq"
+                                                          Label="Représentant"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.FonctionRepresentant"
+                                                          Label="Fonction"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <div class="compact-section">
+                                    <div class="compact-section-header">
+                                        <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" />
+                                        <span>Contacts</span>
+                                    </div>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.TelBnq"
+                                                          Label="Téléphone"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" sm="6">
+                                            <MudTextField @bind-Value="banque.EmailBnq"
+                                                          Label="Email"
+                                                          Variant="Variant.Outlined"
+                                                          FullWidth="true"
+                                                          Size="Size.Small"
+                                                          Margin="Margin.Dense"
+                                                          Class="compact-input" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <div class="compact-actions">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Secondary"
+                                                       OnClick="ResetForm"
+                                                       Size="Size.Small"
+                                                       StartIcon="@Icons.Material.Filled.Clear"
+                                                       Class="rounded-pill px-3"
+                                                       Style="min-width: 100px;">
+                                                Annuler
+                                            </MudButton>
+
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Info"
+                                                       Size="Size.Small"
+                                                       StartIcon="@Icons.Material.Filled.Preview"
+                                                       OnClick="@(() => ShowPreview(banque))"
+                                                       Class="rounded-pill px-3"
+                                                       Style="min-width: 100px;"
+                                                       Disabled="@(banque.IdBnq == 0)">
+                                                Aperçu
+                                            </MudButton>
+                                        </div>
+
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="@(isEditing ? Color.Warning : Color.Primary)"
+                                                   ButtonType="ButtonType.Submit"
+                                                   Size="Size.Small"
+                                                   StartIcon="@(isEditing ? Icons.Material.Filled.Edit : Icons.Material.Filled.Save)"
+                                                   Class="rounded-pill px-4 shadow-sm action-button"
+                                                   Style="min-width: 120px;">
+                                            @(isEditing ? "Mettre à jour" : "Enregistrer")
+                                        </MudButton>
+                                    </div>
+                                </div>
+                            </MudItem>
+
+                        </MudGrid>
+                    </EditForm>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row list-gap">
+        <div class="col-12">
+            <MudCard Class="list-card" Elevation="6">
+                <MudCardHeader Class="pa-4" Style="background-color: #f8fafc;">
+                    <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6" Class="text-dark mb-0">
+                                📋 Liste des banques
+                            </MudText>
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                                @banques.Count
+                            </MudChip>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <MudTextField @bind-Value="searchTerm"
+                                          Placeholder="Rechercher une banque..."
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Immediate="true"
+                                          Size="Size.Small"
+                                          Class="search-input"
+                                          Style="min-width: 240px;" />
+
+                            <MudTooltip Text="Rafraîchir">
+                                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                               Color="Color.Secondary"
+                                               Variant="Variant.Outlined"
+                                               Size="Size.Small"
+                                               OnClick="RefreshList" />
+                            </MudTooltip>
+                        </div>
+                    </div>
+                </MudCardHeader>
+
+                <MudCardContent Class="pa-0">
+                    @if (!filteredBanques.Any())
+                    {
+                        <div class="text-center py-8">
+                            <div class="empty-state">
+                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
+                                         Size="Size.Large"
+                                         Color="Color.Secondary"
+                                         Class="mb-3" />
+                                <MudText Typo="Typo.h6" Class="mb-2">Aucune banque trouvée</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                                    Commencez par ajouter votre première banque
+                                </MudText>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="ResetForm">
+                                    Ajouter une banque
+                                </MudButton>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="banque-list">
+                            @foreach (var banqueItem in filteredBanques)
+                            {
+                                <div class="banque-item @(banqueItem.IdBnq == banque.IdBnq ? "active" : "")">
+                                    <div class="banque-item-content">
+                                        <div class="d-flex align-items-start flex-wrap">
+                                            <div class="banque-avatar">
+                                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
+                                                         Color="Color.Primary"
+                                                         Size="Size.Small" />
+                                            </div>
+
+                                            <div class="flex-grow-1 ms-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
+                                                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-0">
+                                                        @banqueItem.NomRaisonSocialBnq
+
+                                                        @if (!string.IsNullOrWhiteSpace(banqueItem.SigleBnq))
+                                                        {
+                                                            <MudChip T="string"
+                                                                     Color="Color.Info"
+                                                                     Variant="Variant.Outlined"
+                                                                     Size="Size.Small"
+                                                                     Class="ms-2">
+                                                                @banqueItem.SigleBnq
+                                                            </MudChip>
+                                                        }
+                                                    </MudText>
+
+                                                    @if (IsBoa(banqueItem))
+                                                    {
+                                                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                                                            Banque applicative (BOA)
+                                                        </MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
+                                                            Référentiel
+                                                        </MudChip>
+                                                    }
+                                                </div>
+
+                                                <div class="row g-2 mt-2">
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="detail-item">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Color="Color.Secondary" />
+                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.RepresentantBnq) ? "Non renseigné" : banqueItem.RepresentantBnq)</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="detail-item">
+                                                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Color="Color.Secondary" />
+                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.SiegeSocial) ? "Non renseigné" : banqueItem.SiegeSocial)</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="detail-item">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Color="Color.Secondary" />
+                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.TelBnq) ? "Non renseigné" : banqueItem.TelBnq)</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="detail-item">
+                                                            <MudIcon Icon="@Icons.Material.Filled.VpnKey" Size="Size.Small" Color="Color.Secondary" />
+                                                            <span>SWIFT: @(string.IsNullOrWhiteSpace(banqueItem.Swift) ? "Non renseigné" : banqueItem.Swift)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="banque-actions mt-3 flex-wrap gap-2">
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       StartIcon="@Icons.Material.Filled.Edit"
+                                                       OnClick="@(() => Edit(banqueItem))"
+                                                       Class="px-3">
+                                                Modifier
+                                            </MudButton>
+
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       StartIcon="@Icons.Material.Filled.Delete"
+                                                       OnClick="@(() => ConfirmDelete(banqueItem))"
+                                                       Class="px-3">
+                                                Supprimer
+                                            </MudButton>
+
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Info"
+                                                       Size="Size.Small"
+                                                       StartIcon="@Icons.Material.Filled.Visibility"
+                                                       OnClick="@(() => ShowPreview(banqueItem))"
+                                                       Class="ms-auto px-3">
+                                                Détails
+                                            </MudButton>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+</MudContainer>
+
+@code {
+    private EditContext editContext = default!;
+    private BanqueModel banque = new();
+    private List<BanqueModel> banques = new();
+    private bool isEditing = false;
+    private string searchTerm = string.Empty;
+
+    private string HeaderIcon => isEditing
+        ? Icons.Material.Filled.Edit
+        : Icons.Material.Filled.AddBusiness;
+
+    private List<BanqueModel> filteredBanques =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? banques
+            : banques.Where(b =>
+                (b.NomRaisonSocialBnq?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (b.SigleBnq?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (b.RepresentantBnq?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (b.SiegeSocial?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (b.Swift?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            ).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(banque);
+        await LoadBanques();
+    }
+
+    private bool IsBoa(BanqueModel model)
+    {
+        return string.Equals(model.SigleBnq?.Trim(), "BOA", StringComparison.OrdinalIgnoreCase)
+            || (model.NomRaisonSocialBnq?.Contains("BOA", StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private async Task LoadBanques()
+    {
+        try
+        {
+            banques = await BanqueService.GetAllAsync() ?? new List<BanqueModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors du chargement des banques : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        if (!editContext.Validate())
+        {
+            Snackbar.Add("Veuillez corriger les erreurs du formulaire.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var result = isEditing
+                ? await BanqueService.UpdateAsync(banque)
+                : await BanqueService.AddAsync(banque);
+
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Banque enregistrée avec succès.", Severity.Success);
+                await LoadBanques();
+                ResetForm();
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l’enregistrement.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Edit(BanqueModel model)
+    {
+        banque = new BanqueModel
+        {
+            IdBnq = model.IdBnq,
+            NomRaisonSocialBnq = model.NomRaisonSocialBnq,
+            SigleBnq = model.SigleBnq,
+            FormeJuridique = model.FormeJuridique,
+            CapitalSocial = model.CapitalSocial,
+            SiegeSocial = model.SiegeSocial,
+            RegistreCommerce = model.RegistreCommerce,
+            Swift = model.Swift,
+            TelBnq = model.TelBnq,
+            EmailBnq = model.EmailBnq,
+            RepresentantBnq = model.RepresentantBnq,
+            FonctionRepresentant = model.FonctionRepresentant,
+            NomCollaborateur = model.NomCollaborateur,
+            VisaCollaborateur = model.VisaCollaborateur
+        };
+
+        isEditing = true;
+        editContext = new EditContext(banque);
+        NavigationManager.NavigateTo("/banque#form", false);
+    }
+
+    private async Task ConfirmDelete(BanqueModel model)
+    {
+        if (IsBoa(model))
+        {
+            Snackbar.Add("La banque BOA ne peut pas être supprimée car elle est utilisée par l’application.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["ContentText"] = $"Êtes-vous sûr de vouloir supprimer la banque « {model.NomRaisonSocialBnq} » ? Cette action est irréversible.",
+            ["ButtonText"] = "Supprimer",
+            ["Color"] = Color.Error
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogConfirmation>("Confirmation de suppression", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            try
+            {
+                var deleteResult = await BanqueService.DeleteAsync(model);
+
+                if (deleteResult.IsSuccess)
+                {
+                    Snackbar.Add("Banque supprimée avec succès.", Severity.Success);
+                    await LoadBanques();
+
+                    if (banque.IdBnq == model.IdBnq)
+                        ResetForm();
+                }
+                else
+                {
+                    Snackbar.Add(deleteResult.ErrorMessage ?? "Erreur lors de la suppression.", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void ResetForm()
+    {
+        banque = new BanqueModel();
+        isEditing = false;
+        editContext = new EditContext(banque);
+    }
+
+    private async Task RefreshList()
+    {
+        await LoadBanques();
+        Snackbar.Add("Liste actualisée.", Severity.Info);
+    }
+
+    private Task OpenQuickAdd()
+    {
+        ResetForm();
+        NavigationManager.NavigateTo("/banque#form", false);
+        return Task.CompletedTask;
+    }
+
+    private async Task ShowPreview(BanqueModel model)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Banque"] = model
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            Position = DialogPosition.Center
+        };
+
+        var dialogRef = await DialogService.ShowAsync<BanquePreviewDialog>("Détails de la banque", parameters, options);
+        await dialogRef.Result;
+    }
+
+    private int GetDistinctCities()
+    {
+        return banques
+            .Select(b => b.SiegeSocial?.Split(',').FirstOrDefault()?.Trim())
+            .Where(city => !string.IsNullOrWhiteSpace(city))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+    }
+
+    private string GetAverageCapital()
+    {
+        if (!banques.Any())
+            return "N/A";
+
+        var capitals = banques
+            .Select(b =>
+            {
+                var raw = b.CapitalSocial?.Replace(" ", "").Replace(",", "");
+                return decimal.TryParse(raw, out var capital) ? capital : 0m;
+            })
+            .Where(c => c > 0)
+            .ToList();
+
+        return capitals.Any() ? $"{capitals.Average():N0} FCFA" : "N/A";
+    }
+
+    private string GetLastAddedDate()
+    {
+        return banques.Any() ? "Récent" : "Jamais";
+    }
+}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #003366 0%, #004d99 100%);
+        --primary-light: rgba(0, 51, 102, 0.1);
+        --success-light: rgba(25, 135, 84, 0.1);
+        --warning-light: rgba(255, 193, 7, 0.1);
+        --info-light: rgba(13, 202, 240, 0.1);
+        --card-shadow: 0 4px 20px rgba(0, 51, 102, 0.08);
+        --hover-shadow: 0 8px 30px rgba(0, 51, 102, 0.12);
+        --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --border-radius: 12px;
+    }
+
+    .header-section {
+        margin-bottom: 2rem;
+    }
+
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        background: var(--primary-gradient);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 15px rgba(0, 51, 102, 0.15);
+    }
+
+    .header-icon {
+        font-size: 24px;
+        color: white;
+    }
+
+    .text-gradient-primary {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* ====== STATS ====== */
+    .stats-card {
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: var(--transition-smooth);
+        background: white;
+        height: 90px;
+        display: flex;
+        align-items: center;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bg-primary-light {
+        background-color: var(--primary-light);
+    }
+
+    .bg-success-light {
+        background-color: var(--success-light);
+    }
+
+    .bg-warning-light {
+        background-color: var(--warning-light);
+    }
+
+    .bg-info-light {
+        background-color: var(--info-light);
+    }
+
+    .stats-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 3px;
+        white-space: nowrap;
+    }
+
+    .stats-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #003366;
+        line-height: 1.1;
+    }
+
+    /* ====== FORMULAIRE COMPACT ====== */
+    .form-card-compact {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background: white;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: var(--transition-smooth);
+    }
+
+        .form-card-compact:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+    .compact-header {
+        background: linear-gradient(90deg, rgba(0, 51, 102, 0.05), rgba(0, 51, 102, 0.02));
+        border-bottom: 2px solid rgba(0, 51, 102, 0.1);
+        padding: 0.75rem 1rem !important;
+    }
+
+    .compact-header-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 51, 102, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .compact-content {
+        padding: 1rem !important;
+    }
+
+    .compact-section {
+        border: 1px solid rgba(0, 51, 102, 0.08);
+        border-radius: 10px;
+        padding: 0.75rem;
+        background: rgba(0, 51, 102, 0.01);
+        transition: var(--transition-smooth);
+    }
+
+        .compact-section:hover {
+            border-color: rgba(0, 51, 102, 0.15);
+            background: rgba(0, 51, 102, 0.02);
+        }
+
+    .compact-section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #003366;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px dashed rgba(0, 51, 102, 0.1);
+    }
+
+    .compact-fields {
+        padding: 0.25rem;
+    }
+
+    .compact-input {
+        font-size: 0.85rem !important;
+    }
+
+        .compact-input .mud-input-control {
+            margin-top: 0 !important;
+        }
+
+        .compact-input .mud-input-label {
+            font-size: 0.8rem !important;
+        }
+
+        .compact-input .mud-input {
+            font-size: 0.85rem !important;
+            padding: 8px 12px !important;
+        }
+
+        .compact-input .mud-input-adornment {
+            font-size: 18px !important;
+        }
+
+    .compact-grid .mud-grid-item {
+        padding: 4px !important;
+    }
+
+    .compact-actions {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 2px solid rgba(0, 51, 102, 0.1);
+    }
+
+    .action-button {
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem !important;
+    }
+
+    .alert-sm {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.8rem !important;
+        border-radius: 8px;
+        margin-bottom: 1rem !important;
+    }
+
+    /* ====== LISTE ====== */
+    .search-input {
+        border-radius: 25px;
+    }
+
+        .search-input .mud-input-outlined-border {
+            border-radius: 25px;
+        }
+
+    /* espace entre formulaire et liste */
+    .list-gap {
+        margin-top: 2rem;
+    }
+
+    .banque-list {
+        padding: 1rem;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .banque-item {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 2px solid transparent;
+        transition: var(--transition-smooth);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .banque-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 51, 102, 0.1);
+            border-color: rgba(0, 51, 102, 0.1);
+        }
+
+        .banque-item.active {
+            border-color: #003366;
+            background: linear-gradient(90deg, rgba(0, 51, 102, 0.03), rgba(0, 51, 102, 0.01));
+            animation: pulse-border 2s infinite;
+        }
+
+    @@keyframes pulse-border {
+        0%, 100% {
+            border-color: #003366;
+        }
+
+        50% {
+            border-color: rgba(0, 51, 102, 0.5);
+        }
+    }
+
+    .banque-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-light);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+
+    .banque-actions {
+        display: flex;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+        .banque-actions .mud-button-root {
+            font-size: 0.8rem !important;
+            min-height: 28px !important;
+            padding: 4px 12px !important;
+        }
+
+    /* ====== RESPONSIVE ====== */
+    @@media (max-width: 768px) {
+        .header-row {
+            justify-content: center !important;
+            text-align: center;
+        }
+
+        .header-left {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .icon-container {
+            margin: 0 auto;
+        }
+
+        .header-cta {
+            width: 100%;
+        }
+
+        .stats-row {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .stats-card {
+            height: auto;
+            padding: 0.75rem !important;
+        }
+
+        .stats-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .stats-value {
+            font-size: 1.2rem;
+        }
+
+        .compact-section-header {
+            font-size: 0.8rem;
+        }
+
+        .banque-item {
+            padding: 0.75rem;
+        }
+
+        .detail-item {
+            font-size: 0.75rem;
+        }
+    }
+
+    .mud-button.rounded-pill {
+        border-radius: 50px !important;
+    }
+
+    /* Scrollbar personnalisée */
+    .banque-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .banque-list::-webkit-scrollbar-track {
+        background: rgba(0, 51, 102, 0.05);
+        border-radius: 10px;
+    }
+
+    .banque-list::-webkit-scrollbar-thumb {
+        background: rgba(0, 51, 102, 0.2);
+        border-radius: 10px;
+    }
+
+        .banque-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 51, 102, 0.3);
+        }
+</style>

@@ -1,0 +1,543 @@
+﻿<div class="sidebar">
+    <!-- Header -->
+    <div class="sidebar-header">
+        <div class="brand-container">
+            
+            <div class="brand-info">
+                <div class="brand-title">GESCPSI</div>
+                <div class="brand-subtitle">Gestion des Actes juridiques(CPSI)</div>
+            </div>
+            
+            @* <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button> *@
+        </div>
+
+	</div>
+
+    <!-- Navigation -->
+    <div class="sidebar-nav">
+        <div class="nav-section">
+            <div class="section-label">NAVIGATION </div>
+
+            <NavLink class="nav-item" href="" Match="NavLinkMatch.All" title="Tableau de bord">
+                <div class="nav-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <div class="nav-text">Tableau de bord</div>
+                <div class="nav-indicator"></div>
+            </NavLink>
+
+            <NavLink class="nav-item" href="listAct" Match="NavLinkMatch.All" title="Consulter les actes">
+                <div class="nav-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div class="nav-text">Gestion des Actes</div> @* Liste des actes *@
+                @* <div class="nav-counter">24</div> *@
+            </NavLink>
+
+            <NavLink class="nav-item" href="choisirAct" Match="NavLinkMatch.Prefix" title="Saisir un acte ">
+                <div class="nav-icon">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div class="nav-text">Nouvel Acte</div> @* Saisir un acte *@
+                @* <div class="nav-badge new">Nouveau</div> *@
+            </NavLink>
+
+
+            @* <NavLink class="nav-item" href="listClientAct" Match="NavLinkMatch.All" title="Lister des clients">
+                <div class="nav-icon">
+                    <i class="bi bi-person-vcard"></i>
+                </div>
+                <div class="nav-text">Acte_Client</div>
+            </NavLink> *@
+            
+            <NavLink class="nav-item" href="validationAct" Match="NavLinkMatch.All" title="Valider les actes">
+                <div class="nav-icon">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <div class="nav-text">Validation</div>
+            </NavLink>
+
+            <NavLink class="nav-item" href="archivage" Match="NavLinkMatch.All" title="Archiver des actes">
+                <div class="nav-icon">
+                    <i class="bi bi-archive"></i>
+                </div>
+                <div class="nav-text">Archives</div>
+            </NavLink>
+
+            <NavLink class="nav-item" href="securite" Match="NavLinkMatch.All" title="Historique et traçabilité">
+                <div class="nav-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="nav-text">Historique</div>
+            </NavLink>
+
+            <NavLink class="nav-item" href="Testfastreport" Match="NavLinkMatch.All" title="test fastreport">
+                <div class="nav-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div class="nav-text">Test fastreport</div>
+            </NavLink>
+            <NavLink class="nav-item" href="Testfastreportjson" Match="NavLinkMatch.All" title="Test fastreport json">
+                <div class="nav-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div class="nav-text">Testfastreportpdf</div>
+            </NavLink>
+            <NavLink class="nav-item" href="Testfastreportpdf" Match="NavLinkMatch.All" title="Test fastreport pdf">
+                <div class="nav-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div class="nav-text">Test fastreport pdf</div>
+            </NavLink>
+            <NavLink class="nav-item" href="Testfastreportworkflow" Match="NavLinkMatch.All" title="Test fastreport workflow">
+                <div class="nav-icon">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div class="nav-text">Test fastreport workflow</div>
+            </NavLink>
+
+        </div>
+
+        <div class="nav-section">
+            <div class="section-label">ADMIN</div>
+
+            <NavLink class="nav-item" href="ajouterAct" Match="NavLinkMatch.All" title="Enregistrer un nouvel acte">
+                <div class="nav-icon">
+                    <i class="bi bi-file-earmark-medical"></i>
+                </div>
+                <div class="nav-text">Types d'Actes </div> @* Enregistrer un acte *@
+            </NavLink>
+
+            
+            <NavLink class="nav-item" href="clientPage" Match="NavLinkMatch.Prefix" title="Enregistrer des clients ">
+                <div class="nav-icon">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <div class="nav-text"> Clients </div> @* Enregistrer un client *@
+
+            </NavLink>
+
+            <NavLink class="nav-item" href="/banque" Match="NavLinkMatch.All" title="Banque">
+                <div class="nav-icon">
+                    <i class="bi bi-bank"></i>
+                </div>
+                <div class="nav-text">Banque</div>
+            </NavLink>
+
+
+            <NavLink class="nav-item" href="parametres" Match="NavLinkMatch.All" title="Paramètres système">
+                <div class="nav-icon">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div class="nav-text">Paramètres</div>
+            </NavLink>
+
+            <NavLink class="nav-item" href="rapports" Match="NavLinkMatch.All" title="Rapports et statistiques">
+                <div class="nav-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="nav-text">Rapports</div>
+            </NavLink>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <!-- Footer -->
+    <!-- Footer : User Profile -->
+    <div class="sidebar-footer user-footer">
+        <div class="user-profile footer-profile">
+            <div class="avatar">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="user-info">
+                <div class="user-name">User</div>
+            </div>
+        </div>
+
+        <button class="logout-btn" title="Déconnexion">
+            <i class="bi bi-box-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+    /* ====== VARIABLES ====== */
+    :root {
+        --sidebar-bg: linear-gradient(180deg, #0f2b5a 0%, #0a1a3a 100%);
+        --sidebar-width: 46vh;
+        --sidebar-collapsed: 40px;
+        --primary-color: #4361ee;
+        --primary-light: rgba(67, 97, 238, 0.15);
+        --secondary-color: #3a0ca3;
+        --accent-color: #4cc9f0;
+        --success-color: #2ecc71;
+        --text-primary: #ffffff;
+        --text-secondary: #a0b4ff;
+        --text-muted: #6c7db5;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.2);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+    }
+
+    /* =========================================
+       🎨 CPSI - BOA Inspired Corporate Palette
+       ========================================= */
+
+    :root {
+        /* ================= PRIMARY COLORS ================= */
+        /* Violet institutionnel (CTA section) */
+        --cpsi-primary-purple: #3F3A8A;
+        /* Vert institutionnel foncé (footer / branding) */
+        --cpsi-primary-green-dark: #2F5D50;
+        /* Vert action (boutons principaux) */
+        --cpsi-primary-green: #158A5C;
+        /* Bleu corporate (logo / identité) */
+        --cpsi-primary-blue: #1F3C88;
+        /* ================= NEUTRALS ================= */
+
+        --cpsi-white: #FFFFFF;
+        --cpsi-light-gray: #F2F2F2;
+        --cpsi-gray: #6C757D;
+        --cpsi-dark-gray: #343A40;
+        /* ================= BACKGROUNDS ================= */
+
+        --cpsi-bg-main: var(--cpsi-white);
+        --cpsi-bg-soft: var(--cpsi-light-gray);
+        --cpsi-bg-footer: var(--cpsi-primary-green-dark);
+        --cpsi-bg-cta: var(--cpsi-primary-purple);
+        /* ================= TEXT COLORS ================= */
+
+        --cpsi-text-primary: #1E1E2D;
+        --cpsi-text-secondary: var(--cpsi-gray);
+        --cpsi-text-light: #FFFFFF;
+        /* ================= BUTTON STATES ================= */
+
+        --cpsi-btn-primary: var(--cpsi-primary-green);
+        --cpsi-btn-primary-hover: #126B49;
+        --cpsi-btn-secondary: var(--cpsi-primary-purple);
+        --cpsi-btn-secondary-hover: #332F73;
+    }
+
+
+
+
+    /* ====== SIDEBAR ====== */
+    .sidebar {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(900px 520px at 12% 8%, rgba(0,74,136,.20), transparent 55%), radial-gradient(900px 520px at 85% 18%, rgba(2,132,199,.12), transparent 58%), linear-gradient(180deg, #0A192F 0%, #0F2744 100%);
+        padding: 10px;
+        gap: 12px;
+        border-right: 1px solid var(--border-color);
+        
+    }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+            .sidebar.collapsed .brand-info,
+            .sidebar.collapsed .nav-text,
+            .sidebar.collapsed .section-label,
+            .sidebar.collapsed .nav-badge,
+            .sidebar.collapsed .nav-counter,
+            .sidebar.collapsed .user-info {
+                display: none;
+            }
+
+            .sidebar.collapsed .nav-item {
+                justify-content: center;
+               /*  padding: 8px; */
+            }
+
+    /* ====== HEADER ====== */
+    
+    .brand-container {
+        display: flex;
+        align-items: center;
+        padding: 14px 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(0,74,136,.16), rgba(56,189,248,.06)), rgba(255,255,255,.02);
+        box-shadow: 0 14px 40px rgba(0,0,0,.35);
+        position: relative;
+        
+    }
+
+    
+    .brand-info {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        /* flex-wrap: wrap; */
+    }
+
+
+    .brand-title {
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,.96);
+    }
+
+    .brand-subtitle {
+        font-size: 11px;
+        font-weight: 650;
+        color: rgba(255,255,255,.62);
+    }
+
+   /*  .sidebar-toggle {
+        font-size: 10px;
+        padding: 3px 12px;
+		margin-left: auto;
+        background: var(--primary-light);
+        border-radius: 15px;
+        color: var(--accent-color);
+    } */
+
+
+
+
+    /* ====== NAVIGATION ====== */
+    .sidebar-nav {
+        overflow-y: auto;
+        /* flex: 1;
+        padding: 20px 0;*/
+            
+    }
+    
+    .nav-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 2px 2px 6px;
+    }
+
+    .section-label {
+        margin: 12px 10px 6px;
+        font-size: 10.5px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .14em;
+        color: rgba(255,255,255,.55);
+    }
+
+    .nav-item {
+        color: #FFFFFF;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        transition: var(--transition);
+        border-radius: var(--radius-md);
+        gap: 12px;
+        margin: 1px 8px;
+        padding: 8px;
+       
+    }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,.06);
+            transform: translateX(5px); 
+            border-color: rgba(0,74,136,.30);
+            filter: saturate(1.06);
+        }
+
+        .nav-item.active {
+            background: linear-gradient( 90deg, var(--cpsi-primary-green-dark), var(--cpsi-primary-green) );
+            color: white;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+    .nav-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 16px;
+        border-radius: var(--radius-sm);
+    }
+
+    .nav-text {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    
+
+    /* .nav-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: #ff6b6b;
+        color: white;
+    }
+
+    .nav-counter {
+        font-size: 12px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+    } */
+
+    /* ====== QUICK ACTIONS ====== */
+    .quick-actions {
+        padding: 10px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+    }
+
+    .action-btn {
+        aspect-ratio: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+        .action-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+    /* ====== FOOTER USER PROFILE ====== */
+ .sidebar-footer {
+        
+        padding: 10px;
+        display: flex;
+        justify-content: center; /* centre horizontalement */
+        align-items: center; /* centre verticalement contenu */
+        justify-content: space-between;
+        border-top: 1px solid rgba(255,255,255,.10);
+        gap: 10px;
+        margin-top: auto; /* le colle en bas */
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(0,74,136,.16), rgba(56,189,248,.06)), rgba(255,255,255,.02);
+        box-shadow: 0 14px 40px rgba(0,0,0,.35);
+ }
+
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: #126B49;
+    }
+
+    .user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #6C757D;
+    }
+
+    /* .user-role {
+        font-size: 12px;
+        color: #FFFFFF;
+    } */
+
+
+    .logout-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: rgba(255, 107, 107, 0.15);
+        color: #ff6b6b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+        }
+
+    /* ====== SCROLLBAR ====== */
+    .sidebar-nav::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 4px;
+    } 
+
+</style>
+
+
+
+<script>
+    // Toggle sidebar collapse
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.querySelector('#sidebarToggle');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+
+        // Mobile menu toggle (if you have a hamburger menu elsewhere)
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('mobile-open');
+            });
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            if (window.innerWidth <= 768 &&
+                !sidebar.contains(event.target) &&
+                !event.target.closest('.mobile-menu-toggle')) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+
+        // Add active state to current page
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && currentPath.includes(href)) {
+                item.classList.add('active');
+            }
+        });
+    });
+</script> 

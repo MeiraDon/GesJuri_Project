@@ -1,0 +1,303 @@
+﻿@page "/ajouterAct"
+@rendermode InteractiveServer
+
+<PageTitle>AjoutAct</PageTitle>
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Components
+
+@inject IAjoutAct AjoutActService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-6">
+
+    <MudCard Elevation="6" Class="pa-6 mx-auto mb-8" Style="max-width:650px;">
+        <MudCardHeader Style="background-color:#003366;color:white;">
+            <MudText Typo="Typo.h6">➕ Ajout d'un type d'acte</MudText>
+        </MudCardHeader>
+
+        <MudCardContent>
+            <MudForm @ref="form">
+
+                <MudSelect T="string"
+                           Label="Catégorie de client"
+                           Variant="Variant.Filled"
+                           @bind-Value="ajoutActModel.CategorieClient"
+                           Required="true"
+                           Class="mb-6">
+
+                    <MudSelectItem Value="@("Personne Physique")">
+                        Personne Physique
+                    </MudSelectItem>
+
+                    <MudSelectItem Value="@("Personne Morale")">
+                        Personne Morale
+                    </MudSelectItem>
+
+                    
+
+                </MudSelect>
+
+                <MudTextField @bind-Value="ajoutActModel.NomAct"
+                              Label="Nom du type d'acte"
+                              Variant="Variant.Filled"
+                              Required="true"
+                              RequiredError="Le nom est obligatoire"
+                              FullWidth
+                              Class="mb-6" />
+
+                <MudTextField @bind-Value="ajoutActModel.Description"
+                              Label="Description"
+                              Variant="Variant.Filled"
+                              Lines="3"
+                              FullWidth
+                              Class="mb-6" />
+
+                <MudStack Class="mt-4" Row="true" Justify="Justify.FlexEnd" Style="gap: 8px;">
+                    <MudButton Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               OnClick="AjouterOuModifierActe"
+                               StartIcon="@Icons.Material.Filled.Save"
+                               Size="Size.Medium"
+                               Disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" Class="mr-2" />
+                        }
+                        @(isEditing ? "Modifier" : "Enregistrer")
+                    </MudButton>
+                </MudStack>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+
+    
+    <MudCard Elevation="4" Class="pa-6 mx-auto mb-8">
+        <MudText Typo="Typo.h6" Class="mb-4">📋 Liste des types d'actes enregistrés</MudText>
+
+        @if (isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+        }
+
+        @if (ajoutActList == null || ajoutActList.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Elevation="2" Class="mb-4">
+                Aucun type d'acte n'a été enregistré pour le moment.
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="ajoutActList" Dense="true" Hover="true" Bordered="true" Striped="true" Elevation="0" Loading="@isLoading" Class="mb-4">
+                <HeaderContent>
+                    <MudTh>Catégorie</MudTh>
+                    <MudTh>Nom</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh Style="width: 120px;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.CategorieClient</MudTd>
+                    <MudTd>@context.NomAct</MudTd>
+                    <MudTd>
+                        @if (!string.IsNullOrEmpty(context.Description))
+                        {
+                            <MudTooltip Text="@context.Description">
+                                <MudText Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    @context.Description
+                                </MudText>
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudText Color="Color.Default" Style="font-style: italic;">Non renseignée</MudText>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="2">
+                            <MudTooltip Text="Modifier">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ModifierActe(context))" />
+                            </MudTooltip>
+
+                            <MudTooltip Text="Supprimer">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ConfirmerSuppression(context.IdAjout))" />
+                            </MudTooltip>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Total : @(ajoutActList?.Count ?? 0) type(s) d'acte
+        </MudText>
+    </MudCard>
+</MudContainer>
+
+
+
+
+@code {
+    private MudForm? form;
+    private AjoutActModel ajoutActModel = new AjoutActModel();
+    private List<AjoutActModel> ajoutActList = new();
+    private bool isSaving = false;
+    private bool isLoading = false;
+    private bool isEditing = false;
+    private int? idEnEdition = null;
+
+    protected override async Task OnInitializedAsync() => await ChargerListeAsync();
+
+    private async Task ChargerListeAsync()
+    {
+        try
+        {
+            isLoading = true;
+            ajoutActList = await AjoutActService.GetAllAsync() ?? new List<AjoutActModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur lors du chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AjouterOuModifierActe()
+    {
+        if (form == null) return;
+
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Veuillez corriger les erreurs du formulaire", Severity.Warning);
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            Result<AjoutActModel> result;
+
+            if (isEditing && idEnEdition.HasValue)
+            {
+                var existing = await AjoutActService.GetByIdAsync(idEnEdition.Value);
+                if (existing == null)
+                {
+                    Snackbar.Add("Type d'acte non trouvé", Severity.Error);
+                    return;
+                }
+
+                existing.NomAct = ajoutActModel.NomAct?.Trim() ?? string.Empty;
+                existing.Description = ajoutActModel.Description?.Trim();
+                existing.CategorieClient = ajoutActModel.CategorieClient;
+
+                result = await AjoutActService.UpdateAsync(existing);
+            }
+            else
+            {
+                var nouveauActe = new AjoutActModel
+                    {
+                        NomAct = ajoutActModel.NomAct?.Trim() ?? string.Empty,
+                        Description = ajoutActModel.Description?.Trim(),
+                        CategorieClient = ajoutActModel.CategorieClient
+                    };
+                result = await AjoutActService.AddAsync(nouveauActe);
+            }
+
+            if (result.IsSuccess)
+            {
+                Snackbar.Add(isEditing ? "Type d'acte modifié avec succès" : "Type d'acte ajouté avec succès", Severity.Success);
+                ResetForm();
+                await ChargerListeAsync();
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur inconnue", Severity.Error);
+            }
+        }
+        finally { isSaving = false; }
+    }
+
+    private void ModifierActe(AjoutActModel acte)
+    {
+        isEditing = true;
+        idEnEdition = acte.IdAjout;
+        ajoutActModel = new AjoutActModel
+            {
+                CategorieClient = acte.CategorieClient,
+                NomAct = acte.NomAct,
+                Description = acte.Description
+            };
+    }
+
+    private async Task ConfirmerSuppression(int id)
+    {
+        var parameters = new DialogParameters<DialogConfirmation>
+    {
+        { x => x.ContentText, "Êtes-vous sûr de vouloir supprimer ce type d'acte ? Cette action est irréversible." }
+    };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        // Ouvre le dialogue
+        var dialogRef = await DialogService.ShowAsync<DialogConfirmation>("Confirmation", parameters, options);
+
+        // Récupère le résultat en sécurisant le null
+        var result = await dialogRef.Result.ConfigureAwait(false);
+
+        if (result?.Data is true) // ✅ null check ajouté
+        {
+            await SupprimerActeConfirmé(id);
+        }
+    }
+
+
+    private async Task SupprimerActeConfirmé(int id)
+    {
+        try
+        {
+            var acte = await AjoutActService.GetByIdAsync(id);
+            if (acte == null)
+            {
+                Snackbar.Add("Type d'acte non trouvé", Severity.Warning);
+                return;
+            }
+
+            var result = await AjoutActService.DeleteAsync(acte);
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Type d'acte supprimé avec succès", Severity.Success);
+                await ChargerListeAsync();
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de la suppression", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ResetForm()
+    {
+        ajoutActModel = new AjoutActModel();
+        isEditing = false;
+        idEnEdition = null;
+        form?.ResetValidation();
+    }
+}

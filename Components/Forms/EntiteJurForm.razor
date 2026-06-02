@@ -1,0 +1,69 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Date de l'acte juridique*</label>
+        <InputDate class="form-control" @bind-Value="EntiteJuridique.DateActeJuridique" />
+        <ValidationMessage For="@(() => EntiteJuridique.DateActeJuridique)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Référence*</label>
+        <InputText class="form-control" @bind-Value="EntiteJuridique.Reference" />
+        <ValidationMessage For="@(() => EntiteJuridique.Reference)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Nom de l'huissier / Notaire*</label>
+        <InputText class="form-control"
+                   @bind-Value="EntiteJuridique.NomHuissier"
+                   placeholder="Ex: Maître [Nom Complet]" />
+        <ValidationMessage For="@(() => EntiteJuridique.NomHuissier)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Ville de l'huissier*</label>
+        <InputText class="form-control"
+                   @bind-Value="EntiteJuridique.VilleHuissier"
+                   placeholder="Ex: Abidjan" />
+        <ValidationMessage For="@(() => EntiteJuridique.VilleHuissier)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">N° de dossier*</label>
+        <InputText class="form-control" @bind-Value="EntiteJuridique.NumeroDossier" />
+        <ValidationMessage For="@(() => EntiteJuridique.NumeroDossier)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Nom du dossier*</label>
+        <InputText class="form-control"
+                   @bind-Value="EntiteJuridique.NomDossier"
+                   placeholder="Ex: Recouvrement dossier client X" />
+        <ValidationMessage For="@(() => EntiteJuridique.NomDossier)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Responsable*</label>
+        <InputText class="form-control"
+                   @bind-Value="EntiteJuridique.Responsable"
+                   placeholder="Ex: Directeur de l'agence" />
+        <ValidationMessage For="@(() => EntiteJuridique.Responsable)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fonction du responsable*</label>
+        <InputText class="form-control"
+                   @bind-Value="EntiteJuridique.FonctionResponsable"
+                   placeholder="Ex: Responsable de service, etc." />
+        <ValidationMessage For="@(() => EntiteJuridique.FonctionResponsable)" />
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired]
+    public EntiteJurViewModel EntiteJuridique { get; set; } = null!;
+
+}

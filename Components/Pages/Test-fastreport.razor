@@ -1,0 +1,67 @@
+﻿@page "/Testfastreport"
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Reports
+@inject ActReportDataBuilder Builder
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Test Builder FastReport</MudText>
+
+    <MudNumericField T="int" Label="Id Acte" @bind-Value="acteId" Class="mb-4" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TesterBuilder">
+        Tester BuildAsync
+    </MudButton>
+
+    @if (model is not null)
+    {
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1">Résultat</MudText>
+
+        <MudText>Acte : @model.ActReportNomTypesActe</MudText>
+        <MudText>Statut : @model.ActReportStatut</MudText>
+
+        <MudText>Débiteur : @model.DebiteurReportNomComplet</MudText>
+        <MudText>Caution : @model.CautionReportNomComplet</MudText>
+        <MudText>Témoin 1 : @model.Temoin1ReportNomComplet</MudText>
+        <MudText>Témoin 2 : @model.Temoin2ReportNomComplet</MudText>
+
+        <MudText>Montant concours : @model.PretReportMontantConcours</MudText>
+        <MudText>Taux : @model.PretReportTaux</MudText>
+
+        <MudText>Montant cautionné : @model.CautionnementReportMontantCautionne</MudText>
+        <MudText>Nom dossier : @model.EntiteJuridiqueReportNomDossier</MudText>
+    }
+</MudPaper>
+
+@code {
+    private int acteId;
+    private ActCautionnementReportModel? model;
+
+    private async Task TesterBuilder()
+    {
+        try
+        {
+            model = await Builder.BuildAsync(acteId);
+
+            Snackbar.Add("BuildAsync exécuté avec succès.", Severity.Success);
+
+            if (string.IsNullOrWhiteSpace(model.DebiteurReportNomComplet))
+                Snackbar.Add("Débiteur non trouvé.", Severity.Warning);
+
+            if (string.IsNullOrWhiteSpace(model.CautionReportNomComplet))
+                Snackbar.Add("Caution non trouvée.", Severity.Warning);
+
+            if (model.PretReportMontantConcours <= 0)
+                Snackbar.Add("PretReportMontantConcours vide ou nul.", Severity.Warning);
+
+            if (model.PretReportTaux <= 0)
+                Snackbar.Add("PretReportTaux vide ou nul.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur BuildAsync : {ex.Message}", Severity.Error);
+        }
+    }
+}

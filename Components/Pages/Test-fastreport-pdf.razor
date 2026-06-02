@@ -1,0 +1,41 @@
+﻿@page "/Testfastreportpdf"
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Reports
+@inject ActReportPdfService PdfService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Test PDF FastReport</MudText>
+
+    <MudNumericField T="int" Label="Id Acte" @bind-Value="acteId" Class="mb-4" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="GenererPdf">
+        Générer PDF
+    </MudButton>
+
+    @if (!string.IsNullOrWhiteSpace(pdfPath))
+    {
+        <MudAlert Severity="Severity.Success" Class="mt-4">
+            PDF généré : @pdfPath
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    private int acteId;
+    private string? pdfPath;
+
+    private async Task GenererPdf()
+    {
+        try
+        {
+            pdfPath = await PdfService.GeneratePdfAsync(acteId);
+            Snackbar.Add("PDF généré avec succès.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur PDF : {ex.Message}", Severity.Error);
+        }
+    }
+}

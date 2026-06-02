@@ -1,0 +1,52 @@
+﻿@page "/Testfastreportworkflow"
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Reports
+@inject ActReportWorkflowService WorkflowService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Test Workflow FastReport</MudText>
+
+    <MudNumericField T="int" Label="Id Acte" @bind-Value="acteId" Class="mb-4" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Generer">
+        Générer JSON + PDF + Sauvegarder
+    </MudButton>
+
+    @if (!string.IsNullOrWhiteSpace(jsonPath))
+    {
+        <MudAlert Severity="Severity.Success" Class="mt-3">
+            JSON : @jsonPath
+        </MudAlert>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(pdfPath))
+    {
+        <MudAlert Severity="Severity.Success" Class="mt-3">
+            PDF : @pdfPath
+        </MudAlert>
+    }
+</MudPaper>
+
+@code {
+    private int acteId;
+    private string? jsonPath;
+    private string? pdfPath;
+
+    private async Task Generer()
+    {
+        try
+        {
+            var result = await WorkflowService.GenerateAndSaveAsync(acteId);
+            jsonPath = result.jsonPath;
+            pdfPath = result.pdfPath;
+
+            Snackbar.Add("Génération et sauvegarde terminées avec succès.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+    }
+}

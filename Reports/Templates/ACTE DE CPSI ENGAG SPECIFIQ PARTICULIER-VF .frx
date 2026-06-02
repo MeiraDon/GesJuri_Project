@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" TextQuality="Regular" ReportInfo.Name="Simple List" ReportInfo.Author="Fast Reports Inc" ReportInfo.Description="Demonstrates a simple list report. To create it:&#13;&#10;- go to &quot;Data&quot; menu and select &quot;Choose Report Data...&quot; item to select a datasource;&#13;&#10;- go to &quot;Report|Configure Bands...&quot; menu to create the band structure;&#13;&#10;- return to the report page, doubleclick the data band to show its editor;&#13;&#10;- choose the datasource;&#13;&#10;- drag data from the Data Dictionary window to the band." ReportInfo.Created="01/17/2008 03:05:57" ReportInfo.Modified="04/15/2026 17:19:43" ReportInfo.CreatorVersion="2024.1.0.0">
+  <Dictionary>
+   
+        <Column Name="ActReportIdActe" DataType="System.Int32"/>
+        <Column Name="ActReportNomTypesActe" DataType="System.String"/>
+        <Column Name="ActReportDateCreation" DataType="System.DateTime"/>
+        <Column Name="ActReportStatut" DataType="System.String"/>
+        <Column Name="BanqueReportNomRaisonSocialBnq" DataType="System.String"/>
+        <Column Name="BanqueReportSigleBnq" DataType="System.String"/>
+        <Column Name="BanqueReportFormeJuridique" DataType="System.String"/>
+        <Column Name="BanqueReportCapitalSocial" DataType="System.String"/>
+        <Column Name="BanqueReportSiegeSocial" DataType="System.String"/>
+        <Column Name="BanqueReportRegistreCommerce" DataType="System.String"/>
+        <Column Name="BanqueReportSwift" DataType="System.String"/>
+        <Column Name="BanqueReportTelBnq" DataType="System.String"/>
+        <Column Name="BanqueReportEmailBnq" DataType="System.String"/>
+        <Column Name="BanqueReportRepresentantBnq" DataType="System.String"/>
+        <Column Name="BanqueReportFonctionRepresentant" DataType="System.String"/>
+        <Column Name="BanqueReportNomCollaborateur" DataType="System.String"/>
+        <Column Name="BanqueReportVisaCollaborateur" DataType="System.String"/>
+        <Column Name="DebiteurReportNomComplet" DataType="System.String"/>
+        <Column Name="DebiteurReportNomRaisonsociale" DataType="System.String"/>
+        <Column Name="DebiteurReportNomRepresentant" DataType="System.String"/>
+        <Column Name="DebiteurReportNom" DataType="System.String"/>
+        <Column Name="DebiteurReportPrenoms" DataType="System.String"/>
+        <Column Name="DebiteurReportNumCompte" DataType="System.String"/>
+        <Column Name="DebiteurReportNumRCCM" DataType="System.String"/>
+        <Column Name="DebiteurReportDateNaiss" DataType="System.DateTime"/>
+        <Column Name="DebiteurReportLieuNaiss" DataType="System.String"/>
+        <Column Name="DebiteurReportPaysNaiss" DataType="System.String"/>
+        <Column Name="DebiteurReportNationalite" DataType="System.String"/>
+        <Column Name="DebiteurReportAdressecomplet" DataType="System.String"/>
+        <Column Name="DebiteurReportVilleCommune" DataType="System.String"/>
+        <Column Name="DebiteurReportPaysResidn" DataType="System.String"/>
+        <Column Name="DebiteurReportBPClt" DataType="System.String"/>
+        <Column Name="DebiteurReportTelBur" DataType="System.String"/>
+        <Column Name="DebiteurReportTelCel" DataType="System.String"/>
+        <Column Name="DebiteurReportTelDom" DataType="System.String"/>
+        <Column Name="DebiteurReportProfessionClt" DataType="System.String"/>
+        <Column Name="DebiteurReportSituationMatrim" DataType="System.String"/>
+        <Column Name="DebiteurReportNomConjoint" DataType="System.String"/>
+        <Column Name="DebiteurReportDateMariage" DataType="System.DateTime"/>
+        <Column Name="DebiteurReportLieuMariage" DataType="System.String"/>
+        <Column Name="DebiteurReportRegimeMatrim" DataType="System.String"/>
+        <Column Name="DebiteurReportTypePieceID" DataType="System.String"/>
+        <Column Name="DebiteurReportNumPieceID" DataType="System.String"/>
+        <Column Name="DebiteurReportDateDelivPiece" DataType="System.DateTime"/>
+        <Column Name="DebiteurReportLieuDelivPiece" DataType="System.String"/>
+        <Column Name="DebiteurReportPersonDelivPiece" DataType="System.String"/>
+        <Column Name="CautionReportNomComplet" DataType="System.String"/>
+        <Column Name="CautionReportNomRaisonsociale" DataType="System.String"/>
+        <Column Name="CautionReportNomRepresentant" DataType="System.String"/>
+        <Column Name="CautionReportNom" DataType="System.String"/>
+        <Column Name="CautionReportPrenoms" DataType="System.String"/>
+        <Column Name="CautionReportNumCompte" DataType="System.String"/>
+        <Column Name="CautionReportNumRCCM" DataType="System.String"/>
+        <Column Name="CautionReportDateNaiss" DataType="System.DateTime"/>
+        <Column Name="CautionReportLieuNaiss" DataType="System.String"/>
+        <Column Name="CautionReportPaysNaiss" DataType="System.String"/>
+        <Column Name="CautionReportNationalite" DataType="System.String"/>
+        <Column Name="CautionReportAdressecomplet" DataType="System.String"/>
+        <Column Name="CautionReportVilleCommune" DataType="System.String"/>
+        <Column Name="CautionReportPaysResidn" DataType="System.String"/>
+        <Column Name="CautionReportBPClt" DataType="System.String"/>
+        <Column Name="CautionReportTelBur" DataType="System.String"/>
+        <Column Name="CautionReportTelCel" DataType="System.String"/>
+        <Column Name="CautionReportTelDom" DataType="System.String"/>
+        <Column Name="CautionReportProfessionClt" DataType="System.String"/>
+        <Column Name="CautionReportSituationMatrim" DataType="System.String"/>
+        <Column Name="CautionReportNomConjoint" DataType="System.String"/>
+        <Column Name="CautionReportDateMariage" DataType="System.DateTime"/>
+        <Column Name="CautionReportLieuMariage" DataType="System.String"/>
+        <Column Name="CautionReportRegimeMatrim" DataType="System.String"/>
+        <Column Name="CautionReportTypePieceID" DataType="System.String"/>
+        <Column Name="CautionReportNumPieceID" DataType="System.String"/>
+        <Column Name="CautionReportDateDelivPiece" DataType="System.DateTime"/>
+        <Column Name="CautionReportLieuDelivPiece" DataType="System.String"/>
+        <Column Name="CautionReportPersonDelivPiece" DataType="System.String"/>
+        <Column Name="Temoin1ReportNomComplet" DataType="System.String"/>
+        <Column Name="Temoin1ReportNomRaisonsociale" DataType="System.String"/>
+        <Column Name="Temoin1ReportNomRepresentant" DataType="System.String"/>
+        <Column Name="Temoin1ReportNom" DataType="System.String"/>
+        <Column Name="Temoin1ReportPrenoms" DataType="System.String"/>
+        <Column Name="Temoin1ReportNumCompte" DataType="System.String"/>
+        <Column Name="Temoin1ReportNumRCCM" DataType="System.String"/>
+        <Column Name="Temoin1ReportDateNaiss" DataType="System.DateTime"/>
+        <Column Name="Temoin1ReportLieuNaiss" DataType="System.String"/>
+        <Column Name="Temoin1ReportPaysNaiss" DataType="System.String"/>
+        <Column Name="Temoin1ReportNationalite" DataType="System.String"/>
+        <Column Name="Temoin1ReportAdressecomplet" DataType="System.String"/>
+        <Column Name="Temoin1ReportVilleCommune" DataType="System.String"/>
+        <Column Name="Temoin1ReportPaysResidn" DataType="System.String"/>
+        <Column Name="Temoin1ReportBPClt" DataType="System.String"/>
+        <Column Name="Temoin1ReportTelBur" DataType="System.String"/>
+        <Column Name="Temoin1ReportTelCel" DataType="System.String"/>
+        <Column Name="Temoin1ReportTelDom" DataType="System.String"/>
+        <Column Name="Temoin1ReportProfessionClt" DataType="System.String"/>
+        <Column Name="Temoin1ReportSituationMatrim" DataType="System.String"/>
+        <Column Name="Temoin1ReportNomConjoint" DataType="System.String"/>
+        <Column Name="Temoin1ReportDateMariage" DataType="System.DateTime"/>
+        <Column Name="Temoin1ReportLieuMariage" DataType="System.String"/>
+        <Column Name="Temoin1ReportRegimeMatrim" DataType="System.String"/>
+        <Column Name="Temoin1ReportTypePieceID" DataType="System.String"/>
+        <Column Name="Temoin1ReportNumPieceID" DataType="System.String"/>
+        <Column Name="Temoin1ReportDateDelivPiece" DataType="System.DateTime"/>
+        <Column Name="Temoin1ReportLieuDelivPiece" DataType="System.String"/>
+        <Column Name="Temoin1ReportPersonDelivPiece" DataType="System.String"/>
+        <Column Name="Temoin2ReportNomComplet" DataType="System.String"/>
+        <Column Name="Temoin2ReportNomRaisonsociale" DataType="System.String"/>
+        <Column Name="Temoin2ReportNomRepresentant" DataType="System.String"/>
+        <Column Name="Temoin2ReportNom" DataType="System.String"/>
+        <Column Name="Temoin2ReportPrenoms" DataType="System.String"/>
+        <Column Name="Temoin2ReportNumCompte" DataType="System.String"/>
+        <Column Name="Temoin2ReportNumRCCM" DataType="System.String"/>
+        <Column Name="Temoin2ReportDateNaiss" DataType="System.DateTime"/>
+        <Column Name="Temoin2ReportLieuNaiss" DataType="System.String"/>
+        <Column Name="Temoin2ReportPaysNaiss" DataType="System.String"/>
+        <Column Name="Temoin2ReportNationalite" DataType="System.String"/>
+        <Column Name="Temoin2ReportAdressecomplet" DataType="System.String"/>
+        <Column Name="Temoin2ReportVilleCommune" DataType="System.String"/>
+        <Column Name="Temoin2ReportPaysResidn" DataType="System.String"/>
+        <Column Name="Temoin2ReportBPClt" DataType="System.String"/>
+        <Column Name="Temoin2ReportTelBur" DataType="System.String"/>
+        <Column Name="Temoin2ReportTelCel" DataType="System.String"/>
+        <Column Name="Temoin2ReportTelDom" DataType="System.String"/>
+        <Column Name="Temoin2ReportProfessionClt" DataType="System.String"/>
+        <Column Name="Temoin2ReportSituationMatrim" DataType="System.String"/>
+        <Column Name="Temoin2ReportNomConjoint" DataType="System.String"/>
+        <Column Name="Temoin2ReportDateMariage" DataType="System.DateTime"/>
+        <Column Name="Temoin2ReportLieuMariage" DataType="System.String"/>
+        <Column Name="Temoin2ReportRegimeMatrim" DataType="System.String"/>
+        <Column Name="Temoin2ReportTypePieceID" DataType="System.String"/>
+        <Column Name="Temoin2ReportNumPieceID" DataType="System.String"/>
+        <Column Name="Temoin2ReportDateDelivPiece" DataType="System.DateTime"/>
+        <Column Name="Temoin2ReportLieuDelivPiece" DataType="System.String"/>
+        <Column Name="Temoin2ReportPersonDelivPiece" DataType="System.String"/>
+        <Column Name="CautionnementReportNomTypesActe" DataType="System.String"/>
+        <Column Name="CautionnementReportNumeroCautionmt" DataType="System.String"/>
+        <Column Name="CautionnementReportMontantCautionne" DataType="System.Int32"/>
+        <Column Name="CautionnementReportMontantLettreCautionmt" DataType="System.String"/>
+        <Column Name="CautionnementReportDateSignatureCautionmt" DataType="System.DateTime"/>
+        <Column Name="CautionnementReportDateEffetCautionmt" DataType="System.DateTime"/>
+        <Column Name="CautionnementReportDateExpirationCautionmt" DataType="System.DateTime"/>
+        <Column Name="CautionnementReportLieuSignatureCautionmt" DataType="System.String"/>
+        <Column Name="CautionnementReportEtatCautionmt" DataType="System.String"/>
+        <Column Name="CautionnementReportConditionsRevocationCautionmt" DataType="System.String"/>
+        <Column Name="CautionnementReportObligationsBanque" DataType="System.String"/>
+        <Column Name="CautionnementReportObligationsCaution" DataType="System.String"/>
+        <Column Name="CautionnementReportClauseSubrogation" DataType="System.String"/>
+        <Column Name="CautionnementReportClauseNonNovation" DataType="System.String"/>
+        <Column Name="CautionnementReportElectionDomicile" DataType="System.String"/>
+        <Column Name="CautionnementReportReglementDifferend" DataType="System.String"/>
+        <Column Name="PretReportReferenceConvention" DataType="System.String"/>
+        <Column Name="PretReportMontantConcours" DataType="System.Int32"/>
+        <Column Name="PretReportTaux" DataType="System.Double"/>
+        <Column Name="PretReportMontantLettrePret" DataType="System.String"/>
+        <Column Name="PretReportAccessoires" DataType="System.String"/>
+        <Column Name="PretReportObjetPret" DataType="System.String"/>
+        <Column Name="PretReportDateSignaturePret" DataType="System.DateTime"/>
+        <Column Name="PretReportDureMoisPret" DataType="System.Int32"/>
+        <Column Name="PretReportDateDebutRemboursemnt" DataType="System.DateTime"/>
+        <Column Name="PretReportDatePremiereEcheance" DataType="System.DateTime"/>
+        <Column Name="PretReportMontantPremiereEcheance" DataType="System.Int32"/>
+        <Column Name="PretReportDateDerniereEcheance" DataType="System.DateTime"/>
+        <Column Name="PretReportMontantDerniereEcheance" DataType="System.Int32"/>
+        <Column Name="PretReportEtatPret" DataType="System.String"/>
+        <Column Name="AutorisationReportNumeroAutorisation" DataType="System.String"/>
+        <Column Name="AutorisationReportDateAutorisation" DataType="System.DateTime"/>
+        <Column Name="AutorisationReportLieuAutorisation" DataType="System.String"/>
+        <Column Name="AutorisationReportMontantMaxAutorise" DataType="System.Int32"/>
+        <Column Name="AutorisationReportConditionsAutorisation" DataType="System.String"/>
+        <Column Name="ChargeReportTypeCharge" DataType="System.String"/>
+        <Column Name="ChargeReportMontantCharge" DataType="System.Int32"/>
+        <Column Name="ChargeReportDateCharge" DataType="System.DateTime"/>
+        <Column Name="ChargeReportPayePar" DataType="System.String"/>
+        <Column Name="ChargeReportStatutCharge" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportDateActeJuridique" DataType="System.DateTime"/>
+        <Column Name="EntiteJuridiqueReportReference" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportNomHuissier" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportVilleHuissier" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportNumeroDossier" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportResponsable" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportFonctionResponsable" DataType="System.String"/>
+        <Column Name="EntiteJuridiqueReportNomDossier" DataType="System.String"/>
+        
+  </Dictionary>
+  <ReportPage Name="Page1" Guides="207.9" Watermark.Font="Arial, 60pt">
+    <ReportTitleBand Name="ReportTitle1" Width="718.2" Height="103.95" CanGrow="true">
+      <TextObject Name="Text1" Left="37.8" Top="37.8" Width="642.6" Height="66.15" Fill.Color="Silver" Text="ACTE DE CAUTIONNEMENT PERSONNEL, SOLIDAIRE ET INDIVISIBLE – ENGAGEMENT SPECIFIQUE – PERSONNE PHYSIQUE" HorzAlign="Center" VertAlign="Center" Font="Tahoma, 11pt, style=Bold"/>
+      <TextObject Name="Text48" Left="-9450" Top="-9450" Width="94.5" Height="18.9" Text="La Caution et la BOA-TOGO étant ci-après dénommées, (i) ensemble, les « Parties », ou, &#13;&#10;(ii) séparément, chaque « Partie », ou, individuellement, comme susmentionné ;&#13;&#10;&#13;&#10;Il convient de noter que si cette transaction nécessite la présence de tiers pour assister la caution, en vue d’une meilleure compréhension du contrat, l’identité de ces tiers sera présentée en Annexe 2." Font="Arial, 10pt"/>
+    </ReportTitleBand>
+    <DataBand Name="Data1" Top="107.95" Width="718.2" Height="9393.3" Border.Lines="Left, Right, Bottom" Border.Color="Maroon" CanGrow="true">
+      <TextObject Name="Text23" Left="37.8" Top="7635.6" Width="642.6" Height="793.8" Text="M__________________________________________________________________________________ né(e) le____________________________à____________________________________ (__________________________ ), de nationalité _____________________________, ________________________________________ , demeurant à              ____________________________________________________________________  (_____________________________ ), _____BP ___________________________, Tél.: Bur : ________________________, Cell. : _________________________, Dom. : __________________________, célibataire ou époux(se) de M___________________________________________ avec laquelle(lequel) il(elle) s’est marié(e) le _________________ à la mairie de ___________________________________ (__________________________) sous le régime de ___________________________________________________, titulaire de _____________________________  N°___________________________________________ délivrée le _____________ par le__________________________________________________ &#13;&#10;&#13;&#10;Agissant ou intervenant en qualité de témoin N°1&#13;&#10;&#13;&#10;M__________________________________________________________________________________ né(e) le____________________________à____________________________________ (__________________________ ), de nationalité _____________________________, ________________________________________ , demeurant à              ____________________________________________________________________  (_____________________________ ), _____BP ___________________________, Tél.: Bur : ________________________, Cell. : _________________________, Dom. : __________________________, célibataire ou époux(se) de M___________________________________________ avec laquelle(lequel) il(elle) s’est marié(e) le _________________ à la mairie de ___________________________________ (__________________________) sous le régime de ___________________________________________________, titulaire de _____________________________  N°___________________________________________ délivrée le _____________ par le__________________________________________________ &#13;&#10;&#13;&#10;Agissant ou intervenant en qualité de témoin N°2&#13;&#10;" Font="Calibri, 12pt, style=Bold, Italic"/>
+      <TextObject Name="Text24" Left="37.8" Top="8410.5" Width="642.6" Height="132.3" Text="11  Pays de naissance&#13;&#10;12 Profession&#13;&#10;13  Ville-commune- adresse géographique&#13;&#10;14  Pays de résidence &#13;&#10;15 Nature de la pièce d’identité fournie (Passeport, CNI, AI, CC, etc.)&#13;&#10;16  Pays de naissance&#13;&#10;17  Profession&#13;&#10;18  Ville-commune- adresse géographique&#13;&#10;19  Pays de résidence &#13;&#10;20  Nature de la pièce d’identité fournie (Passeport, CNI, AI, CC, etc.)&#13;&#10;" HorzAlign="Justify" Font="Times New Roman, 8pt, style=Italic"/>
+      <TextObject Name="Text25" Left="37.8" Top="94.5" Width="642.6" Height="595.35" Text="&#13;&#10;1.	M [Data.DebiteurReportNomComplet] né(e) le [Data.DebiteurReportDateNaiss] à [Data.DebiteurReportLieuNaiss] [Data.DebiteurReportPaysNaiss] nationalité    [Data.DebiteurReportNationalite], demeurant à  ____________________________________________________________________  (_____________________________ ), _____BP [Data.DebiteurReportBPClt]Tél.: Bur : ________________________, Cell. : _________________________, Dom. : __________________________, célibataire ou époux(se) de M___________________________________________ avec laquelle(lequel) il(elle) s’est marié(e) le _________________ à la mairie de ___________________________________ (__________________________) sous le régime de ___________________________________________________, titulaire de _____________________________  N°___________________________________________ délivrée le ____________ par le_______________________________________________________________________________________________et dont copie constitue l’Annexe 1 ci-jointe ;&#13;&#10;&#13;&#10;ci-après indifféremment dénommé « M_________________ » ou la « Caution »;&#13;&#10;&#13;&#10;ET:&#13;&#10;&#13;&#10;2.	BANK OF AFRICA-TOGO, en abrégé  « BOA-TOGO», Société Anonyme de droit togolais avec Conseil d’Administration, au capital de 17.500.000.000 (Dix-sept milliards cinq cent millions) de francs CFA, dont le siège social est sis à Lomé, Boulevard de la République, SWIFT : AFRITGTG, immatriculée au Registre du Commerce et du Crédit Mobilier de Lomé sous le numéro TG-LOM 2009 B 0340, représentée par Monsieur Abdel Salame MOROU, son Directeur Général Adjoint, dûment habilité à l’effet des présentes;&#13;&#10;&#13;&#10;ci-après indifféremment dénommée « la Banque » ou « la BOA-TOGO» ou « le Bénéficiaire ».&#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt">
+        <Formats>
+          <GeneralFormat/>
+          <GeneralFormat/>
+          <GeneralFormat/>
+          <GeneralFormat/>
+          <GeneralFormat/>
+          <GeneralFormat/>
+        </Formats>
+      </TextObject>
+      <TextObject Name="Text26" Left="37.8" Top="737.1" Width="642.6" Height="75.6" Text="1  Pays de naissance&#13;&#10;2  Profession&#13;&#10;3 Ville-commune- adresse géographique&#13;&#10;4  Pays de résidence &#13;&#10;5 Nature de la pièce d’identité fournie (Passeport, CNI, AI, CC, etc.)&#13;&#10;" HorzAlign="Justify" Font="Times New Roman, 9pt, style=Italic"/>
+      <TextObject Name="Text27" Left="37.8" Top="718.2" Width="340.2" Height="9.45" Border.Lines="Top" Font="Times New Roman, 8pt, style=Bold"/>
+      <TextObject Name="Text28" Left="37.8" Top="1039.5" Width="642.6" Height="642.6" Text="M_________________________________________________________________________________________________ né(e) le____________________________à____________________________________ (__________________________ ), de nationalité _____________________________, ________________________________________ , demeurant à ____________________________________________________________________  (_____________________________ ), _____BP ___________________________, Tél.: Bur : ________________________, Cell. : _________________________, Dom. : __________________________, célibataire ou époux(se) de M___________________________________________ avec laquelle(lequel) il(elle) s’est marié(e) le _________________ à la mairie de ___________________________________ (__________________________) sous le régime de ___________________________________________________, titulaire de _____________________________  N°___________________________________________ délivrée le _____________ par le_______________________________________________________________________________________________ dont la copie constitue l’Annexe 3 ci-jointe ; &#13;&#10;ci-après indifféremment  dénommé le « Débiteur Cautionné » ou le « Débiteur Principal », a sollicité et obtenu un concours (ci-dessous dénommé le Prêt ou le Concours) présentant les caractéristiques suivantes (cf. Convention jointe en Annexe 4 ):&#13;&#10;&#13;&#10;Montant du concours : &#13;&#10;Taux :&#13;&#10;Date 1ère échéance : 			                  Montant 1ère échéance :&#13;&#10;Date dernière échéance 				  Montant dernière échéance : &#13;&#10;&#13;&#10;&#13;&#10;En garantie du remboursement intégral des sommes susceptibles d’être dues à la Banque, en principal, intérêts, frais, commissions, taxes et autres accessoires au titre du Concours, la Banque a souhaité bénéficier d’un cautionnement personnel et solidaire de M_______________________, ____________________(fonction), à hauteur de la somme maximale de _______________________ (_______________) de Francs CFA y compris le " HorzAlign="Justify" Font="Calibri, 12pt"/>
+      <TextObject Name="Text29" Left="37.8" Top="1701" Width="340.2" Height="9.45" Border.Lines="Top" Font="Times New Roman, 8pt, style=Bold"/>
+      <TextObject Name="Text30" Left="37.8" Top="1719.9" Width="378" Height="94.5" Text="6  Pays de naissance&#13;&#10;7  Profession&#13;&#10;8 Ville-commune- adresse géographique&#13;&#10;9 Pays de résidence &#13;&#10;10 Nature de la pièce d’identité fournie (Passeport, CNI, AI, CC, etc.)&#13;&#10;" HorzAlign="Justify" Font="Times New Roman, 9pt, style=Italic"/>
+      <TextObject Name="Text31" Left="37.8" Top="2003.4" Width="642.6" Height="2494.8" Text="Article 1 :	L’exposé préalable ci-dessus et les Annexes ci-jointes ont la même valeur juridique que le présent cautionnement personnel, solidaire et indivisible (le « Cautionnement ») dont ils font partie intégrante et avec lequel ils font corps.&#13;&#10;&#13;&#10;Article 2 :  La Caution déclare qu’elle a parfaite connaissance des termes et conditions du Concours consenti par la Banque au Débiteur Cautionné et qu’elle connaît également la situation financière et juridique du Débiteur Cautionné à la date de signature des présentes. En conséquence, elle se déclare et se constitue caution personnelle, solidaire et indivisible du Débiteur Cautionné, en garantie du remboursement ou du paiement de toutes les sommes qui pourraient être dues par le Débiteur Cautionné à la Banque au titre du Concours.&#13;&#10;&#13;&#10;Article 3 :	Les engagements et obligations de la Caution au titre du Cautionnement sont expressément limités au Montant Cautionné, à savoir la somme maximale en principal, intérêts, commissions, frais, taxes et autres accessoires, y compris les frais de recouvrement de créance, de ________________________(__________________) de Francs CFA, en garantie de toutes les sommes que le Débiteur Cautionné pourrait devoir à la Banque au titre du Concours.&#13;&#10;&#13;&#10;Article 4 :	Le  présent contrat de cautionnement prend effet à compter du jour de la signature des présentes et reste valable jusqu’au remboursement intégral à la Banque de l’ensemble des sommes qui lui sont dues par le Débiteur Cautionné au titre du Concours. Il peut être révoqué à tout moment par la caution avant que la somme maximale garantie ait été atteinte. Dans cette hypothèse, il est expressément stipulé que tous les engagements du Débiteur Cautionné, nés avant la révocation, resteront cependant garantis par la Caution. La révocation n’emporte décharge de la Caution que par le paiement, dans la limite du Montant Cautionné, de toutes les sommes que le Débiteur Cautionné pourrait devoir à la Banque au titre du Concours, à la date d’effet de la révocation du Cautionnement et de la Caution Solidaire qu’il institue.&#13;&#10;&#13;&#10;Si, en raison de cette révocation, la Banque décidait de réduire ou d’interrompre le Concours consenti au Débiteur Cautionné et d’en demander le remboursement, elle devrait respecter un délai de préavis conforme à celui prévu dans la convention de Prêt, à charge pour elle de notifier sa décision au Débiteur Cautionné et à la Caution.&#13;&#10;&#13;&#10;Article 5 :	La Banque est tenue dans le mois qui suit le terme de chaque semestre civil à compter de la signature du contrat de cautionnement, de communiquer à la caution, un état de la dette du Débiteur Principal, précisant sa cause, ses échéances et son montant en principal, intérêts et autres accessoires restant dus à la fin du semestre écoulé, en lui rappelant la faculté de révocation par reproduction littérale des dispositions de l’article 19 du présent Acte Uniforme. A défaut d’accomplissement des formalités prévues, la Banque est déchue vis à vis de la Caution des intérêts contractuels échus depuis la date de la précédente information jusqu’à la date de communication de la nouvelle information.&#13;&#10;&#13;&#10;&#13;&#10;Article 6 :	La Banque est tenue de notifier à la Caution toute prorogation conventionnelle du terme du Concours, de même que l’octroi de facilités de paiement au Débiteur Cautionné, qui profiteront à la Caution si celle-ci y acquiesce formellement. Par contre, la Caution ne pourra pas se prévaloir des délais de paiement accordés judiciairement au Débiteur Cautionné.&#13;&#10;&#13;&#10;Article 7 : La Banque est tenue d’informer la Caution de toute défaillance du Débiteur Cautionné au titre du Concours, ainsi que de la déchéance ou de la prorogation du terme du Concours, et, en ce cas, du montant restant dû au Bénéficiaire par le Débiteur Cautionné, au jour de la défaillance, de la déchéance du terme ou de la prorogation du terme, en principal, intérêts, commissions, frais, taxes et autres accessoires.&#13;&#10;&#13;&#10;Article 8 : En cas de défaillance du Débiteur Cautionné, pour quelque cause que ce soit, la Caution sera tenue de payer à la Banque ce que le Débiteur Cautionné lui doit au titre du Concours, en principal, intérêts, commissions, frais, taxes et autres accessoires, le tout dans la limite du Montant Cautionné et sous réserve, toutefois, que la Banque ait adressée préalablement une mise en demeure de payer au Débiteur Cautionné, et que celle-ci soit restée sans effet . Dans ce cas, la Caution s’engage à payer les sommes dues dans un délai maximum de trente (30) jours à compter de la première demande écrite de la Banque par lettre recommandée avec accusé de réception ou par acte extrajudiciaire. Le Débiteur Cautionné sera appelé à la cause entre la Banque et la Caution.&#13;&#10;&#13;&#10;Article 9 :	Conformément aux dispositions des articles 27 et 28 de l’Acte Uniforme de l’OHADA portant organisation des Sûretés, la Caution Solidaire ne dispose pas du bénéfice de discussion et de division. En conséquence, la Banque pourra, en cas de défaillance du Débiteur Cautionné,  et après une mise en demeure restée sans effet depuis au moins un mois, demander à la Caution de payer les sommes dues par le Débiteur Cautionné, dans la limite du Montant Cautionné, sans avoir à poursuivre préalablement ce dernier, ni à exercer préalablement et/ou simultanément une quelconque poursuite à l’encontre de qui que ce soit, en ce compris les tiers qui se seraient portés garants du Débiteur Cautionné sous quelque forme que ce soit.&#13;&#10;&#13;&#10;Conformément à l’article 31 de l’Acte Uniforme de l’OHADA portant organisation des Sûretés, la Caution sera immédiatement subrogée dans les droits de la Banque à concurrence des sommes qu’elle aura payées en exécution du Cautionnement. Le Débiteur Cautionné sera appelé à la cause entre la Banque et la Caution.&#13;&#10;&#13;&#10;Article 10 :	La preuve de l’existence des créances résultera suffisamment des relevés de compte établis par la Banque.&#13;&#10;&#13;&#10;Si la créance de la Banque sur le Débiteur Cautionné au titre du Concours qui est accordé par la Banque au Bénéficiaire, est supérieure au Montant Cautionné, tous paiements partiels effectués par le Débiteur Cautionné s’imputeront d’abord sur la partie non garantie quelle que soit l’origine des fonds, à moins que ceux-ci proviennent d’un paiement fait par la Caution en exécution des présentes.&#13;&#10;&#13;&#10;Article 11 : 	Le Cautionnement et la Caution Solidaire qu’il institue ne font pas novation mais s’ajoutent et s’ajouteront à toutes les garanties réelles et/ou personnelles qui ont pu ou pourront être contractées ou fournies en faveur de la Banque, soit par le Débiteur Cautionné, soit par la Caution, soit par tout tiers en garantie des sommes restant dues.&#13;&#10;&#13;&#10;Article 12 :	Les obligations de la Caution au titre du Cautionnement, sont stipulées indivisibles, de telle sorte que leur exécution pourra être exigée en entier, à concurrence du Montant Cautionné, de n’importe lequel des héritiers, successeurs ou ayant droit de la Caution, sans qu’une division de ses recours puisse lui être imposée.&#13;&#10;&#13;&#10;Article 13 :	Tous droits, frais de timbres, impôts et autres frais relatifs au Cautionnement et à ses suites, ou pouvant résulter de leur exécution, sont à la charge du Débiteur Cautionné et de la Caution qui s’y obligent. En conséquence le Débiteur Cautionné autorise la Banque à débiter son compte n°………………………………………..du montant des frais y afférents.&#13;&#10;Si la Banque consent à en faire l’avance, ils deviendront exigibles à sa première demande tant au débiteur cautionné qu’à la caution.&#13;&#10;&#13;&#10;Article 14 :	Pour l’exécution du Cautionnement et de ses suites, la Caution et la Banque font élection de domicile, chacune pour ce qui la concerne, aux adresses mentionnées en tête des présentes, où toute notification ou exécution du Cautionnement pourra leur être valablement faite par tout moyen laissant trace écrite de sa réception par le destinataire.&#13;&#10;&#13;&#10;Article 15 :	Tout différend résultant de la validité, l’interprétation ou de l’exécution du présent acte devra au préalable faire l’objet d’un règlement à l’amiable.&#13;&#10;&#13;&#10;A défaut de règlement à l’amiable dans un délai de trente (30) jours, suivant la réception, par l’une des Parties de la demande d’un règlement amiable, émanant de l’autre Partie, le différend sera soumis au Tribunal de Lomé.&#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt"/>
+      <TextObject Name="Text32" Left="226.8" Top="4347" Width="340.2" Height="37.8" Text="Fait à Lomé, le _____________________ 2025" Font="Calibri, 12pt"/>
+      <TextObject Name="Text33" Left="151.2" Top="4403.7" Width="500.85" Height="37.8" Text="En trois exemplaires originaux, dont un pour l’enregistrement" Font="Calibri, 12pt, style=Bold"/>
+      <TextObject Name="Text22" Left="37.8" Top="5896.8" Width="642.6" Height="519.75" Text="A  la  garantie  du  concours  que  vous  avez  consenti  à  Mr,  Mme,  Melle,………………………….&#13;&#10;……………………………………………………………………………………………………………….&#13;&#10;D’un  montant  de ………………………………………………………………………………&#13;&#10;………………………………………………………………………. ………remboursable  en &#13;&#10;……………………………………………de  ……………………..à…………………………&#13;&#10;J’ai contracté  à  l’égard  de  la  BANK  OF  AFRICA - TOGO  un  engagement  de  caution  solidaire  et  indivisible  suivant  acte  du ………………………………………..&#13;&#10;&#13;&#10;En  vertu  de  cet  engagement  je  vous  autorise  dès  à  présent,  en  cas  d’impayé  de remboursement  dudit  prêt  à  débiter  mon  compte N°………………………………………&#13;&#10;du  montant  des  impayés  constatés.&#13;&#10;&#13;&#10;J’ai  eu   parfaitement connaissance  des  conditions  générales  du prêt  accordé à Mr, Mme, Mlle………………………………………………………………………………………. et&#13;&#10;notamment  de  la  convention  de  déchéance  de  terme  qui  peut  être  mise à exécution  en  cas  de  non  règlement  ponctuel  d’une  échéance  du  crédit  que  je cautionne.&#13;&#10;&#13;&#10;Veuillez  agréer, Monsieur le  Directeur  Général,  l’expression  de  mes salutations distinguées.&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;                                                   Fait à…………………………, le ……………………2025&#13;&#10;         &#13;&#10;                                                   La Caution&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;                                                                                    &#13;&#10;                                                                                 &#13;&#10;&#13;&#10; &#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt"/>
+      <TextObject Name="Text21" Left="37.8" Top="5386.5" Width="642.6" Height="132.3" Text="(1) Faire précéder la signature de la Caution de la mention manuscrite « Bon pour caution personnelle, solidaire et indivisible dans les termes ci-dessus indiqués, à concurrence du Montant Cautionné, soit la somme maximale           de ___________________________ (________________) de Francs CFA  en principal, intérêts, commissions, frais, taxes, autres accessoires et frais de recouvrement de créance y compris ceux postérieurs à la dénonciation » .&#13;&#10;&#13;&#10;(2) Faire précéder la signature de la Banque de la mention manuscrite « Bon pour acceptation de la caution personnelle, solidaire et indivisible ».&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;" HorzAlign="Justify" Font="Calibri, 10pt, style=Italic"/>
+      <TextObject Name="Text20" Left="37.8" Top="5310.9" Width="642.6" Height="56.7" Text="Signatures recueillies en présence du collaborateur BOA, M. XXXXXXXXXXXX&#13;&#10;Visa du collaborateur BOA-TOGO :&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt, style=Bold, Italic"/>
+      <TextObject Name="Text34" Left="415.8" Top="6633.9" Width="226.8" Height="28.35" Text="Lomé,  le XX/ XX/ 2025" Font="Calibri, 12pt, style=Italic"/>
+      <TextObject Name="Text35" Left="37.8" Top="6700.05" Width="226.8" Height="28.35" Text="Direction Juridique" Font="Calibri, 12pt, style=Bold, Italic"/>
+      <TextObject Name="Text36" Left="37.8" Top="6737.85" Width="226.8" Height="28.35" Text="N/Réf.: ………………………………" Font="Calibri, 12pt, style=Italic"/>
+      <TextObject Name="Text37" Left="415.8" Top="6766.2" Width="255.15" Height="75.6" Text="&#13;&#10;Maître AGBOBLY-ATAYI Ayi Mawuko&#13;&#10;Huissier de Justice&#13;&#10;" Font="Calibri, 12pt, style=Bold, Italic"/>
+      <TextObject Name="Text38" Left="37.8" Top="6917.4" Width="56.7" Height="37.8" Text="Objet " Font="Calibri, 12pt, style=Italic, Underline"/>
+      <TextObject Name="Text39" Left="415.8" Top="6860.7" Width="226.8" Height="28.35" Text="LOME" Font="Calibri, 12pt, style=Bold, Italic, Underline"/>
+      <TextObject Name="Text40" Left="37.8" Top="6955.2" Width="66.15" Height="37.8" Text="Dossier" Font="Calibri, 12pt, style=Italic, Underline"/>
+      <TextObject Name="Text41" Left="85.05" Top="6917.4" Width="368.55" Height="37.8" Text=": Cautionnement personnel, solidaire et indivisible" Font="Calibri, 12pt, style=Italic"/>
+      <TextObject Name="Text42" Left="94.5" Top="6955.2" Width="170.1" Height="37.8" Text=" :   XXXXXXXXXX" Font="Calibri, 12pt, style=Italic"/>
+      <TextObject Name="Text43" Left="37.8" Top="7030.8" Width="642.6" Height="189" Text="Cher Maître,&#13;&#10;&#13;&#10;Nous vous remettons ci-joint :&#13;&#10;&#13;&#10;	Copie du contrat de prêt signé entre XXXXXXXXXXX et nous-mêmes le XX/XX/2025 pour un montant XXXXX («Montant») de FCFA ;&#13;&#10;&#13;&#10;	Un exemplaire de l’acte de cautionnement à notre profit à hauteur de XXXXXXXXXX («Montant cautionné») de FCFA par notre relation.&#13;&#10; &#13;&#10;Nous vous prions de bien vouloir, procéder à l’enregistrement de l’acte de cautionnement auprès de l’Office Togolais des Recettes.&#13;&#10;&#13;&#10;Votre intervention accomplie, vous voudrez bien nous faire parvenir un exemplaire de votre exploit accompagné des documents requis.&#13;&#10;&#13;&#10;Nous vous remercions pour votre collaboration et vous prions d’agréer, Cher Maître, l'expression de nos sentiments distingués.&#13;&#10;" Font="Calibri, 12pt"/>
+      <TextObject Name="Text44" Left="37.8" Top="8297.1" Width="340.2" Height="9.45" Border.Lines="Top" Font="Times New Roman, 8pt, style=Bold"/>
+      <TableObject Name="Table3" Left="94.5" Top="8580.6" Width="549.09" Height="510.25" Border.Lines="All">
+        <TableColumn Name="Column8" Width="279.77"/>
+        <TableColumn Name="Column9" Width="269.32"/>
+        <TableRow Name="Row8" Height="75.63">
+          <TableCell Name="Cell30" Border.Lines="All" Fill.Color="DarkGray" Text="&#13;&#10; Le Témoin N°1" HorzAlign="Center" Font="Calibri, 12pt, style=Bold"/>
+          <TableCell Name="Cell31" Fill.Color="DarkGray" Text="&#13;&#10; Le Témoin N°2&#13;&#10;" HorzAlign="Center" Font="Calibri, 12pt, style=Bold"/>
+        </TableRow>
+        <TableRow Name="Row9" Height="434.62">
+          <TableCell Name="Cell32" Border.Lines="All" Text="&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;   &#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10; M_________________________" Font="Calibri, 12pt, style=Bold"/>
+          <TableCell Name="Cell33" Border.Lines="All" Text="&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;   &#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10; M_________________________" Font="Calibri, 12pt, style=Bold"/>
+        </TableRow>
+      </TableObject>
+      <TextObject Name="Text45" Left="37.8" Top="9128.7" Width="642.6" Height="56.7" Text="Signatures recueillies en présence du collaborateur BOA-TOGO, M. XXXXXXX&#13;&#10;Visa du collaborateur BOA-TOGO :&#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt, style=Italic"/>
+      <TextObject Name="Text46" Left="37.8" Top="9204.3" Width="642.6" Height="56.7" Text="Faire précéder la signature des témoins « Je certifie de l’identité et de la présence de M XXXXXXXXXXXXXX et atteste que la nature et les effets du présent acte lui ont été précisés ».&#13;&#10; &#13;&#10;" HorzAlign="Justify" Font="Calibri, 12pt, style=Bold, Italic"/>
+      <TextObject Name="Text47" Left="37.8" Top="47.25" Width="226.8" Height="28.35" Text="ENTRE LES SOUSSIGNES: &#13;&#10;" Font="Calibri, 12pt, style=Bold"/>
+      <TextObject Name="Text49" Left="37.8" Top="850.5" Width="642.6" Height="132.3" Text="La Caution et la BOA-TOGO étant ci-après dénommées, (i) ensemble, les « Parties », ou, &#13;&#10;(ii) séparément, chaque « Partie », ou, individuellement, comme susmentionné ;&#13;&#10;&#13;&#10;Il convient de noter que si cette transaction nécessite la présence de tiers pour assister la caution, en vue d’une meilleure compréhension du contrat, l’identité de ces tiers sera présentée en Annexe 2." HorzAlign="Justify" Font="Calibri, 12pt"/>
+      <TextObject Name="Text50" Left="264.6" Top="1001.7" Width="94.5" Height="18.9" Text="Préambule" Font="Calibri, 12pt, style=Bold, Underline"/>
+      <TextObject Name="Text51" Left="37.8" Top="5717.25" Width="453.6" Height="56.7" Text="NOM               :                                                &#13;&#10;PRENOMS     :                                                &#13;&#10;ADRESSE      :                           " Font="Arial, 10pt"/>
+      <TextObject Name="Text52" Left="226.8" Top="5821.2" Width="302.4" Height="28.35" Text="AUTORISATION DE DEBIT AUTOMATIQUE" Font="Calibri, 12pt, style=Bold, Underline"/>
+      <TableObject Name="Table1" Left="75.6" Top="4800.6" Width="558.51" Height="481.83" Border.Lines="All">
+        <TableColumn Name="Column4" Width="284.49"/>
+        <TableColumn Name="Column5" Width="274.02"/>
+        <TableRow Name="Row4" Height="89.75">
+          <TableCell Name="Cell19" Border.Lines="All" Fill.Color="DarkGray" Text="&#13;&#10;            LA CAUTION (1)" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell20" Fill.Color="DarkGray" Text="&#13;&#10;          Le Bénéficiaire&#13;&#10;     Pour BANK OF AFRICA-TOGO (2)&#13;&#10;" Font="Arial, 10pt, style=Bold"/>
+        </TableRow>
+        <TableRow Name="Row5" Height="392.08">
+          <TableCell Name="Cell24" Border.Lines="All" Text="&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;   &#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10; M_________________________" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell25" Border.Lines="All" Text="&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;&#13;&#10;               Abdel Salame MOROU" Font="Arial, 10pt, style=Bold"/>
+        </TableRow>
+      </TableObject>
+      <TableObject Name="Table2" Left="75.6" Top="7257.6" Width="567.98" Height="122.77" Border.Lines="All">
+        <TableColumn Name="Column6" Width="284.49"/>
+        <TableColumn Name="Column7" Width="283.49"/>
+        <TableRow Name="Row6" Height="47.21">
+          <TableCell Name="Cell26" Border.Lines="All" Fill.Color="DarkGray" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell27" Fill.Color="DarkGray" Text="         &#13;&#10;           Directrice Juridique" Font="Arial, 12pt, style=Italic"/>
+        </TableRow>
+        <TableRow Name="Row7" Height="75.56">
+          <TableCell Name="Cell28" Border.Lines="All" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell29" Border.Lines="All" Text="&#13;&#10;&#13;&#10;             Rachel NAPO-KOURA" Font="Arial, 10pt, style=Bold"/>
+        </TableRow>
+      </TableObject>
+      <TextObject Name="Text53" Left="226.8" Top="7578.9" Width="274.05" Height="37.8" Text="  IDENTIFICATION DES TIERS" Font="Calibri, 12pt, style=Bold, Italic, Underline"/>
+      <TextObject Name="Text54" Left="37.8" Top="8391.6" Width="340.2" Height="9.45" Border.Lines="Top" Font="Times New Roman, 8pt, style=Bold"/>
+      <TextObject Name="Text55" Left="37.8" Top="1890" Width="642.6" Height="56.7" Text="principal, les intérêts, commissions, frais, taxes et autres accessoires (le « Montant Cautionné »)." Font="Calibri, 12pt"/>
+      <TextObject Name="Text56" Left="207.9" Top="1946.7" Width="415.8" Height="18.9" Text="CECI EXPOSE, IL EST ARRETE ET CONVENU CE QUI SUIT :" Font="Calibri, 12pt, style=Bold, Underline"/>
+    </DataBand>
+    <PageFooterBand Name="PageFooter1" Top="9505.25" Width="718.2" Height="85.05" Fill.Color="WhiteSmoke" CanGrow="true">
+      <TextObject Name="Text10" Left="614.25" Top="56.7" Width="94.5" Height="28.35" Text="[PageN]" HorzAlign="Right" VertAlign="Center" Font="Tahoma, 8pt"/>
+    </PageFooterBand>
+  </ReportPage>
+</Report>

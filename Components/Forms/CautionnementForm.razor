@@ -1,0 +1,108 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Numéro de cautionnement*</label>
+        <InputText class="form-control" @bind-Value="Cautionnement.NumeroCautionmt" />
+        <ValidationMessage For="@(() => Cautionnement.NumeroCautionmt)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Montant (chiffres)*</label>
+        <InputNumber class="form-control" @bind-Value="Cautionnement.MontantCautionne" />
+        <ValidationMessage For="@(() => Cautionnement.MontantCautionne)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Montant (lettres)*</label>
+        <InputText class="form-control" @bind-Value="Cautionnement.MontantLettreCautionmt" />
+        <ValidationMessage For="@(() => Cautionnement.MontantLettreCautionmt)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date signature*</label>
+        <InputDate class="form-control" @bind-Value="Cautionnement.DateSignatureCautionmt" />
+        <ValidationMessage For="@(() => Cautionnement.DateSignatureCautionmt)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date effet*</label>
+        <InputDate class="form-control" @bind-Value="Cautionnement.DateEffetCautionmt" />
+        <ValidationMessage For="@(() => Cautionnement.DateEffetCautionmt)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date expiration*</label>
+        <InputDate class="form-control" @bind-Value="Cautionnement.DateExpirationCautionmt" />
+        <ValidationMessage For="@(() => Cautionnement.DateExpirationCautionmt)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Lieu de signature*</label>
+        <InputText class="form-control" @bind-Value="Cautionnement.LieuSignatureCautionmt" placeholder="Ex: Abidjan, Plateau" />
+        <ValidationMessage For="@(() => Cautionnement.LieuSignatureCautionmt)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">État du cautionnement*</label>
+        <InputSelect class="form-select" @bind-Value="Cautionnement.EtatCautionmt">
+            <option value="">Sélectionner...</option>
+            <option value="Actif">Actif</option>
+            <option value="En attente">En attente</option>
+            <option value="Résilié">Résilié</option>
+            <option value="Expiré">Expiré</option>
+            <option value="Exécuté">Exécuté</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Cautionnement.EtatCautionmt)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Conditions de révocation*</label>
+        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ConditionsRevocationCautionmt" placeholder="Ex: En cas de non-paiement des échéances, défaut de déclaration..." />
+        <ValidationMessage For="@(() => Cautionnement.ConditionsRevocationCautionmt)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Obligations de la banque*</label>
+        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ObligationsBanque" placeholder="Ex: Informer la caution de tout incident, fournir les états de compte..." />
+        <ValidationMessage For="@(() => Cautionnement.ObligationsBanque)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Obligations de la caution*</label>
+        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ObligationsCaution" placeholder="Ex: Payer à première demande, informer de tout changement d'adresse..." />
+        <ValidationMessage For="@(() => Cautionnement.ObligationsCaution)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Clause de subrogation*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ClauseSubrogation" placeholder="Ex: La caution qui paie est subrogée dans les droits de la banque..." />
+        <ValidationMessage For="@(() => Cautionnement.ClauseSubrogation)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Clause de non-novation*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ClauseNonNovation" placeholder="Ex: Toute modification de la convention principale n'affecte pas la caution..." />
+        <ValidationMessage For="@(() => Cautionnement.ClauseNonNovation)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Élection de domicile*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ElectionDomicile" placeholder="Ex: Pour l'exécution du présent acte, les parties élisent domicile..." />
+        <ValidationMessage For="@(() => Cautionnement.ElectionDomicile)" />
+    </div>
+
+    <div class="col-6">
+        <label class="form-label">Règlement des différends*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ReglementDifferend" placeholder="Ex: Tout différend sera soumis aux tribunaux de [Ville]..." />
+        <ValidationMessage For="@(() => Cautionnement.ReglementDifferend)" />
+    </div>
+</div>
+
+@code {
+    
+    [Parameter, EditorRequired]
+    public CautionnementViewModel Cautionnement { get; set; } = null!;
+}

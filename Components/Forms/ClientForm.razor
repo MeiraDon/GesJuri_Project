@@ -1,0 +1,277 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.ViewModels
+
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label">Type de client*</label>
+        <InputSelect class="form-select"
+                     @bind-Value="Model.TypeClient"
+                     @bind-Value:after="OnTypeClientAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Personne Physique">Personne Physique</option>
+            <option value="Personne Morale">Personne Morale</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Model.TypeClient)" />
+    </div>
+
+    @if (Model.TypeClient == "Personne Morale")
+    {
+        <div class="col-12 col-md-4">
+            <label class="form-label">Raison sociale*</label>
+            <InputText class="form-control" @bind-Value="Model.NomRaisonsociale" placeholder="Nom société" />
+            <ValidationMessage For="@(() => Model.NomRaisonsociale)" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label">Numéro RCCM*</label>
+            <InputText class="form-control" @bind-Value="Model.NumRCCM" placeholder="numéro RCCM" />
+            <ValidationMessage For="@(() => Model.NumRCCM)" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label">Numéro de compte*</label>
+            <InputText class="form-control" @bind-Value="Model.NumCompte" placeholder="numéro de compte" />
+            <ValidationMessage For="@(() => Model.NumCompte)" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label">Représentant légal*</label>
+            <InputText class="form-control" @bind-Value="Model.NomRepresentant" placeholder="M. [Nom complet]" />
+            <ValidationMessage For="@(() => Model.NomRepresentant)" />
+        </div>
+    }
+    else if (Model.TypeClient == "Personne Physique")
+    {
+        <div class="col-12 col-md-4">
+            <label class="form-label">Nom*</label>
+            <InputText class="form-control" @bind-Value="Model.Nom" />
+            <ValidationMessage For="@(() => Model.Nom)" />
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label">Prénoms*</label>
+            <InputText class="form-control" @bind-Value="Model.Prenoms" />
+            <ValidationMessage For="@(() => Model.Prenoms)" />
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label">Numéro de compte*</label>
+            <InputText class="form-control" @bind-Value="Model.NumCompte" placeholder="Numéro de compte" />
+            <ValidationMessage For="@(() => Model.NumCompte)" />
+        </div>
+    }
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Sexe</label>
+        <InputSelect class="form-select" @bind-Value="Model.Sexe">
+            <option value="">Sélectionner...</option>
+            <option value="Masculin">Masculin</option>
+            <option value="Féminin">Féminin</option>
+        </InputSelect>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Date de naissance*</label>
+        <InputDate class="form-control" @bind-Value="Model.DateNaiss" />
+        <ValidationMessage For="@(() => Model.DateNaiss)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Pays de naissance</label>
+        <InputText class="form-control" @bind-Value="Model.PaysNaiss" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Pays de résidence*</label>
+        <InputText class="form-control" @bind-Value="Model.PaysResidn" />
+        <ValidationMessage For="@(() => Model.PaysResidn)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Lieu de naissance*</label>
+        <InputText class="form-control" @bind-Value="Model.LieuNaiss" />
+        <ValidationMessage For="@(() => Model.LieuNaiss)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Nationalité*</label>
+        <InputText class="form-control" @bind-Value="Model.Nationalite" />
+        <ValidationMessage For="@(() => Model.Nationalite)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Adresse complète*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Model.Adressecomplet" />
+        <ValidationMessage For="@(() => Model.Adressecomplet)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Ville</label>
+        <InputText class="form-control" @bind-Value="Model.VilleCommune" />
+        <ValidationMessage For="@(() => Model.VilleCommune)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Boîte postale</label>
+        <InputText class="form-control" @bind-Value="Model.BPClt" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Bureau</label>
+        <InputText class="form-control" type="tel" @bind-Value="Model.TelBur" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Cellulaire*</label>
+        <InputText class="form-control" type="tel" @bind-Value="Model.TelCel" />
+        <ValidationMessage For="@(() => Model.TelCel)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Domicile</label>
+        <InputText class="form-control" type="tel" @bind-Value="Model.TelDom" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Profession*</label>
+        <InputText class="form-control" @bind-Value="Model.ProfessionClt" />
+        <ValidationMessage For="@(() => Model.ProfessionClt)" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Situation matrimoniale*</label>
+        <InputSelect class="form-select"
+                     @bind-Value="Model.SituationMatrim"
+                     @bind-Value:after="OnSituationAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Célibataire">Célibataire</option>
+            <option value="Marié(e)">Marié(e)</option>
+            <option value="Divorcé(e)">Divorcé(e)</option>
+            <option value="Veuf(ve)">Veuf(ve)</option>
+            <option value="Séparé(e)">Séparé(e)</option>
+            <option value="Concubinage">Concubinage</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Model.SituationMatrim)" />
+    </div>
+
+    @if (Model.SituationMatrim == "Marié(e)")
+    {
+        <div class="col-12">
+            <div class="border rounded p-3 bg-light">
+                <h6 class="mb-3">Informations sur le mariage</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Nom du conjoint</label>
+                        <InputText class="form-control" @bind-Value="Model.NomConjoint" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Date du mariage</label>
+                        <InputDate class="form-control" @bind-Value="Model.DateMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Lieu du mariage</label>
+                        <InputText class="form-control" @bind-Value="Model.LieuMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Régime matrimonial</label>
+                        <InputSelect class="form-select" @bind-Value="Model.RegimeMatrim">
+                            <option value="">Sélectionner...</option>
+                            <option value="Communauté réduite">Communauté réduite</option>
+                            <option value="Séparation de biens">Séparation de biens</option>
+                            <option value="Communauté universelle">Communauté universelle</option>
+                            <option value="Participation aux acquêts">Participation aux acquêts</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-12">
+        <div class="border rounded p-3 mt-3">
+            <h6 class="mb-3">Pièce d'identité</h6>
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Type de pièce*</label>
+                    <InputSelect class="form-select" @bind-Value="Model.TypePieceID">
+                        <option value="">Sélectionner...</option>
+                        <option value="CNI">Carte Nationale d'Identité (CNI)</option>
+                        <option value="Passeport">Passeport</option>
+                        <option value="Permis">Permis de Conduire</option>
+                        <option value="Carte Séjour">Carte de Séjour</option>
+                        <option value="CarteRefugie">Carte de Réfugié</option>
+                        <option value="TitreSecours">Titre de Séjour</option>
+                        <option value="Autre">Autre</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Model.TypePieceID)" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">N° de pièce*</label>
+                    <InputText class="form-control" @bind-Value="Model.NumPieceID" />
+                    <ValidationMessage For="@(() => Model.NumPieceID)" />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Date de délivrance*</label>
+                    <InputDate class="form-control" @bind-Value="Model.DateDelivPiece" />
+                    <ValidationMessage For="@(() => Model.DateDelivPiece)" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Lieu de délivrance</label>
+                    <InputText class="form-control" @bind-Value="Model.LieuDelivPiece" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Délivrée par</label>
+                    <InputText class="form-control" @bind-Value="Model.PersonDelivPiece" />
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <InputCheckbox class="form-check-input" @bind-Value="Model.CopiePieceJointe" />
+                        <label class="form-check-label">Copie de la pièce jointe</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ClientModelViewModel Model { get; set; } = null!;
+
+    private Task OnTypeClientAfter()
+    {
+        var value = Model.TypeClient;
+
+        if (value == "Personne Morale")
+        {
+            Model.Nom = "";
+            Model.Prenoms = "";
+            Model.Sexe = "";
+            Model.DateNaiss = null;
+            Model.PaysNaiss = "";
+            Model.LieuNaiss = "";
+        }
+        else if (value == "Personne Physique")
+        {
+            Model.NomRaisonsociale = "";
+            Model.NomRepresentant = "";
+            Model.NumRCCM = "";
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnSituationAfter()
+    {
+        if (Model.SituationMatrim != "Marié(e)")
+        {
+            Model.NomConjoint = "";
+            Model.DateMariage = null;
+            Model.LieuMariage = "";
+            Model.RegimeMatrim = "";
+        }
+
+        return Task.CompletedTask;
+    }
+}

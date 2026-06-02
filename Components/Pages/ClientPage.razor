@@ -1,0 +1,733 @@
+﻿@page "/clientPage" 
+@page "/clientPage/{IdAjout:int}"
+@rendermode InteractiveServer
+
+<PageTitle>Client</PageTitle>
+
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.ViewModels
+
+@inject IClient ClientService
+@inject IClientAct ClientActService
+@inject IRolesClientAct RolesClientActService
+@inject ITypesAct TypesActService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<div class="container py-4" lang="fr">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-11">
+
+            <!-- HEADER -->
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+                <div>
+                    <h1 class="h4 mb-1">
+                        <i class="bi bi-person-vcard me-2"></i>
+                        @(isEdit ? "Modifier un client" : "Créer un client")
+                    </h1>
+                    <div class="text-muted">
+                        @(string.IsNullOrWhiteSpace(roleLabel)
+                                                ? "Renseignez les informations du client et consultez la liste complète."
+                                                : $"Rôle visé : {roleLabel}")
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    @if (acteId.HasValue)
+                    {
+                        <span class="badge text-bg-light">Acte #@acteId</span>
+                    }
+                    @if (IdAjout > 0)
+                    {
+                        <span class="badge text-bg-primary">TypeActeIdAjout: @IdAjout</span>
+                    }
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-stat bg-primary-light p-3 rounded-circle me-3">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Size="Size.Large" />
+                            </div>
+                            <div>
+                                <div class="text-muted small">Total clients</div>
+                                <div class="h3 fw-bold text-primary mb-0">@_clients.Count</div>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </div>
+
+                <div class="col-md-4">
+                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-stat bg-success-light p-3 rounded-circle me-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Success" Size="Size.Large" />
+                            </div>
+                            <div>
+                                <div class="text-muted small">Personnes physiques</div>
+                                <div class="h3 fw-bold text-success mb-0">@_clients.Count(c => string.Equals(c.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase))</div>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </div>
+
+                <div class="col-md-4">
+                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-stat bg-warning-light p-3 rounded-circle me-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Warning" Size="Size.Large" />
+                            </div>
+                            <div>
+                                <div class="text-muted small">Personnes morales</div>
+                                <div class="h3 fw-bold text-warning mb-0">@_clients.Count(c => string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))</div>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+
+                    <EditForm EditContext="@editContext" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="border rounded p-3">
+                            <GesCPSI_Project.Components.Forms.ClientForm Model="@vm" />
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div class="alert alert-danger mt-3 mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack" disabled="@isSaving">
+                                <i class="bi bi-arrow-left me-2"></i>Retour
+                            </button>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-danger" @onclick="ResetForm" disabled="@isSaving">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                                </button>
+
+                                <button type="submit" class="btn btn-success" disabled="@isSaving">
+                                    @if (isSaving)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Enregistrement...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-check2 me-2"></i>
+                                        <span>Enregistrer</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(successMessage))
+                        {
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="bi bi-check-circle me-2"></i>@successMessage
+                            </div>
+                        }
+                    </EditForm>
+
+                </div>
+            </div>
+
+            <div class="text-muted small mb-4">
+                Si vous venez du wizard, vous serez renvoyé automatiquement après l’enregistrement.
+            </div>
+
+            
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-3 px-md-4 pb-4" lang="fr">
+    <!-- LISTE DES CLIENTS -->
+    <MudPaper Class="mb-3" Elevation="1">
+        <div class="p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                <div>
+                    <MudText Typo="Typo.h6" Class="mb-1">
+                        📋 Liste des clients
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Rechercher, filtrer, modifier ou sélectionner un client existant.
+                    </MudText>
+                </div>
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="ReloadClientsAsync">
+                    Actualiser
+                </MudButton>
+            </div>
+
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <MudTextField @bind-Value="_search"
+                                  Placeholder="Rechercher nom, raison sociale, téléphone, pièce..."
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  FullWidth="true" />
+                </div>
+
+                <div class="col-md-4">
+                    <MudSelect T="string" @bind-Value="_typeClientFilter"
+                               Variant="Variant.Outlined"
+                               Label="Type de client"
+                               Clearable="true"
+                               FullWidth="true">
+                        <MudSelectItem T="string" Value="@((string?)null)">Tous</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Personne Physique")">Personne Physique</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Personne Morale")">Personne Morale</MudSelectItem>
+                    </MudSelect>
+                </div>
+
+                <div class="col-md-2 d-flex justify-content-end">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               OnClick="ResetClientFilters"
+                               FullWidth="true">
+                        Effacer
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+
+    @if (_loadingClients)
+    {
+        <div class="text-center py-5">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <div class="text-muted mt-3">Chargement des clients...</div>
+        </div>
+    }
+    else if (!FilteredClients.Any())
+    {
+        <div class="text-center py-5 my-4 bg-white rounded shadow-sm">
+            <i class="bi bi-people display-5 text-muted"></i>
+            <div class="h5 fw-bold mt-3">Aucun client trouvé</div>
+            <div class="text-muted">Essaie de modifier les filtres ou crée un nouveau client.</div>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
+            <MudTable Items="FilteredClients"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Bordered="true"
+                      FixedHeader="true"
+                      Height="520px"
+                      RowsPerPage="10"
+                      Breakpoint="Breakpoint.Sm">
+
+                <HeaderContent>
+                    <MudTh>Type client</MudTh>
+                    <MudTh>Clients</MudTh>
+                    <MudTh>Compte / RCCM</MudTh>
+                    <MudTh>Numéro Pièce</MudTh>
+                    <MudTh>Téléphone</MudTh>
+                    <MudTh>Nationalité</MudTh>
+                    <MudTh class="text-end">Actions</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@GetClientTypeColor(context)"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small">
+                            @(string.IsNullOrWhiteSpace(context.TypeClient) ? "-" : context.TypeClient)
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium">@GetClientDisplayName(context)</div>
+                        <div class="text-muted small">@GetClientSubTitle(context)</div>
+                    </MudTd>
+
+                    <MudTd>
+                        @if (string.Equals(context.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div><strong>N°RCCM :</strong> @(string.IsNullOrWhiteSpace(context.NumRCCM) ? "-" : context.NumRCCM)</div>
+                            <div><strong>N°Compte :</strong> @(string.IsNullOrWhiteSpace(context.NumCompte) ? "-" : context.NumCompte)</div>
+                        }
+                        else if (string.Equals(context.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div><strong>N°:</strong> @(string.IsNullOrWhiteSpace(context.NumCompte) ? "-" : context.NumCompte)</div>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+
+                    </MudTd>
+
+                    <MudTd>
+                        <strong>@context.TypePieceID :</strong> @context.NumPieceID
+                    </MudTd>
+
+                    <MudTd>
+                        <strong>Tel:</strong> @(FirstNonEmpty(context.TelCel, context.TelBur, context.TelDom, "-"))
+                    </MudTd>
+
+                    <MudTd>
+                        @(string.IsNullOrWhiteSpace(context.Nationalite) ? "-" : context.Nationalite)
+                    </MudTd>
+
+                    <MudTd class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <MudTooltip Text="Modifier">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => EditClientFromList(context.IdClt))" />
+                            </MudTooltip>
+
+                            @if (CanSelectClientForWizard)
+                            {
+                                <MudTooltip Text="Sélectionner ce client">
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                   Color="Color.Success"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => SelectClientForWizard(context.IdClt))" />
+                                </MudTooltip>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+</div>
+
+@code {
+    [Parameter] public int IdAjout { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? returnUrl { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "role")]
+    public string? role { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "acteId")]
+    public int? acteId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "clientId")]
+    public int? clientId { get; set; }
+
+    private ClientModelViewModel vm = new();
+    private EditContext editContext = default!;
+
+    private bool isSaving;
+    private bool isEdit;
+    private string? errorMessage;
+    private string? successMessage;
+    private string? roleLabel;
+
+    // LISTE
+    private List<ClientModel> _clients = new();
+    private bool _loadingClients = true;
+    private string _search = string.Empty;
+    private string? _typeClientFilter = null;
+
+    private bool CanSelectClientForWizard =>
+        acteId.HasValue && acteId.Value > 0 && !string.IsNullOrWhiteSpace(roleLabel) && !string.IsNullOrWhiteSpace(returnUrl);
+
+    private List<ClientModel> FilteredClients => GetFilteredClients();
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(vm);
+
+        roleLabel = role switch
+        {
+            "Debiteur" or "débiteur" or "debiteur" or "Débiteur" => "Débiteur",
+            "Caution" or "caution" => "Caution",
+            "Temoin1" or "temoin1" or "Témoin1" => "Témoin1",
+            "Temoin2" or "temoin2" or "Témoin2" => "Témoin2",
+            _ => null
+        };
+
+        if (clientId.HasValue && clientId.Value > 0)
+        {
+            await LoadClientAsync(clientId.Value);
+            isEdit = true;
+        }
+
+        await LoadClientsAsync();
+    }
+
+    private async Task LoadClientsAsync()
+    {
+        try
+        {
+            _loadingClients = true;
+            _clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement liste clients : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingClients = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReloadClientsAsync()
+    {
+        await LoadClientsAsync();
+        Snackbar.Add("Liste des clients actualisée.", Severity.Success);
+    }
+
+    private List<ClientModel> GetFilteredClients()
+    {
+        IEnumerable<ClientModel> query = _clients;
+
+        if (!string.IsNullOrWhiteSpace(_typeClientFilter))
+        {
+            query = query.Where(c => string.Equals(c.TypeClient, _typeClientFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var s = _search.Trim().ToLowerInvariant();
+
+            query = query.Where(c =>
+                c.IdClt.ToString().Contains(s) ||
+                (GetClientDisplayName(c).ToLowerInvariant().Contains(s)) ||
+                ((c.NomRaisonsociale ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.NumRCCM ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.NumCompte ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.NomRepresentant ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.TelCel ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.TelBur ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.TypePieceID ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.NumPieceID ?? string.Empty).ToLowerInvariant().Contains(s)) ||
+                ((c.Nationalite ?? string.Empty).ToLowerInvariant().Contains(s)));
+        }
+
+        return query
+            .OrderByDescending(c => c.IdClt)
+            .ToList();
+    }
+
+    private void ResetClientFilters()
+    {
+        _search = string.Empty;
+        _typeClientFilter = null;
+    }
+
+    private string GetClientDisplayName(ClientModel c)
+    {
+        if (string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(c.NomRaisonsociale) ? "Société non renseignée" : c.NomRaisonsociale!;
+
+        return $"{c.Nom} {c.Prenoms}".Trim();
+    }
+
+    private string GetClientSubTitle(ClientModel c)
+    {
+        if (string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(c.NomRepresentant) ? "-" : $"Représentant : {c.NomRepresentant}";
+
+        return string.IsNullOrWhiteSpace(c.ProfessionClt) ? "-" : c.ProfessionClt!;
+    }
+
+    private Color GetClientTypeColor(ClientModel c)
+    {
+        return c.TypeClient switch
+        {
+            "Personne Physique" => Color.Success,
+            "Personne Morale" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private static string FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+        return "-";
+    }
+
+    private async Task EditClientFromList(int id)
+    {
+        clientId = id;
+        isEdit = true;
+        await LoadClientAsync(id);
+        Snackbar.Add($"Client #{id} chargé en modification.", Severity.Info);
+    }
+
+    private void SelectClientForWizard(int id)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl))
+        {
+            Snackbar.Add("Aucune URL de retour définie.", Severity.Warning);
+            return;
+        }
+
+        var sep = returnUrl.Contains('?') ? "&" : "?";
+        var back = $"{returnUrl}{sep}clientId={id}&role={Uri.EscapeDataString(role ?? "")}";
+        NavigationManager.NavigateTo(back, forceLoad: true);
+    }
+
+    private static DateTime ToUtcOrNow(DateTime? dt)
+    {
+        var value = dt ?? DateTime.UtcNow;
+
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Local).ToUniversalTime()
+        };
+    }
+
+    private async Task LoadClientAsync(int id)
+    {
+        try
+        {
+            var c = await ClientService.GetByIdAsync(id);
+            if (c is null)
+            {
+                Snackbar.Add("Client introuvable.", Severity.Warning);
+                return;
+            }
+
+            vm.TypeClient = c.TypeClient;
+            vm.NomRaisonsociale = c.NomRaisonsociale;
+            vm.NomRepresentant = c.NomRepresentant;
+            vm.Nom = c.Nom;
+            vm.Prenoms = c.Prenoms;
+            vm.Sexe = c.Sexe;
+            vm.NumCompte = c.NumCompte;
+            vm.NumRCCM = c.NumRCCM;
+            vm.DateNaiss = c.DateNaiss;
+            vm.PaysNaiss = c.PaysNaiss;
+            vm.LieuNaiss = c.LieuNaiss;
+            vm.Nationalite = c.Nationalite;
+
+            vm.Adressecomplet = c.Adressecomplet;
+            vm.VilleCommune = c.VilleCommune;
+            vm.PaysResidn = c.PaysResidn;
+            vm.BPClt = c.BPClt;
+
+            vm.TelBur = c.TelBur;
+            vm.TelCel = c.TelCel;
+            vm.TelDom = c.TelDom;
+
+            vm.ProfessionClt = c.ProfessionClt;
+            vm.SituationMatrim = c.SituationMatrim;
+            vm.NomConjoint = c.NomConjoint;
+            vm.DateMariage = c.DateMariage;
+            vm.LieuMariage = c.LieuMariage;
+            vm.RegimeMatrim = c.RegimeMatrim;
+
+            vm.TypePieceID = c.TypePieceID;
+            vm.NumPieceID = c.NumPieceID;
+            vm.DateDelivPiece = c.DateDelivPiece;
+            vm.LieuDelivPiece = c.LieuDelivPiece;
+            vm.PersonDelivPiece = c.PersonDelivPiece;
+
+            editContext = new EditContext(vm);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement client : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (!editContext.Validate())
+        {
+            errorMessage = "Veuillez corriger les erreurs du formulaire.";
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+
+            var entity = new ClientModel
+            {
+                IdClt = clientId ?? 0,
+                TypeClient = vm.TypeClient ?? "",
+                NomRaisonsociale = vm.NomRaisonsociale ?? "",
+                NomRepresentant = vm.NomRepresentant ?? "",
+                Nom = vm.Nom ?? "",
+                Prenoms = vm.Prenoms ?? "",
+                Sexe = vm.Sexe ?? "",
+                NumCompte = vm.NumCompte ?? "",
+                NumRCCM = vm.NumRCCM ?? "",
+
+                DateNaiss = ToUtcOrNow(vm.DateNaiss),
+
+                PaysNaiss = vm.PaysNaiss ?? "",
+                LieuNaiss = vm.LieuNaiss ?? "",
+                Nationalite = vm.Nationalite ?? "",
+
+                Adressecomplet = vm.Adressecomplet ?? "",
+                VilleCommune = vm.VilleCommune ?? "",
+                PaysResidn = vm.PaysResidn ?? "",
+                BPClt = vm.BPClt ?? "",
+
+                TelBur = vm.TelBur ?? "",
+                TelCel = vm.TelCel ?? "",
+                TelDom = vm.TelDom ?? "",
+
+                ProfessionClt = vm.ProfessionClt ?? "",
+                SituationMatrim = vm.SituationMatrim ?? "",
+                NomConjoint = vm.NomConjoint ?? "",
+
+                DateMariage = ToUtcOrNow(vm.DateMariage),
+
+                LieuMariage = vm.LieuMariage ?? "",
+                RegimeMatrim = vm.RegimeMatrim ?? "",
+
+                TypePieceID = vm.TypePieceID ?? "",
+                NumPieceID = vm.NumPieceID ?? "",
+
+                DateDelivPiece = ToUtcOrNow(vm.DateDelivPiece),
+
+                LieuDelivPiece = vm.LieuDelivPiece ?? "",
+                PersonDelivPiece = vm.PersonDelivPiece ?? ""
+            };
+
+            Result<ClientModel> res;
+
+            if (isEdit && entity.IdClt > 0)
+                res = await ClientService.UpdateAsync(entity);
+            else
+                res = await ClientService.AddAsync(entity);
+
+            if (!res.IsSuccess || res.Data is null)
+            {
+                errorMessage = res.ErrorMessage ?? "Impossible d'enregistrer le client.";
+                Snackbar.Add(errorMessage, Severity.Error);
+                return;
+            }
+
+            if (acteId.HasValue && acteId.Value > 0 && !string.IsNullOrWhiteSpace(roleLabel))
+            {
+                await UpsertClientActeAsync(acteId.Value, roleLabel!, res.Data.IdClt);
+            }
+
+            successMessage = "Client enregistré avec succès.";
+            Snackbar.Add(successMessage, Severity.Success);
+
+            clientId = res.Data.IdClt;
+            isEdit = true;
+
+            await LoadClientsAsync();
+
+            if (!string.IsNullOrWhiteSpace(returnUrl))
+            {
+                var sep = returnUrl.Contains('?') ? "&" : "?";
+                var back = $"{returnUrl}{sep}clientId={res.Data.IdClt}&role={Uri.EscapeDataString(role ?? "")}";
+                NavigationManager.NavigateTo(back, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpsertClientActeAsync(int acteIdValue, string roleLibelle, int clientIdValue)
+    {
+        var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+        var roleRow = roles.FirstOrDefault(r => string.Equals(r.Libelle?.Trim(), roleLibelle.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (roleRow is null)
+        {
+            Snackbar.Add($"Rôle introuvable en base: {roleLibelle}", Severity.Warning);
+            return;
+        }
+
+        var all = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+        var existing = all.FirstOrDefault(x => x.IdActe == acteIdValue && x.IdRole == roleRow.IdRole);
+
+        if (existing is null)
+        {
+            var ca = new ClientActModel
+            {
+                IdActe = acteIdValue,
+                IdClt = clientIdValue,
+                IdRole = roleRow.IdRole,
+                DescriptionRole = roleLibelle
+            };
+
+            var r = await ClientActService.AddAsync(ca);
+            if (!r.IsSuccess)
+                Snackbar.Add(r.ErrorMessage ?? "Erreur liaison ClientAct.", Severity.Error);
+        }
+        else
+        {
+            existing.IdClt = clientIdValue;
+            existing.DescriptionRole = roleLibelle;
+
+            var r = await ClientActService.UpdateAsync(existing);
+            if (!r.IsSuccess)
+                Snackbar.Add(r.ErrorMessage ?? "Erreur update liaison ClientAct.", Severity.Error);
+        }
+    }
+
+    private void ResetForm()
+    {
+        vm = new ClientModelViewModel();
+        editContext = new EditContext(vm);
+        errorMessage = null;
+        successMessage = null;
+        isEdit = false;
+        clientId = null;
+        StateHasChanged();
+    }
+
+    private void GoBack()
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            NavigationManager.NavigateTo(returnUrl, forceLoad: true);
+        else
+            NavigationManager.NavigateTo($"/saisirPage/{IdAjout}", forceLoad: true);
+    }
+}

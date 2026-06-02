@@ -1,0 +1,175 @@
+﻿@using MudBlazor
+@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.ViewModels
+
+@inject IClient ClientService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <div class="mb-2">
+            <MudText Typo="Typo.h6" Class="fw-bold mb-0">
+                <i class="bi bi-person-plus me-2"></i>Créer un client
+            </MudText>
+            @if (!string.IsNullOrWhiteSpace(RoleLabel))
+            {
+                <MudText Typo="Typo.body2" Class="text-muted">
+                    Rôle : <span class="fw-semibold">@RoleLabel</span>
+                </MudText>
+            }
+        </div>
+
+        <EditForm EditContext="@editContext" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="border rounded p-3">
+                <GesCPSI_Project.Components.Forms.ClientForm Model="@vm" />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                </div>
+            }
+        </EditForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" OnClick="Cancel" Disabled="@isSaving">
+            Annuler
+        </MudButton>
+
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="@isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="me-2" />
+                <span>Enregistrement...</span>
+            }
+            else
+            {
+                <i class="bi bi-check2 me-2"></i>
+            
+                <span>Enregistrer</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string? RoleLabel { get; set; }
+
+    private ClientModelViewModel vm = new();
+    private EditContext editContext = default!;
+    private bool isSaving;
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(vm);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private static DateTime ToUtcOrNow(DateTime? dt)
+    {
+        // si null, on met maintenant en UTC (ou DateTime.UtcNow)
+        var value = dt ?? DateTime.UtcNow;
+
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Local).ToUniversalTime() // Unspecified -> Local -> UTC
+        };
+    }
+
+    private async Task SaveAsync()
+    {
+        errorMessage = null;
+
+        // Forcer la validation DataAnnotations
+        if (!editContext.Validate())
+        {
+            errorMessage = "Veuillez corriger les erreurs du formulaire.";
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+
+            // Mapper VM -> Model (à adapter si ton ClientModel a d'autres champs)
+            var entity = new ClientModel
+            {
+                TypeClient = vm.TypeClient ?? "",
+                NomRaisonsociale = vm.NomRaisonsociale ?? "",
+                NomRepresentant = vm.NomRepresentant ?? "",
+                Nom = vm.Nom ?? "",
+                Prenoms = vm.Prenoms ?? "",
+                Sexe = vm.Sexe ?? "",
+                NumCompte = vm.NumCompte ?? "",
+                NumRCCM = vm.NumRCCM ?? "",
+
+                DateNaiss = ToUtcOrNow(vm.DateNaiss),
+
+                PaysNaiss = vm.PaysNaiss ?? "",
+                LieuNaiss = vm.LieuNaiss ?? "",
+                Nationalite = vm.Nationalite ?? "",
+
+                Adressecomplet = vm.Adressecomplet ?? "",
+                VilleCommune = vm.VilleCommune ?? "",
+                PaysResidn = vm.PaysResidn ?? "",
+                BPClt = vm.BPClt ?? "",
+
+                TelBur = vm.TelBur ?? "",
+                TelCel = vm.TelCel ?? "",
+                TelDom = vm.TelDom ?? "",
+
+                ProfessionClt = vm.ProfessionClt ?? "",
+                SituationMatrim = vm.SituationMatrim ?? "",
+                NomConjoint = vm.NomConjoint ?? "",
+
+                DateMariage = ToUtcOrNow(vm.DateMariage),
+
+                LieuMariage = vm.LieuMariage ?? "",
+                RegimeMatrim = vm.RegimeMatrim ?? "",
+
+                TypePieceID = vm.TypePieceID ?? "",
+                NumPieceID = vm.NumPieceID ?? "",
+
+                DateDelivPiece = ToUtcOrNow(vm.DateDelivPiece),
+
+                LieuDelivPiece = vm.LieuDelivPiece ?? "",
+                PersonDelivPiece = vm.PersonDelivPiece ?? ""
+            };
+
+            var res = await ClientService.AddAsync(entity);
+            if (!res.IsSuccess || res.Data is null)
+            {
+                errorMessage = res.ErrorMessage ?? "Impossible d'enregistrer le client.";
+                Snackbar.Add(errorMessage, Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Client créé avec succès.", Severity.Success);
+
+            // IMPORTANT: on renvoie le ClientModel créé au parent (SaisirPage)
+            MudDialog.Close(DialogResult.Ok(res.Data));
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+            Snackbar.Add(errorMessage, Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

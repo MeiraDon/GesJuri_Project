@@ -1,0 +1,17 @@
+﻿@* @page "/validationAct"
+@attribute [Authorize(Roles = "Validation")]
+
+@inject ITypesAct TypesActService
+@inject IUser UserService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+
+private async Task<List<TypesActModel>> GetActesEnAttente()
+{
+    var actes = await TypesActService.GetAllAsync();
+    return actes.Where(a => a.Statut == "EnAttenteValidation").ToList();
+}
+
+ *@

@@ -1,0 +1,22 @@
+﻿@using MudBlazor
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IConfiguration config
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Default" Variant="Variant.Text" OnClick="Cancel">Annuler</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Confirm">Supprimer</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string ContentText { get; set; } = string.Empty;
+
+    void Cancel() => MudDialog.Cancel(); 
+    void Confirm() => MudDialog.Close(DialogResult.Ok(true)); 
+}

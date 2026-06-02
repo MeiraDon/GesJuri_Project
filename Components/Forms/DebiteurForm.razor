@@ -1,0 +1,287 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label">Type de client*</label>
+        <InputSelect class="form-select"
+                     @bind-Value="Debiteur.TypeClient"
+                     @bind-Value:after="OnTypeClientAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Personne Physique">Personne Physique</option>
+            <option value="Personne Morale">Personne Morale</option>
+        </InputSelect>
+
+        <ValidationMessage For="@(() => Debiteur.TypeClient)" />
+    </div>
+
+    @if (Debiteur.TypeClient == "Personne Morale")
+    {
+        <div class="col-12 col-md-6">
+            <label class="form-label">Raison sociale*</label>
+            <InputText class="form-control" @bind-Value="Debiteur.NomRaisonsociale" placeholder="Nom société" />
+            <ValidationMessage For="@(() => Debiteur.NomRaisonsociale)" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label">Représentant légal*</label>
+            <InputText class="form-control" @bind-Value="Debiteur.NomRepresentant" placeholder="M. [Nom complet]" />
+            <ValidationMessage For="@(() => Debiteur.NomRepresentant)" />
+        </div>
+    }
+    else
+    {
+        <div class="col-12 col-md-6">
+            <label class="form-label">Nom*</label>
+            <InputText class="form-control" @bind-Value="Debiteur.Nom" />
+            <ValidationMessage For="@(() => Debiteur.Nom)" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label">Prénoms*</label>
+            <InputText class="form-control" @bind-Value="Debiteur.Prenoms" />
+            <ValidationMessage For="@(() => Debiteur.Prenoms)" />
+        </div>
+    }
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Sexe*</label>
+        <InputSelect class="form-select" @bind-Value="Debiteur.Sexe">
+            <option value="">Sélectionner...</option>
+            <option value="Masculin">Masculin</option>
+            <option value="Féminin">Féminin</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Debiteur.Sexe)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Date de naissance</label>
+        <InputDate class="form-control" @bind-Value="Debiteur.DateNaiss" />
+        <ValidationMessage For="@(() => Debiteur.DateNaiss)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Pays de naissance*</label>
+        <InputText class="form-control" @bind-Value="Debiteur.PaysNaiss" />
+        <ValidationMessage For="@(() => Debiteur.PaysNaiss)" />
+    </div>
+
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Lieu de naissance</label>
+        <InputText class="form-control" @bind-Value="Debiteur.LieuNaiss" />
+        <ValidationMessage For="@(() => Debiteur.LieuNaiss)" />
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label">Nationalité</label>
+        <InputText class="form-control" @bind-Value="Debiteur.Nationalite" />
+        <ValidationMessage For="@(() => Debiteur.Nationalite)" />
+    </div>
+
+
+
+    <div class="col-12">
+        <label class="form-label">Adresse complète*</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="Debiteur.Adressecomplet" />
+        <ValidationMessage For="@(() => Debiteur.Adressecomplet)" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Ville</label>
+        <InputText class="form-control" @bind-Value="Debiteur.VilleCommune" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Pays</label>
+        <InputText class="form-control" @bind-Value="Debiteur.PaysResidn" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Boîte postale</label>
+        <InputText class="form-control" @bind-Value="Debiteur.BPClt" />
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Bureau</label>
+        <InputText class="form-control" type="tel" inputmode="numeric"
+                   pattern="[0-9+ ]*"
+                   title="Seulement chiffres et + autorisés"
+                   oninput="this.value = this.value.replace(/[^0-9+ ]/g, '')"
+                   placeholder="Ex: +22890123456"
+                   @bind-Value="Debiteur.TelBur" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Cellulaire*</label>
+        <InputText class="form-control" type="tel" inputmode="numeric" pattern="[0-9+ ]*"
+                   title="Seulement chiffres et + autorisés"
+                   oninput="this.value = this.value.replace(/[^0-9+ ]/g, '')"
+                   @bind-Value="Debiteur.TelCel" />
+        <ValidationMessage For="@(() => Debiteur.TelCel)" />
+    </div>
+    <div class="col-12 col-md-4">
+        <label class="form-label">Tél. Domicile</label>
+        <InputText class="form-control" type="tel" inputmode="numeric"
+                   pattern="[0-9+ ]*"
+                   title="Seulement chiffres et + autorisés"
+                   oninput="this.value = this.value.replace(/[^0-9+ ]/g, '')"
+                   @bind-Value="Debiteur.TelDom" />
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Profession*</label>
+        <InputText class="form-control" @bind-Value="Debiteur.ProfessionClt" />
+        <ValidationMessage For="@(() => Debiteur.ProfessionClt)" />
+    </div>
+    <div class="col-12 col-md-6">
+        <label class="form-label">Situation matrimoniale</label>
+        <InputSelect class="form-select"
+                     @bind-Value="Debiteur.SituationMatrim"
+                     @bind-Value:after="OnSituationAfter">
+            <option value="">Sélectionner...</option>
+            <option value="Célibataire">Célibataire</option>
+            <option value="Marié(e)">Marié(e)</option>
+            <option value="Divorcé(e)">Divorcé(e)</option>
+            <option value="Veuf(ve)">Veuf(ve)</option>
+            <option value="Séparé(e)">Séparé(e)</option>
+            <option value="Concubinage">Concubinage</option>
+           
+        </InputSelect>
+
+        
+    </div>
+
+    @if (Debiteur.SituationMatrim == "Marié(e)")
+    {
+        <div class="col-12">
+            <div class="border rounded p-3 bg-light">
+                <h6 class="mb-3"><i class="bi bi-heart-fill text-danger me-2"></i>Informations sur le mariage</h6>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Nom du conjoint</label>
+                        <InputText class="form-control" @bind-Value="Debiteur.NomConjoint" />
+                        <ValidationMessage For="@(() => Debiteur.NomConjoint)" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Date du mariage</label>
+                        <InputDate class="form-control" @bind-Value="Debiteur.DateMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Lieu du mariage</label>
+                        <InputText class="form-control" @bind-Value="Debiteur.LieuMariage" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Régime matrimonial</label>
+                        <InputSelect class="form-select" @bind-Value="Debiteur.RegimeMatrim">
+                            <option value="">Sélectionner...</option>
+                            <option value="Communauté réduite">Communauté réduite</option>
+                            <option value="Séparation de biens">Séparation de biens</option>
+                            <option value="Communauté universelle">Communauté universelle</option>
+                            <option value="Participation aux acquêts">Participation aux acquêts</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-12">
+        <div class="border rounded p-3 mt-3">
+            <h6 class="mb-3"><i class="bi bi-person-badge-fill text-primary me-2"></i>Pièce d'identité</h6>
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Type de pièce*</label>
+                    <InputSelect class="form-select" @bind-Value="Debiteur.TypePieceID">
+                        <option value="">Sélectionner...</option>
+                        <option value="CNI">Carte Nationale d'Identité(CNI)</option>
+                        <option value="Passeport">Passeport</option>
+                        <option value="Permis">Permis de Conduire</option>
+                        <option value="Carte Séjour">Carte de Séjour</option>
+                        <option value="CarteRefugie">Carte de Réfugié</option>
+                        <option value="TitreSecours">Titre de Séjour</option>
+                        <option value="Autre">Autre</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Debiteur.TypePieceID)" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">N° de pièce*</label>
+                    <InputText class="form-control" @bind-Value="Debiteur.NumPieceID" />
+                    <ValidationMessage For="@(() => Debiteur.NumPieceID)" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Date de délivrance</label>
+                    <InputDate class="form-control" @bind-Value="Debiteur.DateDelivPiece" />
+                </div>
+
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Lieu de délivrance</label>
+                    <InputText class="form-control" @bind-Value="Debiteur.LieuDelivPiece" placeholder="Ex: Lomé, Aneho, Paris..." />
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Délivré par</label>
+                    <InputText class="form-control" @bind-Value="Debiteur.PersonDelivPiece" placeholder="Ex: Préfecture de Police, Mairie..." />
+                </div>
+
+
+                
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+ 
+@* <div class="form-check">
+                                                <InputCheckbox class="form-check-input" @bind-Value="model.Debiteur.CopiePieceJointe" />
+                                                <label class="form-check-label fw-semibold">
+                                                    <i class="bi bi-paperclip me-1"></i>Copie de la pièce jointe en annexe 1
+                                                </label>
+                                                <div class="form-text small">La copie certifiée conforme de la pièce d'identité doit être jointe au dossier.</div>
+                                            </div> *@
+
+@code {
+    [Parameter, EditorRequired]
+    public ClientModelViewModel Debiteur { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+
+    private async Task OnSubmit()
+    {
+        await OnNext.InvokeAsync();
+    }
+
+    private Task OnTypeClientAfter()
+    {
+        var value = Debiteur.TypeClient;
+
+        if (value == "Personne Morale")
+        {
+            Debiteur.Nom = "";
+            Debiteur.Prenoms = "";
+            Debiteur.Sexe = "";
+        }
+        else
+        {
+            Debiteur.NomRaisonsociale = "";
+            Debiteur.NomRepresentant = "";
+        }
+
+        return Task.CompletedTask;
+    }
+
+
+    private Task OnSituationAfter()
+    {
+        if (Debiteur.SituationMatrim != "Marié(e)")
+        {
+            Debiteur.NomConjoint = "";
+            Debiteur.DateMariage = null;
+            Debiteur.LieuMariage = "";
+            Debiteur.RegimeMatrim = "";
+        }
+
+        return Task.CompletedTask;
+    }
+
+
+
+
+}

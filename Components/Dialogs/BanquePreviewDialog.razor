@@ -1,0 +1,56 @@
+﻿@using GesCPSI_Project.Models
+@using MudBlazor
+@using MudBlazor.Services
+
+<MudDialog>
+    <DialogContent>
+        <div class="blur-background pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">
+                @Banque.NomRaisonSocialBnq
+            </MudText>
+
+            <MudDivider Class="my-2" />
+
+            <MudStack Spacing="1">
+                <MudText><b>Siège :</b> @Banque.SiegeSocial</MudText>
+                <MudText><b>SWIFT :</b> @Banque.Swift</MudText>
+                <MudText><b>Téléphone :</b> @Banque.TelBnq</MudText>
+                <MudText><b>Email :</b> @Banque.EmailBnq</MudText>
+                <MudText><b>Capital :</b> @Banque.CapitalSocial</MudText>
+            </MudStack>
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="CloseDialog">
+            Fermer
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    // 🔑 OBLIGATOIRE pour fermer le dialog
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+
+    [Parameter]
+    public BanqueModel Banque { get; set; } = default!;
+
+    private void CloseDialog()
+    {
+        MudDialog.Close();
+    }
+}
+<style>
+    .preview-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, rgba(0, 51, 102, 0.1), rgba(0, 77, 153, 0.1));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

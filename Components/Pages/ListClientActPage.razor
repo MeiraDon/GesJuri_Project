@@ -1,0 +1,444 @@
+﻿@page "/listClientAct"
+@rendermode InteractiveServer
+
+<PageTitle>Clients liés aux actes</PageTitle>
+
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+
+@inject IClientAct ClientActService
+@inject IClient ClientService
+@inject ITypesAct TypesActService
+@inject IRolesClientAct RolesClientActService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
+                <i class="bi bi-people-fill me-2"></i>Clients liés aux actes
+            </MudText>
+            @* <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Consultez les participants associés à chaque acte.
+            </MudText> *@
+        </div>
+
+        <div class="d-flex gap-2">
+            <MudTooltip Text="Actualiser">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Color="Color.Primary"
+                               Disabled="@_loading"
+                               OnClick="ReloadAsync" />
+            </MudTooltip>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-primary-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Link" Color="Color.Primary" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Total liaisons</div>
+                        <div class="h3 fw-bold text-primary mb-0">@_clientActs.Count</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-success-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Success" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Clients distincts</div>
+                        <div class="h3 fw-bold text-success mb-0">@DistinctClientsCount</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-warning-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Warning" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Actes distincts</div>
+                        <div class="h3 fw-bold text-warning mb-0">@DistinctActesCount</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-info-light p-3 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Info" Size="Size.Large" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Rôles utilisés</div>
+                        <div class="h3 fw-bold text-info mb-0">@DistinctRolesCount</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <MudPaper Class="mb-3" Elevation="1">
+        <div class="p-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <MudTextField @bind-Value="_search"
+                                  Placeholder="Rechercher client, rôle, acte..."
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true"
+                                  FullWidth="true" />
+                </div>
+
+                <div class="col-md-4">
+                    <MudSelect T="int?" @bind-Value="_selectedRoleId"
+                               Variant="Variant.Outlined"
+                               Label="Filtrer par rôle"
+                               Clearable="true"
+                               FullWidth="true">
+                        <MudSelectItem T="int?" Value="@((int?)null)">Tous les rôles</MudSelectItem>
+                        @foreach (var role in _roles.OrderBy(r => r.Libelle))
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)role.IdRole)">
+                                @role.Libelle
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+
+                <div class="col-md-4">
+                    <MudSelect T="int?" @bind-Value="_selectedActeId"
+                               Variant="Variant.Outlined"
+                               Label="Filtrer par acte"
+                               Clearable="true"
+                               FullWidth="true">
+                        <MudSelectItem T="int?" Value="@((int?)null)">Tous les actes</MudSelectItem>
+                        @foreach (var acte in _actes.OrderBy(a => a.NomTypesActe))
+                        {
+                            <MudSelectItem T="int?" Value="@((int?)acte.IdActe)">
+                                #@acte.IdActe - @acte.NomTypesActe
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               OnClick="ResetFilters">
+                        Effacer filtres
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <div class="text-center py-5">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <div class="text-muted mt-3">Chargement des liaisons client-acte...</div>
+        </div>
+    }
+    else if (!FilteredClientActs.Any())
+    {
+        <div class="text-center py-5 my-4">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <div class="h5 fw-bold mt-3">Aucune liaison trouvée</div>
+            <div class="text-muted mb-3">Essaie de modifier les filtres de recherche.</div>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
+            <MudTable Items="FilteredClientActs"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Bordered="true"
+                      FixedHeader="true"
+                      Height="520px"
+                      RowsPerPage="10"
+                      Breakpoint="Breakpoint.Sm">
+
+                <HeaderContent>
+                    <MudTh>Dates</MudTh>
+                    <MudTh>Types clients</MudTh>
+                    <MudTh>Actes</MudTh>
+                    <MudTh>Clients</MudTh>
+                    <MudTh>Rôles</MudTh>
+                    <MudTh class="text-end">Actions</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd>
+                        <div class="text-nowrap">@GetActeCreationDate(context.IdActe)</div>
+                        <div class="text-muted small">Maj : @GetActeUpdateDate(context.IdActe)</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@GetClientTypeColor(context.IdClt)"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small">
+                            @GetClientType(context.IdClt)
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium">@GetActeName(context.IdActe)</div>
+                        @* <div class="text-muted small">Acte #@context.IdActe</div> *@
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="fw-medium">@GetClientDisplayName(context.IdClt)</div>
+                        <div class="text-muted small">@GetClientIdentity(context.IdClt)</div>
+                    </MudTd>
+
+                    <MudTd>
+                        <MudChip T="string"
+                                 Color="@GetRoleColor(context.IdRole)"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Small"
+                                 Class="fw-medium">
+                            @GetRoleName(context.IdRole)
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <MudTooltip Text="Ouvrir l'acte">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => OpenActe(context.IdActe))" />
+                            </MudTooltip>
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+
+            </MudTable>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    private List<ClientActModel> _clientActs = new();
+    private List<ClientModel> _clients = new();
+    private List<TypesActModel> _actes = new();
+    private List<RolesClientActModel> _roles = new();
+
+    private bool _loading = true;
+
+    private string _search = string.Empty;
+    private int? _selectedRoleId = null;
+    private int? _selectedActeId = null;
+
+    private int DistinctClientsCount => _clientActs.Select(x => x.IdClt).Distinct().Count();
+    private int DistinctActesCount => _clientActs.Select(x => x.IdActe).Distinct().Count();
+    private int DistinctRolesCount => _clientActs.Select(x => x.IdRole).Distinct().Count();
+
+    private List<ClientActModel> FilteredClientActs => GetFilteredClientActs();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            _loading = true;
+
+            _clientActs = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+            _clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+            _actes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
+            _roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        await LoadDataAsync();
+        Snackbar.Add("Liste actualisée", Severity.Success);
+    }
+
+    private void ResetFilters()
+    {
+        _search = string.Empty;
+        _selectedRoleId = null;
+        _selectedActeId = null;
+    }
+
+    private List<ClientActModel> GetFilteredClientActs()
+    {
+        IEnumerable<ClientActModel> query = _clientActs;
+
+        if (_selectedRoleId.HasValue)
+            query = query.Where(x => x.IdRole == _selectedRoleId.Value);
+
+        if (_selectedActeId.HasValue)
+            query = query.Where(x => x.IdActe == _selectedActeId.Value);
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var s = _search.Trim().ToLowerInvariant();
+
+            query = query.Where(x =>
+                x.IdCltActe.ToString().Contains(s) ||
+                x.IdActe.ToString().Contains(s) ||
+                (GetClientDisplayName(x.IdClt).ToLowerInvariant().Contains(s)) ||
+                (GetRoleName(x.IdRole).ToLowerInvariant().Contains(s)) ||
+                (GetActeName(x.IdActe).ToLowerInvariant().Contains(s)) ||
+                ((x.DescriptionRole ?? string.Empty).ToLowerInvariant().Contains(s)));
+        }
+
+        return query
+            .OrderByDescending(x => x.IdCltActe)
+            .ToList();
+    }
+
+    private string GetActeCreationDate(int idActe)
+    {
+        var acte = GetActe(idActe);
+        if (acte is null)
+            return "-";
+
+        return acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private string GetActeUpdateDate(int idActe)
+    {
+        var acte = GetActe(idActe);
+        if (acte is null)
+            return "-";
+
+        return acte.DateMaj.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private ClientModel? GetClient(int idClt)
+        => _clients.FirstOrDefault(c => c.IdClt == idClt);
+
+    private RolesClientActModel? GetRole(int idRole)
+        => _roles.FirstOrDefault(r => r.IdRole == idRole);
+
+    private TypesActModel? GetActe(int idActe)
+        => _actes.FirstOrDefault(a => a.IdActe == idActe);
+
+    private string GetClientDisplayName(int idClt)
+    {
+        var c = GetClient(idClt);
+        if (c is null) return "Client introuvable";
+
+        if (string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(c.NomRaisonsociale) ? "Société non renseignée" : c.NomRaisonsociale!;
+
+        return $"{c.Nom} {c.Prenoms}".Trim();
+    }
+
+    private string GetClientIdentity(int idClt)
+    {
+        var c = GetClient(idClt);
+        if (c is null) return "-";
+
+        if (!string.IsNullOrWhiteSpace(c.TypePieceID) || !string.IsNullOrWhiteSpace(c.NumPieceID))
+            return $"{c.TypePieceID} {c.NumPieceID}".Trim();
+
+        if (!string.IsNullOrWhiteSpace(c.TelCel))
+            return c.TelCel!;
+
+        return "-";
+    }
+
+    private string GetClientType(int idClt)
+    {
+        var c = GetClient(idClt);
+        return string.IsNullOrWhiteSpace(c?.TypeClient) ? "-" : c!.TypeClient!;
+    }
+
+    private Color GetClientTypeColor(int idClt)
+    {
+        var type = GetClientType(idClt);
+
+        return type switch
+        {
+            "Personne Physique" => Color.Success,
+            "Personne Morale" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private string GetRoleName(int idRole)
+    {
+        var role = GetRole(idRole);
+        return string.IsNullOrWhiteSpace(role?.Libelle) ? "Rôle inconnu" : role!.Libelle!;
+    }
+
+    private Color GetRoleColor(int idRole)
+    {
+        var roleName = GetRoleName(idRole).Trim().ToLowerInvariant();
+
+        return roleName switch
+        {
+            "debiteur" or "débiteur" => Color.Primary,
+            "caution" => Color.Success,
+            "temoin1" or "témoin1" => Color.Warning,
+            "temoin2" or "témoin2" => Color.Secondary,
+            _ => Color.Info
+        };
+    }
+
+    private string GetActeName(int idActe)
+    {
+        var acte = GetActe(idActe);
+        return string.IsNullOrWhiteSpace(acte?.NomTypesActe) ? "Acte inconnu" : acte!.NomTypesActe!;
+    }
+
+    private void OpenActe(int idActe)
+    {
+        var acte = GetActe(idActe);
+        if (acte is null)
+        {
+            Snackbar.Add("Acte introuvable.", Severity.Warning);
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/saisirPage/{acte.IdAjout}?acteId={acte.IdActe}");
+    }
+
+
+}

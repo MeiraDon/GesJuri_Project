@@ -1,0 +1,60 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+
+<div class="row g-3">
+
+    <div class="col-md-6">
+        <label class="form-label">Type de charge*</label>
+        <InputSelect class="form-select" @bind-Value="Charge.TypeCharge">
+            <option value="">Sélectionner...</option>
+            <option value="Timbre">Timbre fiscal</option>
+            <option value="Impôt">Impôt</option>
+            <option value="OTR">OTR (Officier public)</option>
+            <option value="Honoraires">Honoraires d'huissier</option>
+            <option value="Frais dossier">Frais de dossier</option>
+            <option value="Autre">Autre</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Charge.TypeCharge)" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Montant*</label>
+        <InputNumber class="form-control" @bind-Value="Charge.MontantCharge" />
+        <ValidationMessage For="@(() => Charge.MontantCharge)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date*</label>
+        <InputDate class="form-control" @bind-Value="Charge.DateCharge" />
+        <ValidationMessage For="@(() => Charge.DateCharge)" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Payé par*</label>
+        <InputSelect class="form-select" @bind-Value="Charge.PayePar">
+            <option value="">Sélectionner...</option>
+            <option value="Débiteur">Débiteur</option>
+            <option value="Caution">Caution</option>
+            <option value="Banque">Banque</option>
+            <option value="Partagé">Partagé</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Charge.PayePar)" />
+    </div>
+    <div class="col-4">
+        <label class="form-label">Statut</label>
+        <InputSelect class="form-select" @bind-Value="Charge.StatutCharge">
+            <option value="">Sélectionner...</option>
+            <option value="Payée">Payée</option>
+            <option value="En attente">En attente</option>
+            <option value="Contestée">Contestée</option>
+            <option value="Reportée">Reportée</option>
+            <option value="Exonérée">Exonérée</option>
+        </InputSelect>
+    </div>
+</div>
+@code {
+    [Parameter, EditorRequired]
+    public ChargeViewModel Charge { get; set; } = null!;
+
+}

@@ -1,0 +1,109 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.ViewModels
+
+
+<div class="row g-3">
+
+    <div class="col-md-6">
+        <label class="form-label">Référence convention*</label>
+        <InputText class="form-control" @bind-Value="Pret.ReferenceConvention" />
+        <ValidationMessage For="@(() => Pret.ReferenceConvention)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Montant du concours*</label>
+        <InputNumber class="form-control" @bind-Value="Pret.MontantConcours" />
+        <ValidationMessage For="@(() => Pret.MontantConcours)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Taux (%) *</label>
+        <InputNumber class="form-control" @bind-Value="Pret.Taux" />
+        <ValidationMessage For="@(() => Pret.Taux)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Montant en lettres*</label>
+        <InputText class="form-control" @bind-Value="Pret.MontantLettrePret" />
+        <ValidationMessage For="@(() => Pret.MontantLettrePret)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">État du prêt*</label>
+        <InputSelect class="form-select" @bind-Value="Pret.EtatPret">
+            <option value="">Sélectionner...</option>
+            <option value="En cours">En cours</option>
+            <option value="Clôturé">Clôturé</option>
+            <option value="En retard">En retard</option>
+            <option value="Contentieux">Contentieux</option>
+            <option value="Soldé">Soldé</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => Pret.EtatPret)" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Accessoires</label>
+        <InputTextArea class="form-control"
+                       rows="2"
+                       @bind-Value="Pret.Accessoires"
+                       placeholder="Ex: Frais de dossier, assurance, garanties annexes..." />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Objet du prêt*</label>
+        <InputTextArea class="form-control"
+                       rows="2"
+                       @bind-Value="Pret.ObjetPret"
+                       placeholder="Ex: Financement d'un véhicule, travaux immobiliers, fonds de commerce..." />
+        <ValidationMessage For="@(() => Pret.ObjetPret)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date de signature*</label>
+        <InputDate class="form-control" @bind-Value="Pret.DateSignaturePret" />
+        <ValidationMessage For="@(() => Pret.DateSignaturePret)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Durée (mois)*</label>
+        <InputNumber class="form-control" @bind-Value="Pret.DureMoisPret" />
+        <ValidationMessage For="@(() => Pret.DureMoisPret)" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Date début remboursement*</label>
+        <InputDate class="form-control" @bind-Value="Pret.DateDebutRemboursemnt" />
+        <ValidationMessage For="@(() => Pret.DateDebutRemboursemnt)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Date première échéance*</label>
+        <InputDate class="form-control" @bind-Value="Pret.DatePremiereEcheance" />
+        <ValidationMessage For="@(() => Pret.DatePremiereEcheance)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Montant première échéance*</label>
+        <InputNumber class="form-control" @bind-Value="Pret.MontantPremiereEcheance" />
+        <ValidationMessage For="@(() => Pret.MontantPremiereEcheance)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Date dernière échéance*</label>
+        <InputDate class="form-control" @bind-Value="Pret.DateDerniereEcheance" />
+        <ValidationMessage For="@(() => Pret.DateDerniereEcheance)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Montant dernière échéance*</label>
+        <InputNumber class="form-control" @bind-Value="Pret.MontantDerniereEcheance" />
+        <ValidationMessage For="@(() => Pret.MontantDerniereEcheance)" />
+    </div>
+
+</div>
+@code {
+    [Parameter, EditorRequired]
+    public PretViewModel Pret { get; set; } = null!;
+
+}

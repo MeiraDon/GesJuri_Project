@@ -25,7 +25,6 @@
 
         // DEBITEUR
         public string DebiteurReportNomComplet { get; set; } = string.Empty;
-
         public string DebiteurReportNomRaisonsociale { get; set; } = string.Empty;
         public string DebiteurReportNomRepresentant { get; set; } = string.Empty;
         public string DebiteurReportNom { get; set; } = string.Empty;
@@ -57,7 +56,6 @@
 
         // CAUTION
         public string CautionReportNomComplet { get; set; } = string.Empty;
-
         public string CautionReportNomRaisonsociale { get; set; } = string.Empty;
         public string CautionReportNomRepresentant { get; set; } = string.Empty;
         public string CautionReportNom { get; set; } = string.Empty;
@@ -86,6 +84,16 @@
         public DateTime CautionReportDateDelivPiece { get; set; }
         public string CautionReportLieuDelivPiece { get; set; } = string.Empty;
         public string CautionReportPersonDelivPiece { get; set; } = string.Empty;
+
+        // Caution — Personne Morale
+        public string? CautionReportFormeJuridique { get; set; }
+        public string? CautionReportCapitalSocial { get; set; }
+        public string? CautionReportSiegeSocial { get; set; }
+        public string? CautionReportRegistreCommerce { get; set; }
+        public string? CautionReportNumIdentifFiscal { get; set; }
+        public string? CautionReportFonctionRepresentant { get; set; }
+        public string? CautionReportRefPVDelib { get; set; }
+        public DateTime CautionReportDatePVDelib { get; set; }
 
         // TEMOIN1
         public string Temoin1ReportNomComplet { get; set; } = string.Empty;

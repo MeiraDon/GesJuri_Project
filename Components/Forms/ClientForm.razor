@@ -16,25 +16,137 @@
 
     @if (Model.TypeClient == "Personne Morale")
     {
-        <div class="col-12 col-md-4">
-            <label class="form-label">Raison sociale*</label>
-            <InputText class="form-control" @bind-Value="Model.NomRaisonsociale" placeholder="Nom société" />
-            <ValidationMessage For="@(() => Model.NomRaisonsociale)" />
+        @* ===== IDENTIFICATION SOCIÉTÉ ===== *@
+        <div class="col-12">
+            <div class="border rounded p-3 mt-2 bg-light">
+                <h6 class="mb-3">
+                    <i class="bi bi-building me-1"></i> Identification de la société
+                </h6>
+                <div class="row g-3">
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Raison sociale*</label>
+                        <InputText class="form-control" @bind-Value="Model.NomRaisonsociale"
+                                   placeholder="Nom complet de la société" />
+                        <ValidationMessage For="@(() => Model.NomRaisonsociale)" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Forme juridique</label>
+                        <InputSelect class="form-select" @bind-Value="Model.FormeJuridique">
+                            <option value="">Sélectionner...</option>
+                            <option value="Société Anonyme (SA)">Société Anonyme (SA)</option>
+                            <option value="Société à Responsabilité Limitée (SARL)">SARL</option>
+                            <option value="Société par Actions Simplifiée (SAS)">SAS</option>
+                            <option value="Société en Nom Collectif (SNC)">SNC</option>
+                            <option value="Société en Commandite Simple (SCS)">SCS</option>
+                            <option value="Groupement d'Intérêt Économique (GIE)">GIE</option>
+                            <option value="Entreprise Individuelle (EI)">Entreprise Individuelle</option>
+                            <option value="Autre">Autre</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Capital social (FCFA)</label>
+                        <InputText class="form-control" @bind-Value="Model.CapitalSocial"
+                                   placeholder="Ex: 10 000 000" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Siège social</label>
+                        <InputText class="form-control" @bind-Value="Model.SiegeSocial"
+                                   placeholder="Adresse complète du siège" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">RCCM (Registre Commerce)</label>
+                        <InputText class="form-control" @bind-Value="Model.RegistreCommerce"
+                                   placeholder="Ex: RCCM TG-LOM 2024 B 12345" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">NIF (Numéro Identifiant Fiscal)</label>
+                        <InputText class="form-control" @bind-Value="Model.NumIdentifFiscal"
+                                   placeholder="Numéro NIF" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Numéro RCCM (rapide)*</label>
+                        <InputText class="form-control" @bind-Value="Model.NumRCCM"
+                                   placeholder="Référence rapide" />
+                        <ValidationMessage For="@(() => Model.NumRCCM)" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Numéro de compte*</label>
+                        <InputText class="form-control" @bind-Value="Model.NumCompte"
+                                   placeholder="Numéro de compte bancaire" />
+                        <ValidationMessage For="@(() => Model.NumCompte)" />
+                    </div>
+
+                </div>
+            </div>
         </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label">Numéro RCCM*</label>
-            <InputText class="form-control" @bind-Value="Model.NumRCCM" placeholder="numéro RCCM" />
-            <ValidationMessage For="@(() => Model.NumRCCM)" />
+
+        @* ===== REPRÉSENTANT LÉGAL ===== *@
+        <div class="col-12">
+            <div class="border rounded p-3 mt-2">
+                <h6 class="mb-3">
+                    <i class="bi bi-person-badge me-1"></i> Représentant légal
+                </h6>
+                <div class="row g-3">
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Nom du représentant légal*</label>
+                        <InputText class="form-control" @bind-Value="Model.NomRepresentant"
+                                   placeholder="M. / Mme [Nom complet]" />
+                        <ValidationMessage For="@(() => Model.NomRepresentant)" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Fonction</label>
+                        <InputSelect class="form-select" @bind-Value="Model.FonctionRepresentant">
+                            <option value="">Sélectionner...</option>
+                            <option value="Directeur Général">Directeur Général (DG)</option>
+                            <option value="Président-Directeur Général">PDG</option>
+                            <option value="Président du Conseil d'Administration">PCA</option>
+                            <option value="Gérant">Gérant</option>
+                            <option value="Co-Gérant">Co-Gérant</option>
+                            <option value="Administrateur">Administrateur</option>
+                            <option value="Mandataire">Mandataire</option>
+                            <option value="Autre">Autre</option>
+                        </InputSelect>
+                    </div>
+
+                </div>
+            </div>
         </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label">Numéro de compte*</label>
-            <InputText class="form-control" @bind-Value="Model.NumCompte" placeholder="numéro de compte" />
-            <ValidationMessage For="@(() => Model.NumCompte)" />
-        </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label">Représentant légal*</label>
-            <InputText class="form-control" @bind-Value="Model.NomRepresentant" placeholder="M. [Nom complet]" />
-            <ValidationMessage For="@(() => Model.NomRepresentant)" />
+
+        @* ===== DÉLIBÉRATION AUTORISANT L'ENGAGEMENT ===== *@
+        <div class="col-12">
+            <div class="border rounded p-3 mt-2 bg-light">
+                <h6 class="mb-3">
+                    <i class="bi bi-file-earmark-text me-1"></i> Délibération autorisant l'engagement
+                </h6>
+                <p class="text-muted small mb-3">
+                    Référence du PV (Conseil d'Administration, Assemblée Générale, etc.)
+                    autorisant le représentant à engager la société.
+                </p>
+                <div class="row g-3">
+
+                    <div class="col-12 col-md-8">
+                        <label class="form-label">Référence du PV</label>
+                        <InputText class="form-control" @bind-Value="Model.RefPVDelib"
+                                   placeholder="Ex: PV du Conseil d'Administration n° 12/2025" />
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Date du PV</label>
+                        <InputDate class="form-control" @bind-Value="Model.DatePVDelib" />
+                    </div>
+
+                </div>
+            </div>
         </div>
     }
     else if (Model.TypeClient == "Personne Physique")
@@ -245,6 +357,7 @@
 
         if (value == "Personne Morale")
         {
+            // Nettoyer les champs Personne Physique
             Model.Nom = "";
             Model.Prenoms = "";
             Model.Sexe = "";
@@ -254,9 +367,20 @@
         }
         else if (value == "Personne Physique")
         {
+            // Nettoyer les champs Personne Morale
             Model.NomRaisonsociale = "";
             Model.NomRepresentant = "";
             Model.NumRCCM = "";
+
+            // 🆕 Nettoyage des nouveaux champs Personne Morale
+            Model.FormeJuridique = "";
+            Model.CapitalSocial = "";
+            Model.SiegeSocial = "";
+            Model.RegistreCommerce = "";
+            Model.NumIdentifFiscal = "";
+            Model.FonctionRepresentant = "";
+            Model.RefPVDelib = "";
+            Model.DatePVDelib = null;
         }
 
         return Task.CompletedTask;

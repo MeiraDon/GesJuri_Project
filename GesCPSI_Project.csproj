@@ -18,6 +18,11 @@
     </PackageReference>
     <PackageReference Include="MudBlazor" Version="8.15.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+
+	  <!-- 🔧 FIX: aligner Roslyn sur 4.8.0 pour résoudre le conflit FastReport -->
+	  <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
   </ItemGroup>
 
   <ItemGroup>

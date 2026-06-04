@@ -56,13 +56,13 @@
                 @if (boaBank is not null)
                 {
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                        Cette application crée uniquement des actes pour la banque BOA.
+                        Cette application crée uniquement des actes pour la banque BOA-TOGO.
                     </MudText>
                 }
                 else
                 {
                     <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">
-                        La banque BOA n’est pas configurée dans le référentiel.
+                        La banque BOA-TOGO n’est pas configurée dans le référentiel.
                     </MudText>
                 }
             </MudPaper>
@@ -542,7 +542,7 @@
         if (banque is not null)
             return $"{banque.NomRaisonSocialBnq} ({banque.SigleBnq})";
 
-        return "BOA non configurée";
+        return "BOA-TOGO non configurée";
     }
 
     private async Task<int?> GetBoaBankIdAsync()
@@ -553,8 +553,8 @@
         banques = await BanqueService.GetAllAsync() ?? new List<BanqueModel>();
 
         boaBank = banques.FirstOrDefault(b =>
-            string.Equals(b.SigleBnq?.Trim(), "BOA", StringComparison.OrdinalIgnoreCase) ||
-            (b.NomRaisonSocialBnq?.Contains("BOA", StringComparison.OrdinalIgnoreCase) ?? false)
+            string.Equals(b.SigleBnq?.Trim(), "BOA-TOGO", StringComparison.OrdinalIgnoreCase) ||
+        (b.NomRaisonSocialBnq?.Contains("BOA-TOGO", StringComparison.OrdinalIgnoreCase) ?? false)
         );
 
         return boaBank?.IdBnq;
@@ -582,13 +582,13 @@
             banques = await BanqueService.GetAllAsync() ?? new List<BanqueModel>();
 
             boaBank = banques.FirstOrDefault(b =>
-                string.Equals(b.SigleBnq?.Trim(), "BOA", StringComparison.OrdinalIgnoreCase) ||
-                (b.NomRaisonSocialBnq?.Contains("BOA", StringComparison.OrdinalIgnoreCase) ?? false)
+                string.Equals(b.SigleBnq?.Trim(), "BOA-TOGO", StringComparison.OrdinalIgnoreCase) ||
+            (b.NomRaisonSocialBnq?.Contains("BOA-TOGO", StringComparison.OrdinalIgnoreCase) ?? false)
             );
 
             if (boaBank is null)
             {
-                throw new InvalidOperationException("La banque BOA est introuvable. Veuillez d’abord enregistrer BOA dans /banque.");
+                throw new InvalidOperationException("La banque BOA-TOGO est introuvable. Veuillez d’abord enregistrer BOA-TOGO dans /banque.");
             }
 
             selectedBanqueId = boaBank.IdBnq;
@@ -1061,7 +1061,7 @@ private async Task EnsureActeAsync()
 
     var boaId = await GetBoaBankIdAsync();
     if (!boaId.HasValue)
-        throw new InvalidOperationException("La banque BOA n'est pas configurée. Impossible de créer un acte.");
+            throw new InvalidOperationException("La banque BOA-TOGO n'est pas configurée. Impossible de créer un acte.");
 
     selectedBanqueId = boaId.Value;
 
@@ -1099,7 +1099,7 @@ private async Task SaveStepAsync()
 
     var boaId = await GetBoaBankIdAsync();
     if (!boaId.HasValue)
-        throw new InvalidOperationException("La banque BOA n'est pas configurée.");
+            throw new InvalidOperationException("La banque BOA-TOGO n'est pas configurée.");
 
     selectedBanqueId = boaId.Value;
 

@@ -72,6 +72,20 @@ namespace GesCPSI_Project.ViewModels
         public string? PersonDelivPiece { get; set; }
         public bool CopiePieceJointe { get; set; }
 
+        // Personne Morale — Identification société
+        public string? FormeJuridique { get; set; }
+        public string? CapitalSocial { get; set; }
+        public string? SiegeSocial { get; set; }
+        public string? RegistreCommerce { get; set; }
+        public string? NumIdentifFiscal { get; set; }
+
+        // Personne Morale — Représentant légal
+        public string? FonctionRepresentant { get; set; }
+
+        // Personne Morale — Délibération
+        public string? RefPVDelib { get; set; }
+        public DateTime? DatePVDelib { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (TypeClient == "Personne Physique")
@@ -99,7 +113,7 @@ namespace GesCPSI_Project.ViewModels
 
                 if (string.IsNullOrWhiteSpace(NomRepresentant))
                     yield return new ValidationResult("Représentant obligatoire", new[] { nameof(NomRepresentant) });
-            }
+             }
         }
 
     }

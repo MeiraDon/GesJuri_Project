@@ -43,7 +43,33 @@
 
                 </MudSelect>
 
+                @* 🆕 SÉLECTEUR DE MODÈLE *@
+                <MudSelect T="TemplateType"
+                           Label="Modèle d'acte officiel à utiliser"
+                           Variant="Variant.Filled"
+                           @bind-Value="ajoutActModel.TemplateType"
+                           Required="true"
+                           HelperText="Détermine le rendu PDF et l'aperçu officiel"
+                           Class="mb-6">
+                    <MudSelectItem Value="@TemplateType.CautionnementSpecifiquePhysique">
+                        Cautionnement Spécifique — Personne Physique
+                    </MudSelectItem>
+                    <MudSelectItem Value="@TemplateType.CautionnementSpecifiqueMorale">
+                        Cautionnement Spécifique — Personne Morale
+                    </MudSelectItem>
+                    <MudSelectItem Value="@TemplateType.ToutEngagementPhysique">
+                        Tout Engagement — Personne Physique
+                    </MudSelectItem>
+                    <MudSelectItem Value="@TemplateType.ToutEngagementMorale">
+                        Tout Engagement — Personne Morale
+                    </MudSelectItem>
+                    <MudSelectItem Value="@TemplateType.DelegationLoyersMorale">
+                        Délégation de Loyers — Personne Morale
+                    </MudSelectItem>
+                </MudSelect>
+
                 <MudTextField @bind-Value="ajoutActModel.NomAct"
+                              @bind-Value:after="@(() => SuggererTemplateType())"
                               Label="Nom du type d'acte"
                               Variant="Variant.Filled"
                               Required="true"
@@ -52,6 +78,7 @@
                               Class="mb-6" />
 
                 <MudTextField @bind-Value="ajoutActModel.Description"
+                              @bind-Value:after="@(() => SuggererTemplateType())"
                               Label="Description"
                               Variant="Variant.Filled"
                               Lines="3"
@@ -97,12 +124,18 @@
                 <HeaderContent>
                     <MudTh>Catégorie</MudTh>
                     <MudTh>Nom</MudTh>
+                    <MudTh>Modèle</MudTh>
                     <MudTh>Description</MudTh>
                     <MudTh Style="width: 120px;">Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd>@context.CategorieClient</MudTd>
                     <MudTd>@context.NomAct</MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                            @GetTemplateLabel(context.TemplateType)
+                        </MudChip>
+                    </MudTd>
                     <MudTd>
                         @if (!string.IsNullOrEmpty(context.Description))
                         {
@@ -175,6 +208,16 @@
         }
     }
 
+    private static string GetTemplateLabel(TemplateType type) => type switch
+    {
+        TemplateType.CautionnementSpecifiquePhysique => "Cautionn. Spéc. PP",
+        TemplateType.CautionnementSpecifiqueMorale => "Cautionn. Spéc. PM",
+        TemplateType.ToutEngagementPhysique => "Tout Engag. PP",
+        TemplateType.ToutEngagementMorale => "Tout Engag. PM",
+        TemplateType.DelegationLoyersMorale => "Délég. Loyers PM",
+        _ => "—"
+    };
+
     private async Task AjouterOuModifierActe()
     {
         if (form == null) return;
@@ -203,6 +246,7 @@
                 existing.NomAct = ajoutActModel.NomAct?.Trim() ?? string.Empty;
                 existing.Description = ajoutActModel.Description?.Trim();
                 existing.CategorieClient = ajoutActModel.CategorieClient;
+                existing.TemplateType = ajoutActModel.TemplateType;
 
                 result = await AjoutActService.UpdateAsync(existing);
             }
@@ -231,6 +275,44 @@
         finally { isSaving = false; }
     }
 
+    private void OnNomActChanged(string newValue)
+    {
+        ajoutActModel.NomAct = newValue;
+        SuggererTemplateType();
+    }
+
+    private void OnCategorieClientChanged(string newValue)
+    {
+        ajoutActModel.CategorieClient = newValue;
+        SuggererTemplateType();
+    }
+
+    private void SuggererTemplateType()
+    {
+        var nom = (ajoutActModel.NomAct ?? "").ToLowerInvariant();
+        var cat = ajoutActModel.CategorieClient ?? "";
+        var estMorale = cat.Contains("Morale", StringComparison.OrdinalIgnoreCase);
+
+        if (nom.Contains("délégation") || nom.Contains("delegation") || nom.Contains("loyer"))
+        {
+            ajoutActModel.TemplateType = TemplateType.DelegationLoyersMorale;
+        }
+        else if (nom.Contains("tout engagement") || nom.Contains("tous engagement")
+              || nom.Contains("solde débiteur") || nom.Contains("compte courant"))
+        {
+            ajoutActModel.TemplateType = estMorale
+                ? TemplateType.ToutEngagementMorale
+                : TemplateType.ToutEngagementPhysique;
+        }
+        else  // Par défaut : cautionnement spécifique
+        {
+            ajoutActModel.TemplateType = estMorale
+                ? TemplateType.CautionnementSpecifiqueMorale
+                : TemplateType.CautionnementSpecifiquePhysique;
+        }
+    }
+
+
     private void ModifierActe(AjoutActModel acte)
     {
         isEditing = true;
@@ -239,7 +321,8 @@
             {
                 CategorieClient = acte.CategorieClient,
                 NomAct = acte.NomAct,
-                Description = acte.Description
+                Description = acte.Description,
+                TemplateType = acte.TemplateType
             };
     }
 

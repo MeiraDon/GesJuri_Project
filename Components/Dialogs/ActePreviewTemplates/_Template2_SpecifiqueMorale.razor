@@ -1,0 +1,560 @@
+﻿@using GesCPSI_Project.Reports
+@using static GesCPSI_Project.Components.Dialogs.ActePreviewTemplates.ActePreviewHelpers
+
+<div class="acte-document">
+
+    @* ============= EN-TÊTE BANQUE ============= *@
+    <header class="acte-header">
+        <div class="acte-bank-block">
+            <div class="acte-bank-name">@Data.BanqueReportNomRaisonSocialBnq</div>
+            @if (!string.IsNullOrWhiteSpace(Data.BanqueReportSigleBnq))
+            {
+                <div class="acte-bank-sigle">@Data.BanqueReportSigleBnq</div>
+            }
+            <div class="acte-bank-meta">
+                @Data.BanqueReportFormeJuridique
+                @if (!string.IsNullOrWhiteSpace(Data.BanqueReportCapitalSocial))
+                {
+                    <span> au capital de @Data.BanqueReportCapitalSocial FCFA</span>
+                }
+            </div>
+            <div class="acte-bank-meta">
+                Siège social : @Data.BanqueReportSiegeSocial
+            </div>
+            <div class="acte-bank-meta">
+                RCCM : @Data.BanqueReportRegistreCommerce — SWIFT : @Data.BanqueReportSwift
+            </div>
+        </div>
+    </header>
+
+    @* ============= TITRE PRINCIPAL ============= *@
+    <h1 class="acte-title">
+        ACTE DE CAUTIONNEMENT PERSONNEL,<br />
+        SOLIDAIRE ET INDIVISIBLE
+    </h1>
+    <div class="acte-subtitle">
+        – ENGAGEMENT SPÉCIFIQUE – PERSONNE MORALE –
+    </div>
+    <div class="acte-ref">
+        N° @Data.CautionnementReportNumeroCautionmt
+    </div>
+
+    @* ============= ENTRE LES SOUSSIGNÉS ============= *@
+    <h2 class="acte-section-title">ENTRE LES SOUSSIGNÉS :</h2>
+
+    @* --- La Caution = SOCIÉTÉ --- *@
+    <p class="acte-para">
+        La société <strong>@(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)</strong>,
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportFormeJuridique))
+        {
+            <span>@Data.CautionReportFormeJuridique</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportCapitalSocial))
+        {
+            <span> au capital de @Data.CautionReportCapitalSocial FCFA,</span>
+        }
+        dont le siège social est sis à
+        <strong>@(Data.CautionReportSiegeSocial ?? Data.CautionReportAdressecomplet)</strong>,
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportRegistreCommerce))
+        {
+            <span>immatriculée au Registre du Commerce et du Crédit Mobilier sous le numéro <strong>@Data.CautionReportRegistreCommerce</strong>,</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportNumIdentifFiscal))
+        {
+            <span>NIF : @Data.CautionReportNumIdentifFiscal,</span>
+        }
+        représentée par <strong>M @(Data.CautionReportNomRepresentant ?? Data.CautionReportNomComplet)</strong>,
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportFonctionRepresentant))
+        {
+            <span>en sa qualité de <strong>@Data.CautionReportFonctionRepresentant</strong>,</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Data.CautionReportRefPVDelib))
+        {
+            <span>
+                agissant en vertu des pouvoirs qui lui sont conférés par
+                <strong>@Data.CautionReportRefPVDelib</strong>
+                en date du <strong>@FormatDate(Data.CautionReportDatePVDelib)</strong>,
+            </span>
+        }
+        ci-après dénommée « <strong>la Caution</strong> »,
+    </p>
+
+    <p class="acte-para acte-para-spaced">D'UNE PART,</p>
+    <p class="acte-para">ET</p>
+
+    @* --- La Banque --- *@
+    <p class="acte-para">
+        <strong>@Data.BanqueReportNomRaisonSocialBnq</strong>
+        (@Data.BanqueReportSigleBnq),
+        @Data.BanqueReportFormeJuridique au capital de @Data.BanqueReportCapitalSocial FCFA,
+        dont le siège social est sis à @Data.BanqueReportSiegeSocial,
+        immatriculée au RCCM sous le numéro @Data.BanqueReportRegistreCommerce,
+        code SWIFT @Data.BanqueReportSwift,
+        représentée par <strong>@Data.BanqueReportRepresentantBnq</strong>,
+        en sa qualité de @Data.BanqueReportFonctionRepresentant,
+        dûment habilité(e) à cet effet,
+        ci-après dénommée « <strong>la Banque</strong> » ou « <strong>BOA-TOGO</strong> »,
+    </p>
+
+    <p class="acte-para acte-para-spaced">D'AUTRE PART,</p>
+
+    <p class="acte-para acte-para-italic">
+        La Caution et la BOA-TOGO étant ci-après dénommées, (i) ensemble, les « Parties », ou,
+        (ii) séparément, chaque « Partie », ou, individuellement, comme susmentionné ;
+    </p>
+
+    <p class="acte-para acte-para-italic">
+        Il convient de noter que si cette transaction nécessite la présence de tiers
+        pour assister la Caution, en vue d'une meilleure compréhension du contrat,
+        l'identité de ces tiers sera présentée en Annexe 2.
+    </p>
+
+    @* ============= PRÉAMBULE ============= *@
+    <h2 class="acte-section-title">Préambule</h2>
+
+    <p class="acte-para">
+        1. <strong>M @Data.DebiteurReportNomComplet</strong>
+        né(e) le @FormatDate(Data.DebiteurReportDateNaiss)
+        à @Data.DebiteurReportLieuNaiss (@Data.DebiteurReportPaysNaiss),
+        de nationalité @Data.DebiteurReportNationalite,
+        @Data.DebiteurReportProfessionClt,
+        demeurant à @Data.DebiteurReportAdressecomplet
+        (@Data.DebiteurReportVilleCommune, @Data.DebiteurReportPaysResidn),
+        BP @Data.DebiteurReportBPClt,
+        Tél. Bur : @Data.DebiteurReportTelBur,
+        Cell. : @Data.DebiteurReportTelCel,
+        Dom. : @Data.DebiteurReportTelDom,
+        @FormatSituation(Data.DebiteurReportSituationMatrim, Data.DebiteurReportNomConjoint),
+        titulaire de la pièce d'identité @Data.DebiteurReportTypePieceID
+        n° @Data.DebiteurReportNumPieceID
+        délivrée le @FormatDate(Data.DebiteurReportDateDelivPiece)
+        à @Data.DebiteurReportLieuDelivPiece,
+        ci-après dénommé(e) « <strong>le Débiteur Cautionné</strong> »,
+        a sollicité et obtenu de la Banque, suivant
+        @if (!string.IsNullOrWhiteSpace(Data.PretReportReferenceConvention))
+        {
+            <span>
+                convention de prêt référencée <strong>@Data.PretReportReferenceConvention</strong>
+                en date du @FormatDate(Data.PretReportDateSignaturePret),
+            </span>
+        }
+        un concours d'un montant de
+        <strong>@FormatMontant(Data.PretReportMontantConcours) FCFA</strong>
+        (@Data.PretReportMontantLettrePret),
+        au taux de @Data.PretReportTaux %,
+        sur une durée de @Data.PretReportDureMoisPret mois,
+        destiné à : @Data.PretReportObjetPret
+        (le « <strong>Concours</strong> »).
+    </p>
+
+    <p class="acte-para">
+        2. En garantie du remboursement du Concours, la Caution — société dûment représentée comme indiqué
+        ci-dessus — s'est engagée à se porter caution personnelle, solidaire et indivisible
+        du Débiteur Cautionné, à concurrence d'un montant maximum de
+        <strong>@FormatMontant(Data.CautionnementReportMontantCautionne) FCFA</strong>
+        (@Data.CautionnementReportMontantLettreCautionmt),
+        en principal, les intérêts, commissions, frais, taxes et autres accessoires
+        (le « <strong>Montant Cautionné</strong> »).
+    </p>
+
+    @* ============= CECI EXPOSÉ ============= *@
+    <h2 class="acte-section-title">CECI EXPOSÉ, IL EST ARRÊTÉ ET CONVENU CE QUI SUIT :</h2>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 1 :</strong> L'exposé préalable ci-dessus et les Annexes ci-jointes
+            ont la même valeur juridique que le présent cautionnement personnel, solidaire et indivisible
+            (le « <strong>Cautionnement</strong> ») dont ils font partie intégrante et avec lequel ils font corps.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 2 :</strong> La Caution déclare qu'elle a parfaite connaissance des termes
+            et conditions du Concours consenti par la Banque au Débiteur Cautionné et qu'elle connaît
+            également la situation financière et juridique du Débiteur Cautionné à la date de signature
+            des présentes. Elle déclare en outre que son représentant dispose de tous les pouvoirs
+            nécessaires pour l'engager au titre du présent Cautionnement, conformément aux statuts
+            de la société et aux décisions prises par ses organes compétents.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 3 :</strong> Les engagements et obligations de la Caution au titre du Cautionnement
+            sont expressément limités au Montant Cautionné, à savoir la somme maximale en principal, intérêts,
+            commissions, frais, taxes et autres accessoires, y compris les frais de recouvrement de créance, de
+            <strong>@FormatMontant(Data.CautionnementReportMontantCautionne) FCFA</strong>
+            (@Data.CautionnementReportMontantLettreCautionmt).
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 4 :</strong> Le présent contrat de cautionnement prend effet à compter du
+            <strong>@FormatDate(Data.CautionnementReportDateEffetCautionmt)</strong>
+            et reste valable jusqu'au remboursement intégral à la Banque de l'ensemble des sommes
+            qui lui sont dues par le Débiteur Cautionné au titre du Concours, soit au plus tard le
+            <strong>@FormatDate(Data.CautionnementReportDateExpirationCautionmt)</strong>.
+            Il peut être révoqué à tout moment par la Caution, sur décision de ses organes sociaux compétents,
+            avant que la somme maximale garantie ait été atteinte. Tous les engagements du Débiteur Cautionné
+            nés avant la révocation resteront cependant garantis par la Caution.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportConditionsRevocationCautionmt))
+        {
+            <p class="acte-para"><em>@Data.CautionnementReportConditionsRevocationCautionmt</em></p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 5 :</strong> La Banque est tenue dans le mois qui suit le terme de chaque
+            semestre civil à compter de la signature du contrat de cautionnement, de communiquer à la Caution
+            un état de la dette du Débiteur Cautionné, précisant sa cause, ses échéances et son montant
+            en principal, intérêts et autres accessoires restant dus à la fin du semestre écoulé,
+            en lui rappelant la faculté de révocation par reproduction littérale des dispositions
+            de l'article 19 de l'Acte Uniforme OHADA portant organisation des Sûretés.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 6 :</strong> La Banque est tenue de notifier à la Caution toute prorogation
+            conventionnelle du terme du Concours, de même que l'octroi de facilités de paiement
+            au Débiteur Cautionné, qui profiteront à la Caution si celle-ci y acquiesce formellement
+            par décision de ses organes sociaux.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 7 :</strong> La Banque est tenue d'informer la Caution de toute défaillance
+            du Débiteur Cautionné au titre du Concours, ainsi que de la déchéance ou de la prorogation
+            du terme du Concours.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 8 :</strong> En cas de défaillance du Débiteur Cautionné, la Caution sera tenue
+            de payer à la Banque ce que le Débiteur Cautionné lui doit au titre du Concours, dans la limite
+            du Montant Cautionné. La Caution s'engage à payer les sommes dues dans un délai maximum
+            de trente (30) jours à compter de la première demande écrite de la Banque par lettre recommandée
+            avec accusé de réception ou par acte extrajudiciaire.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportObligationsCaution))
+        {
+            <p class="acte-para"><em>@Data.CautionnementReportObligationsCaution</em></p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 9 :</strong> Conformément aux dispositions des articles 27 et 28 de l'Acte
+            Uniforme OHADA portant organisation des Sûretés, la Caution Solidaire ne dispose pas
+            du bénéfice de discussion et de division. La Banque pourra, en cas de défaillance
+            du Débiteur Cautionné et après mise en demeure restée sans effet depuis au moins un mois,
+            demander à la Caution de payer les sommes dues dans la limite du Montant Cautionné.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportClauseSubrogation))
+        {
+            <p class="acte-para">@Data.CautionnementReportClauseSubrogation</p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 10 :</strong> La preuve de l'existence des créances résultera suffisamment
+            des relevés de compte établis par la Banque.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 11 :</strong> Le Cautionnement et la Caution Solidaire qu'il institue
+            ne font pas novation mais s'ajoutent et s'ajouteront à toutes les garanties réelles
+            et/ou personnelles qui ont pu ou pourront être contractées en faveur de la Banque.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportClauseNonNovation))
+        {
+            <p class="acte-para">@Data.CautionnementReportClauseNonNovation</p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 12 :</strong> Les obligations de la Caution au titre du Cautionnement
+            sont stipulées indivisibles, de telle sorte que leur exécution pourra être exigée en entier,
+            à concurrence du Montant Cautionné, de la Caution, de ses ayants droit, successeurs
+            ou de toute société qui viendrait à lui succéder par voie de fusion, scission ou apport partiel d'actif.
+        </p>
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 13 :</strong> Tous droits, frais de timbres, impôts et autres frais
+            relatifs au Cautionnement et à ses suites sont à la charge du Débiteur Cautionné et de la Caution.
+            Le Débiteur Cautionné autorise la Banque à débiter son compte
+            n° <strong>@Data.DebiteurReportNumCompte</strong> du montant des frais y afférents.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.ChargeReportTypeCharge))
+        {
+            <p class="acte-para">
+                <em>
+                    Charge : @Data.ChargeReportTypeCharge —
+                    Montant : @FormatMontant(Data.ChargeReportMontantCharge) FCFA —
+                    Payé par : @Data.ChargeReportPayePar.
+                </em>
+            </p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 14 :</strong> Pour l'exécution du Cautionnement et de ses suites,
+            la Caution et la Banque font élection de domicile, chacune pour ce qui la concerne,
+            aux adresses mentionnées en tête des présentes (siège social de la Caution).
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportElectionDomicile))
+        {
+            <p class="acte-para">@Data.CautionnementReportElectionDomicile</p>
+        }
+    </article>
+
+    <article class="acte-article">
+        <p class="acte-para">
+            <strong>Article 15 :</strong> Tout différend résultant de la validité, l'interprétation
+            ou de l'exécution du présent acte devra au préalable faire l'objet d'un règlement à l'amiable.
+            À défaut de règlement à l'amiable dans un délai de trente (30) jours, le différend sera soumis
+            au Tribunal de Lomé.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Data.CautionnementReportReglementDifferend))
+        {
+            <p class="acte-para">@Data.CautionnementReportReglementDifferend</p>
+        }
+    </article>
+
+    @* ============= FAIT À LOMÉ ============= *@
+    <p class="acte-closing">
+        Fait à <strong>@Data.CautionnementReportLieuSignatureCautionmt</strong>,
+        le <strong>@FormatDateLong(Data.CautionnementReportDateSignatureCautionmt)</strong>
+    </p>
+    <p class="acte-closing-mention">
+        En trois exemplaires originaux, dont un pour l'enregistrement.
+    </p>
+
+    @* ============= MENTIONS MANUSCRITES — SPÉCIFIQUES PERSONNE MORALE ============= *@
+    <div class="acte-mention-box">
+        <p>
+            <strong>(1)</strong> Faire précéder la signature du représentant légal de la Caution
+            de la mention manuscrite :
+            « <strong>
+                Bon pour caution personnelle, solidaire et indivisible de la société
+                @(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)
+            </strong>,
+            dans les termes ci-dessus indiqués, à concurrence du Montant Cautionné, soit la somme maximale de
+            <strong>@FormatMontant(Data.CautionnementReportMontantCautionne) FCFA</strong>
+            (@Data.CautionnementReportMontantLettreCautionmt) en principal, intérêts, commissions,
+            frais, taxes, autres accessoires et frais de recouvrement de créance ».
+        </p>
+        <p>
+            <em>La signature devra être suivie du cachet de la société.</em>
+        </p>
+        <p>
+            <strong>(2)</strong> Faire précéder la signature de la Banque de la mention « Bon pour accord ».
+        </p>
+    </div>
+
+    @* ============= SIGNATURES ============= *@
+    <div class="acte-signatures">
+        <div class="acte-signature-block">
+            <div class="acte-signature-label">LA CAUTION (1)</div>
+            <div class="acte-signature-name">
+                @(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)
+            </div>
+            <div class="acte-signature-role">
+                Représentée par M @(Data.CautionReportNomRepresentant ?? Data.CautionReportNomComplet)<br />
+                @Data.CautionReportFonctionRepresentant
+            </div>
+            <div class="acte-signature-line"></div>
+            <div class="acte-signature-mention">
+                (Signature + cachet de la société)
+            </div>
+        </div>
+
+        <div class="acte-signature-block">
+            <div class="acte-signature-label">LA BANQUE (2)</div>
+            <div class="acte-signature-name">@Data.BanqueReportRepresentantBnq</div>
+            <div class="acte-signature-role">@Data.BanqueReportFonctionRepresentant</div>
+            <div class="acte-signature-line"></div>
+        </div>
+    </div>
+
+    <div class="acte-collaborator">
+        Signatures recueillies en présence du collaborateur BOA-TOGO,
+        M. <strong>@Data.BanqueReportNomCollaborateur</strong><br />
+        Visa du collaborateur BOA-TOGO : @Data.BanqueReportVisaCollaborateur
+    </div>
+
+    @* ============= ANNEXE 1 - AUTORISATION DE DÉBIT ============= *@
+    <div class="acte-page-break"></div>
+    <h2 class="acte-annexe-title">ANNEXE 1 — AUTORISATION DE DÉBIT AUTOMATIQUE</h2>
+
+    <p class="acte-para">
+        <strong>RAISON SOCIALE :</strong>
+        @(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)<br />
+        <strong>FORME JURIDIQUE :</strong> @Data.CautionReportFormeJuridique<br />
+        <strong>SIÈGE SOCIAL :</strong>
+        @(Data.CautionReportSiegeSocial ?? Data.CautionReportAdressecomplet)<br />
+        <strong>RCCM :</strong> @Data.CautionReportRegistreCommerce<br />
+        <strong>REPRÉSENTANT LÉGAL :</strong>
+        M @(Data.CautionReportNomRepresentant ?? Data.CautionReportNomComplet) —
+        @Data.CautionReportFonctionRepresentant
+    </p>
+
+    <p class="acte-para">
+        À la garantie du concours que vous avez consenti à M <strong>@Data.DebiteurReportNomComplet</strong>,
+        d'un montant de <strong>@FormatMontant(Data.PretReportMontantConcours) FCFA</strong>
+        (@Data.PretReportMontantLettrePret),
+        remboursable en @Data.PretReportDureMoisPret mois,
+        du @FormatDate(Data.PretReportDatePremiereEcheance)
+        au @FormatDate(Data.PretReportDateDerniereEcheance),
+        notre société a contracté à l'égard de la BANK OF AFRICA - TOGO un engagement de caution solidaire
+        et indivisible suivant acte du
+        <strong>@FormatDate(Data.CautionnementReportDateSignatureCautionmt)</strong>.
+    </p>
+
+    <p class="acte-para">
+        En vertu de cet engagement, nous autorisons dès à présent et irrévocablement la Banque
+        à débiter notre compte n° <strong>@Data.CautionReportNumCompte</strong> de toutes sommes
+        qui pourraient être dues à la Banque par le Débiteur Cautionné, dans la limite du Montant Cautionné.
+    </p>
+
+    <p class="acte-letter-signature">
+        Pour la société
+        <strong>@(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)</strong>,<br /><br />
+        <strong>@(Data.CautionReportNomRepresentant ?? Data.CautionReportNomComplet)</strong><br />
+        <em>@Data.CautionReportFonctionRepresentant</em><br />
+        <em>(Signature + cachet de la société)</em>
+    </p>
+
+    @* ============= ANNEXE 2 - TIERS ÉVENTUELS ============= *@
+    @if (!string.IsNullOrWhiteSpace(Data.Temoin1ReportNomComplet))
+    {
+        <div class="acte-page-break"></div>
+        <h2 class="acte-annexe-title">ANNEXE 2 — IDENTIFICATION DES TIERS</h2>
+
+        <p class="acte-para acte-para-italic">
+            Tiers ayant assisté la Caution lors de la signature du présent acte
+            pour une meilleure compréhension du contrat.
+        </p>
+
+        <h3 class="acte-sub-title">Tiers 1</h3>
+        <p class="acte-para">
+            <strong>M @Data.Temoin1ReportNomComplet</strong>,
+            né(e) le @FormatDate(Data.Temoin1ReportDateNaiss)
+            à @Data.Temoin1ReportLieuNaiss (@Data.Temoin1ReportPaysNaiss),
+            de nationalité @Data.Temoin1ReportNationalite,
+            @Data.Temoin1ReportProfessionClt,
+            demeurant à @Data.Temoin1ReportAdressecomplet,
+            titulaire de la pièce @Data.Temoin1ReportTypePieceID
+            n° @Data.Temoin1ReportNumPieceID.
+        </p>
+
+        @if (!string.IsNullOrWhiteSpace(Data.Temoin2ReportNomComplet))
+        {
+            <h3 class="acte-sub-title">Tiers 2</h3>
+            <p class="acte-para">
+                <strong>M @Data.Temoin2ReportNomComplet</strong>,
+                né(e) le @FormatDate(Data.Temoin2ReportDateNaiss)
+                à @Data.Temoin2ReportLieuNaiss (@Data.Temoin2ReportPaysNaiss),
+                de nationalité @Data.Temoin2ReportNationalite,
+                @Data.Temoin2ReportProfessionClt,
+                demeurant à @Data.Temoin2ReportAdressecomplet,
+                titulaire de la pièce @Data.Temoin2ReportTypePieceID
+                n° @Data.Temoin2ReportNumPieceID.
+            </p>
+        }
+    }
+
+    @* ============= LETTRE HUISSIER ============= *@
+    @if (!string.IsNullOrWhiteSpace(Data.EntiteJuridiqueReportNomHuissier))
+    {
+        <div class="acte-page-break"></div>
+        <div class="acte-letter">
+            <div class="acte-letter-header">
+                <div>Lomé, le @FormatDateLong(Data.EntiteJuridiqueReportDateActeJuridique)</div>
+                <div>Direction Juridique</div>
+                <div>N/Réf. : @Data.EntiteJuridiqueReportReference</div>
+            </div>
+
+            <div class="acte-letter-recipient">
+                <strong>Maître @Data.EntiteJuridiqueReportNomHuissier</strong><br />
+                Huissier de Justice<br />
+                @Data.EntiteJuridiqueReportVilleHuissier
+            </div>
+
+            <p class="acte-para">
+                <strong>Objet :</strong> Cautionnement personnel, solidaire et indivisible
+                — Personne Morale<br />
+                <strong>Dossier :</strong> @Data.EntiteJuridiqueReportNumeroDossier —
+                @Data.EntiteJuridiqueReportNomDossier
+            </p>
+
+            <p class="acte-para">Cher Maître,</p>
+
+            <p class="acte-para">Nous vous remettons ci-joint :</p>
+
+            <ul class="acte-list">
+                <li>
+                    Copie du contrat de prêt signé entre @Data.DebiteurReportNomComplet
+                    et nous-mêmes le @FormatDate(Data.PretReportDateSignaturePret)
+                    pour un montant de @FormatMontant(Data.PretReportMontantConcours) FCFA
+                    (« <strong>Montant</strong> ») ;
+                </li>
+                <li>
+                    Un exemplaire de l'acte de cautionnement consenti à notre profit
+                    par la société <strong>@(Data.CautionReportNomRaisonsociale ?? Data.CautionReportNomComplet)</strong>
+                    à hauteur de @FormatMontant(Data.CautionnementReportMontantCautionne) FCFA
+                    (« <strong>Montant cautionné</strong> »).
+                </li>
+                @if (!string.IsNullOrWhiteSpace(Data.CautionReportRefPVDelib))
+                {
+                    <li>
+                        Copie du <strong>@Data.CautionReportRefPVDelib</strong>
+                        en date du @FormatDate(Data.CautionReportDatePVDelib)
+                        autorisant le représentant légal à engager la société.
+                    </li>
+                }
+            </ul>
+
+            <p class="acte-para">
+                Nous vous prions de bien vouloir procéder à l'enregistrement de l'acte de cautionnement
+                auprès de l'Office Togolais des Recettes.
+            </p>
+
+            <p class="acte-para">
+                Votre intervention accomplie, vous voudrez bien nous retourner les documents originaux
+                dûment enregistrés.
+            </p>
+
+            <p class="acte-letter-signature">
+                Pour la BOA-TOGO,<br /><br />
+                <strong>@Data.EntiteJuridiqueReportResponsable</strong><br />
+                <em>@Data.EntiteJuridiqueReportFonctionResponsable</em>
+            </p>
+        </div>
+    }
+
+    @* ============= FOOTER ============= *@
+    <footer class="acte-footer">
+        <div>Document généré le @DateTime.Now.ToString("dd/MM/yyyy à HH:mm")</div>
+        <div class="acte-watermark">APERÇU — Document non officiel</div>
+    </footer>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ActCautionnementReportModel Data { get; set; } = default!;
+}

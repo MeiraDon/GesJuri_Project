@@ -3,6 +3,7 @@ using System;
 using GesCPSI_Project.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GesCPSI_Project.Migrations
 {
     [DbContext(typeof(GesDbContext))]
-    partial class GesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603161647_AddTemplateTypeToAjoutAct")]
+    partial class AddTemplateTypeToAjoutAct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -317,9 +320,6 @@ namespace GesCPSI_Project.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CapitalSocial")
-                        .HasColumnType("text");
-
                     b.Property<bool>("CopiePieceJointe")
                         .HasColumnType("boolean");
 
@@ -331,15 +331,6 @@ namespace GesCPSI_Project.Migrations
 
                     b.Property<DateTime>("DateNaiss")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DatePVDelib")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FonctionRepresentant")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FormeJuridique")
-                        .HasColumnType("text");
 
                     b.Property<string>("LieuDelivPiece")
                         .IsRequired()
@@ -377,9 +368,6 @@ namespace GesCPSI_Project.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("NumIdentifFiscal")
-                        .HasColumnType("text");
-
                     b.Property<string>("NumPieceID")
                         .IsRequired()
                         .HasColumnType("text");
@@ -408,21 +396,12 @@ namespace GesCPSI_Project.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("RefPVDelib")
-                        .HasColumnType("text");
-
                     b.Property<string>("RegimeMatrim")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("RegistreCommerce")
-                        .HasColumnType("text");
-
                     b.Property<string>("Sexe")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("SiegeSocial")
                         .HasColumnType("text");
 
                     b.Property<string>("SituationMatrim")

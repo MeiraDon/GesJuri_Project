@@ -72,6 +72,15 @@ namespace GesCPSI_Project.Models
         public string PersonDelivPiece { get; set; } = string.Empty;
         public bool CopiePieceJointe { get; set; }
 
+        public string? FormeJuridique { get; set; }
+        public string? CapitalSocial { get; set; }
+        public string? SiegeSocial { get; set; }
+        public string? RegistreCommerce { get; set; }
+        public string? NumIdentifFiscal { get; set; }
+        public string? FonctionRepresentant { get; set; }
+        public string? RefPVDelib { get; set; }
+        public DateTime? DatePVDelib { get; set; }
+
 
         // Navigation many-to-many avec TypesActe
         public ICollection<ClientActModel> ClientActModels { get; set; } = new List<ClientActModel>();

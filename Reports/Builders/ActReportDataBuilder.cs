@@ -1,5 +1,6 @@
 ﻿using GesCPSI_Project.Interfaces;
 using GesCPSI_Project.Models;
+using GesCPSI_Project.Services;
 using System.Net;
 
 namespace GesCPSI_Project.Reports
@@ -56,6 +57,10 @@ namespace GesCPSI_Project.Reports
             var temoin1 = GetClientByRoles(links, allClients, "Temoin1", "Temoin 1", "Témoin 1");
             var temoin2 = GetClientByRoles(links, allClients, "Temoin2", "Temoin 2", "Témoin 2");
 
+            // Détecte si la caution est une personne morale
+            var cautionEstMorale = caution is not null
+                && string.Equals(caution.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase);
+
             return new ActCautionnementReportModel
             {
                 ActReportIdActe = acte.IdActe,
@@ -107,6 +112,7 @@ namespace GesCPSI_Project.Reports
                 DebiteurReportLieuDelivPiece = debiteur?.LieuDelivPiece ?? "",
                 DebiteurReportPersonDelivPiece = debiteur?.PersonDelivPiece ?? "",
 
+                // ============ CAUTION — Champs communs ============
                 CautionReportNomComplet = BuildNomComplet(caution),
                 CautionReportNomRaisonsociale = caution?.NomRaisonsociale ?? "",
                 CautionReportNomRepresentant = caution?.NomRepresentant ?? "",
@@ -137,6 +143,18 @@ namespace GesCPSI_Project.Reports
                 CautionReportLieuDelivPiece = caution?.LieuDelivPiece ?? "",
                 CautionReportPersonDelivPiece = caution?.PersonDelivPiece ?? "",
 
+                // ============ CAUTION — Champs Personne Morale ============
+                // Remplis uniquement si la caution est une personne morale, sinon ""
+                CautionReportFormeJuridique = cautionEstMorale ? (caution?.FormeJuridique ?? "") : "",
+                CautionReportCapitalSocial = cautionEstMorale ? (caution?.CapitalSocial ?? "") : "",
+                CautionReportSiegeSocial = cautionEstMorale ? (caution?.SiegeSocial ?? "") : "",
+                CautionReportRegistreCommerce = cautionEstMorale ? (caution?.RegistreCommerce ?? "") : "",
+                CautionReportNumIdentifFiscal = cautionEstMorale ? (caution?.NumIdentifFiscal ?? "") : "",
+                CautionReportFonctionRepresentant = cautionEstMorale ? (caution?.FonctionRepresentant ?? "") : "",
+                CautionReportRefPVDelib = cautionEstMorale ? (caution?.RefPVDelib ?? "") : "",
+                CautionReportDatePVDelib = cautionEstMorale ? SafeDate(caution?.DatePVDelib) : DateTime.MinValue,
+
+                // ============ TÉMOINS ============
                 Temoin1ReportNomComplet = BuildNomComplet(temoin1),
                 Temoin1ReportNomRaisonsociale = temoin1?.NomRaisonsociale ?? "",
                 Temoin1ReportNomRepresentant = temoin1?.NomRepresentant ?? "",

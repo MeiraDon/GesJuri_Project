@@ -215,71 +215,91 @@
                     <MudTh class="text-end">Actions</MudTh>
                 </HeaderContent>
 
-                <RowTemplate>
+                <RowTemplate Context="acte">
                    
                     <MudTd>
 
-                        <div class="text-nowrap">@context.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
-                        <div class="text-muted small">@context.DateCreation.ToLocalTime().ToString("HH:mm")</div>
+                        <div class="text-nowrap">@acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                        <div class="text-muted small">@acte.DateCreation.ToLocalTime().ToString("HH:mm")</div>
                     </MudTd>
 
                     <MudTd>
-                        <div class="text-nowrap">@context.DateMaj.ToLocalTime().ToString("dd/MM/yyyy")</div>
-                        <div class="text-muted small">@context.DateMaj.ToLocalTime().ToString("HH:mm")</div>
+                        <div class="text-nowrap">@acte.DateMaj.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                        <div class="text-muted small">@acte.DateMaj.ToLocalTime().ToString("HH:mm")</div>
                     </MudTd>
 
                     <MudTd>
-                        <div class="fw-medium">@context.NomTypesActe</div>
+                        <div class="fw-medium">@acte.NomTypesActe</div>
                     </MudTd>
 
                     <MudTd>
-                        <div class="fw-medium participant-cell">@GetDebiteurName(context.IdActe)</div>
+                        <div class="fw-medium participant-cell">@GetDebiteurName(acte.IdActe)</div>
                     </MudTd>
 
                     <MudTd>
-                        <div class="fw-medium participant-cell">@GetCautionName(context.IdActe)</div>
+                        <div class="fw-medium participant-cell">@GetCautionName(acte.IdActe)</div>
                     </MudTd>
 
                     <MudTd>
                         <MudChip T="string"
-                                 Color="@GetStatusColor(context.Statut)"
+                                 Color="@GetStatusColor(acte.Statut)"
                                  Variant="Variant.Filled"
                                  Size="Size.Small"
                                  Class="fw-medium">
-                            @((string.IsNullOrWhiteSpace(context.Statut)) ? "Brouillon" : context.Statut)
+                            @((string.IsNullOrWhiteSpace(acte.Statut)) ? "Brouillon" : acte.Statut)
                         </MudChip>
                     </MudTd>
 
                     <MudTd class="text-end">
                         <div class="d-inline-flex align-items-center gap-1">
 
+                            <!-- 👁️ APERÇU - toujours visible -->
+                            <MudTooltip Text="Aperçu de l'acte">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                               Color="Color.Secondary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => PreviewActe(acte))" />
+                            </MudTooltip>
+
+                            <!-- ✏️ MODIFIER -->
                             <MudTooltip Text="Modifier">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                                Color="Color.Primary"
                                                Size="Size.Small"
-                                               OnClick="@(() => Edit(context))" />
+                                               OnClick="@(() => Edit(acte))" />
                             </MudTooltip>
 
-                            
+                            <!-- ⬇️ TÉLÉCHARGER PDF - si PdfGenerePath existe -->
+                            @if (!string.IsNullOrWhiteSpace(acte.PdfGenerePath))
+                            {
+                                <MudTooltip Text="Télécharger le PDF">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                                   Color="Color.Success"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => DownloadPdf(acte))" />
+                                </MudTooltip>
+                            }
 
+                            <!-- 📤 ENVOYER -->
                             <MudTooltip Text="Envoyer au responsable">
                                 <MudIconButton Icon="@Icons.Material.Filled.Send"
                                                Color="Color.Info"
                                                Size="Size.Small"
-                                               Disabled="@(_loading || !CanSendActe(context))"
-                                               OnClick="@(() => SendActeAsync(context))" />
+                                               Disabled="@(_loading || !CanSendActe(acte))"
+                                               OnClick="@(() => SendActeAsync(acte))" />
                             </MudTooltip>
 
+                            <!-- 🗑️ SUPPRIMER -->
                             <MudTooltip Text="Supprimer">
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                Color="Color.Error"
                                                Size="Size.Small"
-                                               OnClick="@(() => ConfirmDelete(context))" />
+                                               OnClick="@(() => ConfirmDelete(acte))" />
                             </MudTooltip>
 
                         </div>
-
                     </MudTd>
+
                 </RowTemplate>
 
                 <PagerContent>
@@ -292,6 +312,8 @@
 </MudContainer>
 
 @code {
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
     private List<TypesActModel> _actes = new();
     private bool _loading = true;
 
@@ -520,6 +542,52 @@
     {
         var returnUrl = Uri.EscapeDataString("/listAct");
         NavigationManager.NavigateTo($"/saisirPage/{acte.IdAjout}?acteId={acte.IdActe}&returnUrl={returnUrl}");
+    }
+
+    
+
+    private async Task PreviewActe(TypesActModel acte)
+    {
+        var parameters = new DialogParameters
+    {
+        { nameof(GesCPSI_Project.Components.Dialogs.ActePreviewDialog.ActeId), acte.IdActe }
+    };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = true,
+                Position = DialogPosition.Center
+            };
+
+        await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ActePreviewDialog>(
+            "Aperçu", parameters, options);
+    }
+
+    private async Task DownloadPdf(TypesActModel acte)
+    {
+        if (string.IsNullOrWhiteSpace(acte.PdfGenerePath))
+        {
+            Snackbar.Add("Le PDF n'a pas encore été généré pour cet acte.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            // Le chemin est déjà au format /uploads/actes/pdf/xxx.pdf (web-relative)
+            var url = acte.PdfGenerePath.StartsWith("/") ? acte.PdfGenerePath : "/" + acte.PdfGenerePath;
+
+            // Ouverture dans un nouvel onglet → le navigateur propose le téléchargement
+            await JS.InvokeVoidAsync("open", url, "_blank");
+
+            Snackbar.Add($"Téléchargement de l'acte #{acte.IdActe} en cours...", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur téléchargement : {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task DeleteActeCascadeAsync(int acteId)

@@ -13,6 +13,9 @@ namespace GesCPSI_Project.Models
         public string? Description { get; set; } = string.Empty;
         public string? CategorieClient { get; set; } = "Personne Physique";
 
+        // 🆕 NOUVEAU CHAMP
+        public TemplateType TemplateType { get; set; } = TemplateType.CautionnementSpecifiquePhysique;
+
         // Navigation : un type ajouté peut servir à créer plusieurs actes
         public ICollection<TypesActModel> TypesActModels { get; set; } = new List<TypesActModel>();
     }

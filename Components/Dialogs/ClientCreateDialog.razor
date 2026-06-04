@@ -140,13 +140,23 @@
                 LieuMariage = vm.LieuMariage ?? "",
                 RegimeMatrim = vm.RegimeMatrim ?? "",
 
-                TypePieceID = vm.TypePieceID ?? "",
-                NumPieceID = vm.NumPieceID ?? "",
+                    TypePieceID = vm.TypePieceID ?? "",
+                    NumPieceID = vm.NumPieceID ?? "",
 
-                DateDelivPiece = ToUtcOrNow(vm.DateDelivPiece),
+                    DateDelivPiece = ToUtcOrNow(vm.DateDelivPiece),
 
-                LieuDelivPiece = vm.LieuDelivPiece ?? "",
-                PersonDelivPiece = vm.PersonDelivPiece ?? ""
+                    LieuDelivPiece = vm.LieuDelivPiece ?? "",
+                    PersonDelivPiece = vm.PersonDelivPiece ?? "",
+
+                    // 🆕 NOUVEAUX CHAMPS PERSONNE MORALE
+                    FormeJuridique = vm.FormeJuridique,
+                    CapitalSocial = vm.CapitalSocial,
+                    SiegeSocial = vm.SiegeSocial,
+                    RegistreCommerce = vm.RegistreCommerce,
+                    NumIdentifFiscal = vm.NumIdentifFiscal,
+                    FonctionRepresentant = vm.FonctionRepresentant,
+                    RefPVDelib = vm.RefPVDelib,
+                    DatePVDelib = ToUtcOrNow(vm.DatePVDelib)
             };
 
             var res = await ClientService.AddAsync(entity);

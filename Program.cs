@@ -1,4 +1,4 @@
-using GesCPSI_Project.Components;
+﻿using GesCPSI_Project.Components;
 using GesCPSI_Project.Data;
 using GesCPSI_Project.Interfaces;
 using GesCPSI_Project.Models;
@@ -7,6 +7,7 @@ using GesCPSI_Project.Services;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +26,45 @@ builder.Services.AddDbContext<GesDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// ============================================================
+// ASP.NET CORE IDENTITY
+// ============================================================
+builder.Services.AddIdentity<UserModel, UserRole>(options =>
+{
+    // Politique de mots de passe
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
 
-// Services m�tier
+    // Verrouillage anti brute-force
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+
+    // Email
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = false; // à passer à true en prod
+})
+.AddEntityFrameworkStores<GesDbContext>()
+.AddDefaultTokenProviders();
+
+// Configuration du cookie d'authentification
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+});
+
+// Pour exposer les infos d'auth aux composants Blazor
+builder.Services.AddCascadingAuthenticationState();
+
+
+
+// Services métier
 builder.Services.AddScoped(typeof(ICrud<>), typeof(ServiceBase<>));
 builder.Services.AddScoped<IAjoutAct, AjoutActService>();
 builder.Services.AddScoped<ITypesAct, TypesActService>();
@@ -90,31 +128,47 @@ builder.Services.AddLogging(logging =>
 var app = builder.Build();
 
 // ? Seed User #1 (SYSTEM) si absent
-await SeedSystemUserAsync(app);
+//await SeedSystemUserAsync(app);
 
-static async Task SeedSystemUserAsync(WebApplication app)
+//static async Task SeedSystemUserAsync(WebApplication app)
+//{
+//    using var scope = app.Services.CreateScope();
+//    var db = scope.ServiceProvider.GetRequiredService<GesDbContext>();
+
+//    var exists = await db.Set<UserModel>().AnyAsync(u => u.IdUser == 1);
+//    if (!exists)
+//    {
+//        db.Set<UserModel>().Add(new UserModel
+//        {
+//            IdUser = 1,
+//            NameUser = "SYSTEM",
+//            SurnameUser = "CPSI",
+//            EmailUser = "system@cpsi.local",
+//            KeycloakId = "LOCAL-SEED-USER-1",
+//            Departement = "Juridique",
+//            Fonction = "Admin",
+//            DateCreation = DateTime.UtcNow,
+//            IsActive = true
+//        });
+
+//        await db.SaveChangesAsync();
+//    }
+//}
+
+
+// ============================================================
+// SEED IDENTITY (rôles + admin par défaut)
+// ============================================================
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
+}
+
+// Seed RoleClient (existant)
+using (var scope = app.Services.CreateScope())
+{
     var db = scope.ServiceProvider.GetRequiredService<GesDbContext>();
-
-    var exists = await db.Set<UserModel>().AnyAsync(u => u.IdUser == 1);
-    if (!exists)
-    {
-        db.Set<UserModel>().Add(new UserModel
-        {
-            IdUser = 1,
-            NameUser = "SYSTEM",
-            SurnameUser = "CPSI",
-            EmailUser = "system@cpsi.local",
-            KeycloakId = "LOCAL-SEED-USER-1",
-            Departement = "Juridique",
-            Fonction = "Admin",
-            DateCreation = DateTime.UtcNow,
-            IsActive = true
-        });
-
-        await db.SaveChangesAsync();
-    }
+    // ... rien à changer ici
 }
 
 
@@ -158,6 +212,11 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+// 🆕 Authentication & Authorization (ordre important : AVANT UseAntiforgery)
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapControllers();
@@ -166,3 +225,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+

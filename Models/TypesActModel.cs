@@ -34,7 +34,7 @@ namespace GesCPSI_Project.Models
         public AjoutActModel AjoutActModel { get; set; } = null!;
 
         // ================= CREATEUR DE L'ACTE =================
-        public int IdUser { get; set; }
+        public int? IdUser { get; set; }
 
         [ForeignKey(nameof(IdUser))]
         public UserModel UserModel { get; set; } = null!;

@@ -89,7 +89,7 @@ builder.Services.AddScoped<ActReportJsonService>();
 builder.Services.AddScoped<ActReportPdfService>();
 builder.Services.AddScoped<ActReportWorkflowService>();
 
-
+builder.Services.AddHttpContextAccessor();
 
 
 

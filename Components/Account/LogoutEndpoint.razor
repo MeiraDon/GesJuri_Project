@@ -1,0 +1,26 @@
+﻿@page "/Account/Logout"
+@layout EmptyLayout
+@using Microsoft.AspNetCore.Identity
+@using GesCPSI_Project.Models
+
+@inject SignInManager<UserModel> SignInManager
+@inject NavigationManager Navigation
+
+@attribute [AllowAnonymous]
+
+<div style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#0A2540 0%,#06182E 100%);">
+    <div style="background:white;padding:48px 64px;border-radius:16px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <p style="margin-top:16px;font-size:1.1rem;font-weight:600;color:#0A2540;">Déconnexion en cours...</p>
+        <p style="margin-top:8px;color:#5E6B7D;font-size:0.9rem;">Vous êtes redirigé.</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await SignInManager.SignOutAsync();
+        await Task.Delay(600);
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

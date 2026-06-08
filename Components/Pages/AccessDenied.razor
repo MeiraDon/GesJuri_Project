@@ -1,0 +1,36 @@
+﻿@page "/access-denied"
+@layout EmptyLayout
+@attribute [AllowAnonymous]
+
+<div class="access-denied-page">
+    <MudPaper Class="access-denied-card" Elevation="0">
+        <MudIcon Icon="@Icons.Material.Filled.Block" Color="Color.Error" Style="font-size: 5rem;" />
+        <MudText Typo="Typo.h4" Class="mt-3" Style="color: #0A2540; font-weight: 700;">Accès refusé</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2 mb-4">
+            Vous n'avez pas les droits nécessaires pour accéder à cette page.
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" Size="Size.Large">
+            <MudIcon Icon="@Icons.Material.Filled.Home" Class="me-2" />
+            Retour à l'accueil
+        </MudButton>
+    </MudPaper>
+</div>
+
+<style>
+    .access-denied-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FAFAF7;
+    }
+
+    .access-denied-card {
+        max-width: 480px;
+        padding: 48px !important;
+        text-align: center;
+        border-radius: 16px !important;
+        background: white !important;
+        border: 1px solid #E1E4E8;
+    }
+</style>

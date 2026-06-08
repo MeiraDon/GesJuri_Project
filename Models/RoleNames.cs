@@ -4,6 +4,7 @@
     /// Noms canoniques des rôles métier — à utiliser dans [Authorize(Roles=...)] et dans les seeds.
     /// Centraliser ça évite les fautes de frappe ("Admin" vs "admin").
     /// </summary>
+    /// 
     public class RoleNames
     {
         public const string Admin = "Admin";

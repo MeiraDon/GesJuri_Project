@@ -1,0 +1,392 @@
+﻿@page "/login"
+@layout EmptyLayout
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Identity
+@using GesCPSI_Project.Models
+@using System.ComponentModel.DataAnnotations
+
+@inject SignInManager<UserModel> SignInManager
+@inject UserManager<UserModel> UserManager
+@inject NavigationManager Navigation
+
+<PageTitle>Connexion — GesCPSI BOA-TOGO</PageTitle>
+
+<div class="login-page">
+    <!-- Côté gauche : visuel / branding -->
+    <div class="login-brand-panel">
+        <div class="login-brand-content">
+            <div class="brand-logo-wrapper">
+                <img src="/images/Logo_boatg.jpg" alt="BOA-TOGO" class="brand-logo" />
+            </div>
+            <h1 class="brand-title">GesCPSI</h1>
+            <p class="brand-tagline">Gestion des Actes de Cautionnement<br />Personnel, Solidaire et Indivisible</p>
+
+            <div class="brand-features">
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Inherit" Size="Size.Small" />
+                    <span>Sécurisé & conforme OHADA</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Speed" Color="Color.Inherit" Size="Size.Small" />
+                    <span>Validation rapide des dossiers</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Inherit" Size="Size.Small" />
+                    <span>Génération PDF automatisée</span>
+                </div>
+            </div>
+
+            <div class="brand-footer">
+                <span>© 2026 BOA-TOGO — Direction Juridique</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Côté droit : formulaire -->
+    <div class="login-form-panel">
+        <MudPaper Class="login-card" Elevation="0">
+            <div class="login-header">
+                <MudText Typo="Typo.h4" Class="login-title">Bienvenue</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Connectez-vous à votre espace de travail
+                </MudText>
+            </div>
+
+            <EditForm Model="model" OnValidSubmit="HandleLoginAsync" FormName="login-form">
+                <DataAnnotationsValidator />
+
+                <div class="form-field">
+                    <MudTextField @bind-Value="model.Email"
+                                  Label="Adresse email"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email"
+                                  AdornmentColor="Color.Primary"
+                                  InputType="InputType.Email"
+                                  Required="true"
+                                  Immediate="true"
+                                  Class="mb-3" />
+                </div>
+
+                <div class="form-field">
+                    <MudTextField @bind-Value="model.Password"
+                                  Label="Mot de passe"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Lock"
+                                  AdornmentColor="Color.Primary"
+                                  InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
+                                  Required="true"
+                                  Class="mb-3">
+                    </MudTextField>
+                    <div class="password-toggle">
+                        <MudIconButton Icon="@(_passwordVisible ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                       Size="Size.Small"
+                                       OnClick="@(() => _passwordVisible = !_passwordVisible)"
+                                       Title="@(_passwordVisible ? "Masquer" : "Afficher")" />
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <MudCheckBox @bind-Value="model.RememberMe" Color="Color.Primary" Dense="true">
+                        <MudText Typo="Typo.body2">Se souvenir de moi</MudText>
+                    </MudCheckBox>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error"
+                              Icon="@Icons.Material.Filled.ErrorOutline"
+                              Class="mb-3"
+                              Dense="true">
+                        @_errorMessage
+                    </MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Disabled="@_isLoading"
+                           Class="login-submit-btn">
+                    @if (_isLoading)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                        <span>Connexion en cours...</span>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Login" Class="me-2" />
+                        <span>Se connecter</span>
+                    }
+                </MudButton>
+            </EditForm>
+
+            <div class="login-footer">
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+                    Besoin d'accès ? Contactez votre administrateur.
+                </MudText>
+            </div>
+        </MudPaper>
+    </div>
+</div>
+
+@code {
+    public LoginModel model { get; set; } = new();
+
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private string? _errorMessage;
+    private bool _isLoading;
+    private bool _passwordVisible;
+
+    protected override void OnInitialized()
+    {
+        // Affichage de l'erreur si l'endpoint Account/Login a renvoyé une erreur
+        _errorMessage = Error switch
+        {
+            "invalid" => "Adresse email ou mot de passe incorrect.",
+            "lockout" => "Compte verrouillé suite à plusieurs tentatives. Réessayez dans 15 minutes.",
+            "missing" => "Veuillez saisir vos identifiants.",
+            "httpContext" => "Erreur technique. Réessayez.",
+            _ => null
+        };
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "L'adresse email est obligatoire")]
+        [EmailAddress(ErrorMessage = "Format d'adresse email invalide")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Le mot de passe est obligatoire")]
+        public string Password { get; set; } = "";
+
+        public bool RememberMe { get; set; }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        _errorMessage = null;
+        _isLoading = true;
+
+        if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+        {
+            _errorMessage = "Veuillez saisir vos identifiants.";
+            _isLoading = false;
+            return;
+        }
+
+        // 🎯 On délègue le SignIn à un endpoint Razor (qui peut écrire les cookies)
+        var qs = $"?Email={Uri.EscapeDataString(model.Email)}" +
+                 $"&Password={Uri.EscapeDataString(model.Password)}" +
+                 $"&RememberMe={model.RememberMe}";
+
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            qs += $"&ReturnUrl={Uri.EscapeDataString(ReturnUrl)}";
+
+        Navigation.NavigateTo($"/Account/Login{qs}", forceLoad: true);
+        await Task.Yield();
+    }
+}
+
+<style>
+    /* ============================================
+           PAGE LOGIN — LAYOUT DOUBLE COLONNE
+           ============================================ */
+    .login-page {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        background: #FAFAF7;
+    }
+
+    /* ===== Panneau gauche : branding ===== */
+    .login-brand-panel {
+        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #0E2C4A 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px;
+    }
+
+        /* Effet visuel subtil : motif géométrique en fond */
+        .login-brand-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(201, 168, 106, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-brand-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(14, 124, 92, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .login-brand-content {
+        position: relative;
+        z-index: 1;
+        max-width: 480px;
+        width: 100%;
+    }
+
+    .brand-logo-wrapper {
+        background: white;
+        display: inline-flex;
+        padding: 16px 24px;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .brand-logo {
+        max-height: 60px;
+        width: auto;
+    }
+
+    .brand-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #FFFFFF 0%, #C9A86A 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .brand-tagline {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 48px;
+        font-weight: 300;
+    }
+
+    .brand-features {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 64px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 0.95rem;
+    }
+
+        .feature-item .mud-icon-root {
+            background: rgba(201, 168, 106, 0.15);
+            padding: 6px;
+            border-radius: 8px;
+            color: #C9A86A !important;
+        }
+
+    .brand-footer {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.5px;
+    }
+
+    /* ===== Panneau droit : formulaire ===== */
+    .login-form-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px;
+    }
+
+    .login-card {
+        max-width: 440px;
+        width: 100%;
+        padding: 48px 40px;
+        background: white !important;
+        border-radius: 16px !important;
+        border: 1px solid #E1E4E8;
+        box-shadow: 0 4px 24px rgba(10, 37, 64, 0.06) !important;
+    }
+
+    .login-header {
+        margin-bottom: 36px;
+    }
+
+    .login-title {
+        color: #0A2540 !important;
+        font-weight: 700 !important;
+        margin-bottom: 8px;
+    }
+
+    .form-field {
+        position: relative;
+        margin-bottom: 4px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        top: 12px;
+        right: 8px;
+        z-index: 2;
+    }
+
+    .form-options {
+        margin: 8px 0 20px;
+    }
+
+    .login-submit-btn {
+        padding: 14px !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.3px;
+        height: 52px !important;
+        margin-top: 8px;
+        text-transform: none !important;
+        box-shadow: 0 4px 12px rgba(10, 37, 64, 0.15) !important;
+    }
+
+        .login-submit-btn:hover {
+            box-shadow: 0 6px 16px rgba(10, 37, 64, 0.25) !important;
+        }
+
+    .login-footer {
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #E1E4E8;
+    }
+
+    /* ===== Responsive ===== */
+    @@media (max-width: 968px) {
+        .login-page {
+            grid-template-columns: 1fr;
+        }
+
+        .login-brand-panel {
+            display: none;
+        }
+
+        .login-card {
+            box-shadow: none !important;
+            border: none;
+            padding: 32px 24px;
+        }
+    }
+</style>

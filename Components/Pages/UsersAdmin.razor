@@ -1,0 +1,685 @@
+﻿@page "/users"
+@attribute [Authorize(Roles = RoleNames.Admin)]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Models
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IUserAdmin UserService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Utilisateurs — GesCPSI</PageTitle>
+
+<div class="users-admin-page">
+
+    <!-- ============= HEADER ============= -->
+    <div class="page-header">
+        <div>
+            <MudText Typo="Typo.h4" Class="page-title">
+                <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Class="me-2" />
+                Gestion des utilisateurs
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                Créez, modifiez et gérez les comptes utilisateurs de l'application.
+            </MudText>
+        </div>
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   Size="Size.Large"
+                   OnClick="OpenCreateDialog"
+                   Class="create-user-btn">
+            Nouvel utilisateur
+        </MudButton>
+    </div>
+
+    <!-- ============= STATS CARDS ============= -->
+    <div class="stats-row">
+        <MudPaper Class="stat-card stat-total" Elevation="0">
+            <div class="stat-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Group" />
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">@_users.Count</div>
+                <div class="stat-label">Utilisateurs total</div>
+            </div>
+        </MudPaper>
+
+        <MudPaper Class="stat-card stat-active" Elevation="0">
+            <div class="stat-icon">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">@_users.Count(u => u.IsActive)</div>
+                <div class="stat-label">Actifs</div>
+            </div>
+        </MudPaper>
+
+        <MudPaper Class="stat-card stat-inactive" Elevation="0">
+            <div class="stat-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Block" />
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">@_users.Count(u => !u.IsActive)</div>
+                <div class="stat-label">Désactivés</div>
+            </div>
+        </MudPaper>
+
+        <MudPaper Class="stat-card stat-admin" Elevation="0">
+            <div class="stat-icon">
+                <MudIcon Icon="@Icons.Material.Filled.Shield" />
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">@_users.Count(u => u.Role == RoleNames.Admin)</div>
+                <div class="stat-label">Administrateurs</div>
+            </div>
+        </MudPaper>
+    </div>
+
+    <!-- ============= FILTRES ============= -->
+    <MudPaper Class="filters-card" Elevation="0">
+        <div class="filters-row">
+            <MudTextField @bind-Value="_searchText"
+                          Placeholder="Rechercher par nom, email ou fonction..."
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Class="filter-search" />
+
+            <MudSelect T="string"
+                       @bind-Value="_roleFilter"
+                       Placeholder="Tous les rôles"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Class="filter-role"
+                       Clearable="true">
+                <MudSelectItem Value="@RoleNames.Admin">Administrateur</MudSelectItem>
+                <MudSelectItem Value="@RoleNames.Agent">Agent Juridique</MudSelectItem>
+                <MudSelectItem Value="@RoleNames.Responsable">Responsable Juridique</MudSelectItem>
+            </MudSelect>
+
+            <MudSelect T="string"
+                       @bind-Value="_statusFilter"
+                       Placeholder="Tous les statuts"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Class="filter-status"
+                       Clearable="true">
+                <MudSelectItem Value="@("active")">Actifs uniquement</MudSelectItem>
+                <MudSelectItem Value="@("inactive")">Désactivés uniquement</MudSelectItem>
+            </MudSelect>
+
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Default"
+                           OnClick="LoadUsersAsync"
+                           Title="Rafraîchir" />
+        </div>
+    </MudPaper>
+
+    <!-- ============= TABLEAU ============= -->
+    <MudPaper Class="users-table-card" Elevation="0">
+        @if (_isLoading)
+        {
+            <div class="text-center py-5">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (!_filteredUsers.Any())
+        {
+            <div class="text-center py-5">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Style="color:#A0A8B5;" />
+                <MudText Typo="Typo.h6" Class="mt-3" Style="color:#5E6B7D;">Aucun utilisateur trouvé</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Modifiez vos filtres ou créez un nouvel utilisateur.
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="@_filteredUsers"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Dense="false"
+                      Class="users-table">
+                <HeaderContent>
+                    <MudTh>Utilisateur</MudTh>
+                    <MudTh>Rôle</MudTh>
+                    <MudTh>Fonction</MudTh>
+                    <MudTh>Statut</MudTh>
+                    <MudTh>Dernière connexion</MudTh>
+                    <MudTh Style="text-align:right;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="user">
+                    <MudTd>
+                        <div class="user-cell">
+                            <div class="user-avatar" style="background: @GetAvatarColor(user.Id);">
+                                @GetInitials(user.NomComplet ?? user.Email)
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">@(user.NomComplet ?? "—")</div>
+                                <div class="user-email">@user.Email</div>
+                            </div>
+                        </div>
+                    </MudTd>
+                    <MudTd>
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@GetRoleColor(user.Role)"
+                                 Variant="Variant.Filled">
+                            @GetRoleLabel(user.Role)
+                        </MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <span class="user-fonction">@(user.Fonction ?? "—")</span>
+                    </MudTd>
+                    <MudTd>
+                        @if (user.IsActive)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.CheckCircle">
+                                Actif
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Block">
+                                Désactivé
+                            </MudChip>
+                        }
+                        @if (user.MustChangePassword)
+                        {
+                            <MudTooltip Text="Doit changer son mot de passe au prochain login">
+                                <MudIcon Icon="@Icons.Material.Filled.Key" Size="Size.Small" Color="Color.Warning" Class="ms-1" />
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <span class="last-login">
+                            @(user.DerniereConnexion.HasValue
+                                ? user.DerniereConnexion.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                : "Jamais connecté")
+                        </span>
+                    </MudTd>
+                    <MudTd Style="text-align:right;">
+                        <MudTooltip Text="Modifier">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => OpenEditDialog(user))" />
+                        </MudTooltip>
+
+                        <MudTooltip Text="@(user.IsActive ? "Désactiver" : "Réactiver")">
+                            <MudIconButton Icon="@(user.IsActive ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                           Size="Size.Small"
+                                           Color="@(user.IsActive ? Color.Warning : Color.Success)"
+                                           OnClick="@(() => ToggleActive(user))"
+                                           Disabled="@(user.Id == _currentUserId)" />
+                        </MudTooltip>
+
+                        <MudTooltip Text="Reset mot de passe">
+                            <MudIconButton Icon="@Icons.Material.Filled.LockReset"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="@(() => ResetPassword(user))" />
+                        </MudTooltip>
+
+                        <MudTooltip Text="Supprimer">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteUser(user))"
+                                           Disabled="@(user.Id == _currentUserId)" />
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new[]{10, 25, 50}" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudPaper>
+
+</div>
+
+@code {
+    private List<UserAdminDto> _users = new();
+    private bool _isLoading = true;
+    private int _currentUserId;
+
+    // Filtres
+    private string _searchText = "";
+    private string? _roleFilter;
+    private string? _statusFilter;
+
+    private IEnumerable<UserAdminDto> _filteredUsers => _users
+        .Where(u =>
+            string.IsNullOrWhiteSpace(_searchText) ||
+            (u.NomComplet?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            u.Email.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            (u.Fonction?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(u => string.IsNullOrEmpty(_roleFilter) || u.Role == _roleFilter)
+        .Where(u => string.IsNullOrEmpty(_statusFilter) ||
+                    (_statusFilter == "active" && u.IsActive) ||
+                    (_statusFilter == "inactive" && !u.IsActive));
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Récupère l'ID de l'admin courant (pour empêcher l'auto-désactivation)
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentEmail = authState.User.Identity?.Name;
+        if (!string.IsNullOrEmpty(currentEmail))
+        {
+            var me = _users.FirstOrDefault(u => u.Email == currentEmail);
+            // On charge d'abord les users, ensuite on retrouve l'ID
+        }
+
+        await LoadUsersAsync();
+
+        // Une fois la liste chargée, on identifie le current user
+        if (!string.IsNullOrEmpty(currentEmail))
+        {
+            var me = _users.FirstOrDefault(u => u.Email == currentEmail);
+            if (me is not null) _currentUserId = me.Id;
+        }
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _users = await UserService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur de chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<UserCreateDialog>("Nouvel utilisateur",
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadUsersAsync();
+        }
+    }
+
+    private async Task OpenEditDialog(UserAdminDto user)
+    {
+        var parameters = new DialogParameters { ["User"] = user };
+        var dialog = await DialogService.ShowAsync<UserEditDialog>($"Modifier {user.NomComplet}",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            });
+
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadUsersAsync();
+        }
+    }
+
+    private async Task ToggleActive(UserAdminDto user)
+    {
+        var action = user.IsActive ? "désactiver" : "réactiver";
+        var confirmed = await DialogService.ShowMessageBox(
+            $"{(user.IsActive ? "Désactiver" : "Réactiver")} l'utilisateur ?",
+            $"Voulez-vous {action} le compte de {user.NomComplet} ?",
+            yesText: "Confirmer",
+            cancelText: "Annuler");
+
+        if (confirmed != true) return;
+
+        var result = await UserService.ToggleActiveAsync(user.Id, _currentUserId);
+        if (result.Success)
+        {
+            Snackbar.Add($"Utilisateur {(user.IsActive ? "désactivé" : "réactivé")}.", Severity.Success);
+            await LoadUsersAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "Erreur", Severity.Error);
+        }
+    }
+
+    private async Task ResetPassword(UserAdminDto user)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Réinitialiser le mot de passe ?",
+            $"Un nouveau mot de passe temporaire sera généré pour {user.NomComplet}. " +
+            $"L'utilisateur devra le changer à sa prochaine connexion.",
+            yesText: "Réinitialiser",
+            cancelText: "Annuler");
+
+        if (confirmed != true) return;
+
+        var result = await UserService.ResetPasswordAsync(user.Id);
+        if (result.Success)
+        {
+            // Affiche le nouveau mot de passe dans un dialog
+            await DialogService.ShowMessageBox(
+                "Mot de passe réinitialisé",
+                new MarkupString($"Voici le nouveau mot de passe temporaire :<br/><br/>" +
+                                $"<strong style='font-family:monospace;background:#f3f4f6;padding:8px 16px;border-radius:6px;font-size:1.1rem;letter-spacing:1px;'>" +
+                                $"{result.GeneratedPassword}</strong><br/><br/>" +
+                                $"⚠️ Communiquez-le à l'utilisateur de manière sécurisée. Il devra le changer au prochain login."),
+                yesText: "J'ai noté");
+
+            await LoadUsersAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "Erreur", Severity.Error);
+        }
+    }
+
+    private async Task DeleteUser(UserAdminDto user)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Supprimer l'utilisateur ?",
+            new MarkupString($"Voulez-vous vraiment supprimer définitivement le compte de <strong>{user.NomComplet}</strong> ? " +
+                            "Cette action est irréversible.<br/><br/>" +
+                            "💡 <em>Vous pouvez aussi désactiver l'utilisateur pour conserver l'historique.</em>"),
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (confirmed != true) return;
+
+        var result = await UserService.DeleteAsync(user.Id, _currentUserId);
+        if (result.Success)
+        {
+            Snackbar.Add("Utilisateur supprimé.", Severity.Success);
+            await LoadUsersAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "Erreur", Severity.Error);
+        }
+    }
+
+    // ===== Helpers =====
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '-', '@' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+        return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+    }
+
+    private static string GetAvatarColor(int id)
+    {
+        var colors = new[]
+        {
+            "linear-gradient(135deg, #0A2540, #06182E)",
+            "linear-gradient(135deg, #0E7C5C, #2F5D50)",
+            "linear-gradient(135deg, #1F3C88, #3F3A8A)",
+            "linear-gradient(135deg, #C9A86A, #B58E50)",
+            "linear-gradient(135deg, #9B1C2D, #7A1623)",
+            "linear-gradient(135deg, #D97706, #B45309)"
+        };
+        return colors[Math.Abs(id) % colors.Length];
+    }
+
+    private static string GetRoleLabel(string? role) => role switch
+    {
+        RoleNames.Admin => "Administrateur",
+        RoleNames.Agent => "Agent Juridique",
+        RoleNames.Responsable => "Resp. Juridique",
+        _ => "—"
+    };
+
+    private static Color GetRoleColor(string? role) => role switch
+    {
+        RoleNames.Admin => Color.Error,
+        RoleNames.Agent => Color.Info,
+        RoleNames.Responsable => Color.Success,
+        _ => Color.Default
+    };
+}
+
+<style>
+    /* ============================================
+       PAGE UTILISATEURS — DESIGN BOA
+       ============================================ */
+    .users-admin-page {
+        padding: 8px;
+    }
+
+    /* ===== HEADER ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .page-title {
+        color: #0A2540 !important;
+        font-weight: 700 !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .create-user-btn {
+        text-transform: none !important;
+        font-weight: 600 !important;
+        padding: 10px 24px !important;
+        box-shadow: 0 4px 12px rgba(10, 37, 64, 0.15) !important;
+    }
+
+    /* ===== STATS CARDS ===== */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .stat-card.stat-total .stat-icon {
+        background: linear-gradient(135deg, #0A2540, #06182E);
+    }
+
+    .stat-card.stat-active .stat-icon {
+        background: linear-gradient(135deg, #0E7C5C, #2F5D50);
+    }
+
+    .stat-card.stat-inactive .stat-icon {
+        background: linear-gradient(135deg, #6B7280, #4B5563);
+    }
+
+    .stat-card.stat-admin .stat-icon {
+        background: linear-gradient(135deg, #9B1C2D, #7A1623);
+    }
+
+    .stat-icon .mud-icon-root {
+        font-size: 28px !important;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0A2540;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #5E6B7D;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    /* ===== FILTRES ===== */
+    .filters-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+        margin-bottom: 16px;
+    }
+
+    .filters-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-search {
+        flex: 1;
+        min-width: 240px;
+    }
+
+    .filter-role,
+    .filter-status {
+        min-width: 200px;
+    }
+
+    /* ===== TABLE ===== */
+    .users-table-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+
+    .users-table {
+        background: white !important;
+    }
+
+    .users-table thead th {
+        background: #F8FAFC !important;
+        color: #0A2540 !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #E1E4E8 !important;
+    }
+
+    .users-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .users-table tbody tr:hover {
+        background: #F8FAFC !important;
+    }
+
+    /* ===== CELLULE UTILISATEUR ===== */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: #0A2540;
+        font-size: 0.95rem;
+    }
+
+    .user-email {
+        font-size: 0.8rem;
+        color: #6B7280;
+    }
+
+    .user-fonction {
+        color: #4B5563;
+        font-size: 0.9rem;
+    }
+
+    .last-login {
+        font-size: 0.85rem;
+        color: #6B7280;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @@media (max-width: 768px) {
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filters-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-role, .filter-status {
+            min-width: 100%;
+        }
+    }
+</style>

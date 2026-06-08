@@ -1,0 +1,323 @@
+﻿@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Models
+
+@inject IUserAdmin UserService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Modifier l'utilisateur</MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <!-- Bloc info utilisateur -->
+        <MudPaper Class="user-summary-card" Elevation="0">
+            <div class="user-summary-avatar" style="background: @GetAvatarColor(User.Id);">
+                @GetInitials(User.NomComplet ?? User.Email)
+            </div>
+            <div>
+                <MudText Typo="Typo.subtitle1" Style="font-weight:600; color:#0A2540;">
+                    @(User.NomComplet ?? User.Email)
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @User.Email
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-1">
+                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                    Créé le @User.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")
+                </MudText>
+            </div>
+        </MudPaper>
+
+        <EditForm Model="model" OnValidSubmit="HandleSubmit">
+            <div class="user-form">
+                <!-- Section : Identification -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" Size="Size.Small" />
+                        <span>Identification</span>
+                    </div>
+
+                    <MudTextField Value="@User.Email"
+                                  Label="Adresse email"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email"
+                                  AdornmentColor="Color.Primary"
+                                  Disabled="true"
+                                  HelperText="L'email ne peut pas être modifié"
+                                  Class="mb-3" />
+
+                    <MudTextField @bind-Value="model.NomComplet"
+                                  Label="Nom complet"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person"
+                                  AdornmentColor="Color.Primary"
+                                  Required="true"
+                                  Class="mb-3" />
+
+                    <MudTextField @bind-Value="model.Fonction"
+                                  Label="Fonction"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Work"
+                                  AdornmentColor="Color.Primary"
+                                  Placeholder="ex: Juriste senior, Chef de service..."
+                                  Class="mb-3" />
+                </div>
+
+                <!-- Section : Rôle -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Primary" Size="Size.Small" />
+                        <span>Rôle et permissions</span>
+                    </div>
+
+                    <MudSelect T="string"
+                               @bind-Value="model.Role"
+                               Label="Rôle"
+                               Variant="Variant.Outlined"
+                               FullWidth="true"
+                               Required="true"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Class="mb-2">
+                        <MudSelectItem Value="@RoleNames.Admin">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">Administrateur</MudChip>
+                                <span class="role-desc">Accès complet</span>
+                            </div>
+                        </MudSelectItem>
+                        <MudSelectItem Value="@RoleNames.Agent">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">Agent Juridique</MudChip>
+                                <span class="role-desc">Saisit et envoie les actes</span>
+                            </div>
+                        </MudSelectItem>
+                        <MudSelectItem Value="@RoleNames.Responsable">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Resp. Juridique</MudChip>
+                                <span class="role-desc">Valide les actes envoyés</span>
+                            </div>
+                        </MudSelectItem>
+                    </MudSelect>
+
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Info" Class="mb-2">
+                        <strong>@GetRoleDescription(model.Role)</strong>
+                    </MudAlert>
+                </div>
+
+                <!-- Section : Statut -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.ToggleOn" Color="Color.Primary" Size="Size.Small" />
+                        <span>Statut du compte</span>
+                    </div>
+
+                    <MudSwitch @bind-Value="model.IsActive"
+                               Color="Color.Success"
+                               Label="@(model.IsActive ? "Compte actif" : "Compte désactivé")"
+                               Class="ms-1" />
+
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-2 ms-1">
+                        @if (model.IsActive)
+                        {
+                            <span>L'utilisateur peut se connecter et utiliser l'application.</span>
+                        }
+                        else
+                        {
+                            <span style="color:#9B1C2D;">⚠️ L'utilisateur ne pourra plus se connecter.</span>
+                        }
+                    </MudText>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">
+                    @_errorMessage
+                </MudAlert>
+            }
+        </EditForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Disabled="@_isSubmitting">Annuler</MudButton>
+        <MudButton OnClick="HandleSubmit"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   Disabled="@_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Enregistrement...</span>
+            }
+            else
+            {
+                <span>Enregistrer</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserAdminDto User { get; set; } = default!;
+
+    private UserUpdateInput model = new();
+    private bool _isSubmitting;
+    private string? _errorMessage;
+
+    protected override void OnInitialized()
+    {
+        model = new UserUpdateInput
+            {
+                Id = User.Id,
+                NomComplet = User.NomComplet ?? "",
+                Fonction = User.Fonction,
+                Role = User.Role ?? RoleNames.Agent,
+                IsActive = User.IsActive
+            };
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task HandleSubmit()
+    {
+        _errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(model.NomComplet))
+        {
+            _errorMessage = "Le nom complet est obligatoire.";
+            return;
+        }
+
+        _isSubmitting = true;
+        try
+        {
+            var result = await UserService.UpdateAsync(model);
+
+            if (!result.Success)
+            {
+                _errorMessage = result.ErrorMessage ?? "Erreur de mise à jour.";
+                return;
+            }
+
+            Snackbar.Add($"Utilisateur {model.NomComplet} mis à jour.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private static string GetRoleDescription(string? role) => role switch
+    {
+        RoleNames.Admin => "L'administrateur peut tout faire : gérer les utilisateurs, configurer les banques, voir et modifier tous les actes.",
+        RoleNames.Agent => "L'agent juridique peut saisir des actes et les envoyer en validation. Il ne peut pas valider lui-même.",
+        RoleNames.Responsable => "Le responsable juridique valide ou rejette les actes envoyés par les agents.",
+        _ => "Sélectionnez un rôle pour voir ses permissions."
+    };
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(new[] { ' ', '.', '-', '@' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+        return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+    }
+
+    private static string GetAvatarColor(int id)
+    {
+        var colors = new[]
+        {
+            "linear-gradient(135deg, #0A2540, #06182E)",
+            "linear-gradient(135deg, #0E7C5C, #2F5D50)",
+            "linear-gradient(135deg, #1F3C88, #3F3A8A)",
+            "linear-gradient(135deg, #C9A86A, #B58E50)",
+            "linear-gradient(135deg, #9B1C2D, #7A1623)",
+            "linear-gradient(135deg, #D97706, #B45309)"
+        };
+        return colors[Math.Abs(id) % colors.Length];
+    }
+}
+
+<style>
+    .user-summary-card {
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F3F5 100%) !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .user-summary-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 18px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .user-form {
+        max-height: 55vh;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .form-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #F1F3F5;
+    }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #0A2540;
+    }
+
+    .role-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+    }
+
+    .role-desc {
+        color: #6B7280;
+        font-size: 0.85rem;
+    }
+</style>

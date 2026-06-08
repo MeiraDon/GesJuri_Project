@@ -1,0 +1,312 @@
+﻿@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Models
+@using System.ComponentModel.DataAnnotations
+
+@inject IUserAdmin UserService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Créer un nouvel utilisateur</MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <EditForm Model="model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="user-form">
+                <!-- Section : Identification -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" Size="Size.Small" />
+                        <span>Identification</span>
+                    </div>
+
+                    <MudTextField @bind-Value="model.Email"
+                                  Label="Adresse email"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email"
+                                  AdornmentColor="Color.Primary"
+                                  Required="true"
+                                  HelperText="Servira d'identifiant de connexion"
+                                  Class="mb-3" />
+
+                    <MudTextField @bind-Value="model.NomComplet"
+                                  Label="Nom complet"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person"
+                                  AdornmentColor="Color.Primary"
+                                  Required="true"
+                                  Placeholder="ex: KOUASSI Jean-Marc"
+                                  Class="mb-3" />
+
+                    <MudTextField @bind-Value="model.Fonction"
+                                  Label="Fonction"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Work"
+                                  AdornmentColor="Color.Primary"
+                                  Placeholder="ex: Juriste senior, Chef de service..."
+                                  Class="mb-3" />
+                </div>
+
+                <!-- Section : Rôle -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Primary" Size="Size.Small" />
+                        <span>Rôle et permissions</span>
+                    </div>
+
+                    <MudSelect T="string"
+                               @bind-Value="model.Role"
+                               Label="Rôle"
+                               Variant="Variant.Outlined"
+                               FullWidth="true"
+                               Required="true"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Class="mb-2">
+                        <MudSelectItem Value="@RoleNames.Admin">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">Administrateur</MudChip>
+                                <span class="role-desc">Accès complet</span>
+                            </div>
+                        </MudSelectItem>
+                        <MudSelectItem Value="@RoleNames.Agent">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">Agent Juridique</MudChip>
+                                <span class="role-desc">Saisit et envoie les actes</span>
+                            </div>
+                        </MudSelectItem>
+                        <MudSelectItem Value="@RoleNames.Responsable">
+                            <div class="role-item">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Resp. Juridique</MudChip>
+                                <span class="role-desc">Valide les actes envoyés</span>
+                            </div>
+                        </MudSelectItem>
+                    </MudSelect>
+
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Info" Class="mb-3 mt-2">
+                        <strong>@GetRoleDescription(model.Role)</strong>
+                    </MudAlert>
+                </div>
+
+                <!-- Section : Mot de passe -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <MudIcon Icon="@Icons.Material.Filled.Key" Color="Color.Primary" Size="Size.Small" />
+                        <span>Mot de passe initial</span>
+                    </div>
+
+                    <MudRadioGroup @bind-Value="_passwordMode" Class="mb-3">
+                        <MudRadio Value="@("auto")" Color="Color.Primary">
+                            <MudText Typo="Typo.body2">
+                                <strong>Générer automatiquement</strong>
+                                <br />
+                                <span style="color:#6B7280;font-size:0.85rem;">Un mot de passe sécurisé sera créé</span>
+                            </MudText>
+                        </MudRadio>
+                        <MudRadio Value="@("manual")" Color="Color.Primary">
+                            <MudText Typo="Typo.body2">
+                                <strong>Définir manuellement</strong>
+                                <br />
+                                <span style="color:#6B7280;font-size:0.85rem;">Saisissez un mot de passe temporaire</span>
+                            </MudText>
+                        </MudRadio>
+                    </MudRadioGroup>
+
+                    @if (_passwordMode == "manual")
+                    {
+                        <MudTextField @bind-Value="model.TemporaryPassword"
+                                      Label="Mot de passe temporaire"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                      OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                                      HelperText="8 caractères min, 1 majuscule, 1 minuscule, 1 chiffre"
+                                      Class="mb-2" />
+                    }
+
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Lock">
+                        L'utilisateur devra <strong>obligatoirement</strong> changer son mot de passe à la première connexion.
+                    </MudAlert>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true">
+                    @_errorMessage
+                </MudAlert>
+            }
+        </EditForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Disabled="@_isSubmitting">Annuler</MudButton>
+        <MudButton OnClick="HandleSubmit"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   Disabled="@_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Création...</span>
+            }
+            else
+            {
+                <span>Créer l'utilisateur</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private UserCreateInput model = new() { Role = RoleNames.Agent };
+    private string _passwordMode = "auto";
+    private bool _showPassword;
+    private bool _isSubmitting;
+    private string? _errorMessage;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task HandleSubmit()
+    {
+        _errorMessage = null;
+
+        // Validation
+        if (string.IsNullOrWhiteSpace(model.Email))
+        {
+            _errorMessage = "L'email est obligatoire.";
+            return;
+        }
+
+        if (!model.Email.Contains('@'))
+        {
+            _errorMessage = "Email invalide.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(model.NomComplet))
+        {
+            _errorMessage = "Le nom complet est obligatoire.";
+            return;
+        }
+
+        if (_passwordMode == "manual" && string.IsNullOrWhiteSpace(model.TemporaryPassword))
+        {
+            _errorMessage = "Veuillez saisir un mot de passe temporaire.";
+            return;
+        }
+
+        // Si mode auto, on vide le mdp pour laisser le service le générer
+        if (_passwordMode == "auto")
+        {
+            model.TemporaryPassword = "";
+        }
+
+        _isSubmitting = true;
+        try
+        {
+            var result = await UserService.CreateAsync(model);
+
+            if (!result.Success)
+            {
+                _errorMessage = result.ErrorMessage ?? "Erreur de création.";
+                return;
+            }
+
+            // Affiche le mot de passe généré dans un dialog
+            if (!string.IsNullOrEmpty(result.GeneratedPassword))
+            {
+                await DialogService.ShowMessageBox(
+                    "✅ Utilisateur créé avec succès",
+                    new MarkupString(
+                        $"Compte créé pour <strong>{model.NomComplet}</strong> ({model.Email})<br/><br/>" +
+                        $"Mot de passe temporaire :<br/><br/>" +
+                        $"<strong style='font-family:monospace;background:#f3f4f6;padding:8px 16px;border-radius:6px;font-size:1.1rem;letter-spacing:1px;color:#0A2540;'>" +
+                        $"{result.GeneratedPassword}</strong><br/><br/>" +
+                        $"⚠️ Communiquez-le à l'utilisateur de manière sécurisée. " +
+                        $"Il devra le changer à sa première connexion."),
+                    yesText: "J'ai noté");
+            }
+            else
+            {
+                Snackbar.Add($"Utilisateur {model.NomComplet} créé avec succès.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private static string GetRoleDescription(string? role) => role switch
+    {
+        RoleNames.Admin => "L'administrateur peut tout faire : gérer les utilisateurs, configurer les banques, voir et modifier tous les actes.",
+        RoleNames.Agent => "L'agent juridique peut saisir des actes et les envoyer en validation. Il ne peut pas valider lui-même.",
+        RoleNames.Responsable => "Le responsable juridique valide ou rejette les actes envoyés par les agents.",
+        _ => "Sélectionnez un rôle pour voir ses permissions."
+    };
+}
+
+<style>
+    .user-form {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .form-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #F1F3F5;
+    }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #0A2540;
+    }
+
+    .role-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+    }
+
+    .role-desc {
+        color: #6B7280;
+        font-size: 0.85rem;
+    }
+</style>

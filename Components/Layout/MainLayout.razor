@@ -1,25 +1,67 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
+@using Microsoft.AspNetCore.Components.Authorization
+@using GesCPSI_Project.Models
 
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudLayout>
     <MudAppBar Elevation="0" Style="
            background:
            radial-gradient(900px 400px at 10% 0%, rgba(21,138,92,.18), transparent 60%),
            linear-gradient(135deg, #0A192F 0%, #004A88 100%);
-           border-bottom: 1px solid rgba(255,255,255,0.08);
-           ">
+           border-bottom: 1px solid rgba(255,255,255,0.08);">
+
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="DrawerToggle"
+                       Style="color:#EAFBF6;" />
 
         <MudElement HtmlTag="a"
                     Class="ma-0"
                     Style="font-weight:bold; color: #EAFBF6; font-size: x-large; text-transform:none;"
                     href="/"
                     rel="noopener noreferrer">
-            <MudImage Src="/Logo_boatg.jpg" Width="200" Height="50" Alt="Logo_boatg" Elevation="0" Align="left" LoadAsync="true" />
+            <MudImage Src="/Logo_boatg.jpg" Width="200" Height="50" Alt="Logo_boatg" Elevation="0" />
         </MudElement>
+
         <MudSpacer />
-        @* <LoginDisplay /> *@
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Style="color: #EAFBF6" Edge="Edge.End" />
+
+        @* ============= USER MENU À DROITE ============= *@
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+            <ActivatorContent>
+                <div class="appbar-user-chip" title="@_userEmail">
+                    <div class="appbar-avatar">@_initials</div>
+                    <div class="appbar-user-info">
+                        <div class="appbar-user-name">@_displayName</div>
+                        <div class="appbar-user-role">@_roleLabel</div>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Style="color:rgba(255,255,255,.7);" />
+                </div>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem Href="/profile">
+                    <div class="d-flex align-items-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Size="Size.Small" />
+                        <span>Mon profil</span>
+                    </div>
+                </MudMenuItem>
+                <MudMenuItem Href="/change-password">
+                    <div class="d-flex align-items-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.LockReset" Size="Size.Small" />
+                        <span>Changer mon mot de passe</span>
+                    </div>
+                </MudMenuItem>
+                <MudDivider />
+                <MudMenuItem Href="/Account/Logout">
+                    <div class="d-flex align-items-center gap-2" style="color: #d32f2f;">
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" Color="Color.Error" />
+                        <span>Se déconnecter</span>
+                    </div>
+                </MudMenuItem>
+            </ChildContent>
+        </MudMenu>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Style="background: transparent; border-right: none;">
@@ -37,11 +79,87 @@
 
 @code {
     bool _drawerOpen = true;
+    private string _userEmail = "";
+    private string _displayName = "Utilisateur";
+    private string _initials = "U";
+    private string _roleLabel = "—";
 
-    void DrawerToggle()
+    void DrawerToggle() => _drawerOpen = !_drawerOpen;
+
+    protected override async Task OnInitializedAsync()
     {
-        _drawerOpen = !_drawerOpen;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            _userEmail = user.Identity.Name ?? "";
+            _displayName = _userEmail.Contains('@') ? _userEmail.Split('@')[0] : _userEmail;
+
+            _initials = string.IsNullOrEmpty(_displayName) ? "U"
+                      : _displayName.Length >= 2 ? _displayName[..2].ToUpper()
+                      : _displayName[..1].ToUpper();
+
+            if (user.IsInRole(RoleNames.Admin))
+                _roleLabel = "Administrateur";
+            else if (user.IsInRole(RoleNames.Responsable))
+                _roleLabel = "Resp. Juridique";
+            else if (user.IsInRole(RoleNames.Agent))
+                _roleLabel = "Agent Juridique";
+        }
     }
 }
 
+<style>
+    /* ====== APP BAR USER CHIP ====== */
+    .appbar-user-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 12px 6px 6px;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
+    .appbar-user-chip:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(201, 168, 106, 0.4);
+    }
+
+    .appbar-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #158A5C, #2F5D50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(21, 138, 92, 0.4);
+    }
+
+    .appbar-user-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+
+    .appbar-user-name {
+        color: #EAFBF6;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .appbar-user-role {
+        color: rgba(201, 168, 106, 0.95);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+</style>

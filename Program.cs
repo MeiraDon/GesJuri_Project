@@ -79,6 +79,7 @@ builder.Services.AddScoped<ICharge, ChargeService>();
 builder.Services.AddScoped<IAutorisation, AutorisationService>();
 builder.Services.AddScoped<IEntiteJur, EntiteJurService>();
 builder.Services.AddScoped<IUser, UserService>();
+builder.Services.AddScoped<IActeWorkflow, ActeWorkflowService>();
 
 //builder.Services.AddScoped<IEmail, EmailService>();
 //ilder.Services.AddScoped<IStorageService, MinioStorageService>();

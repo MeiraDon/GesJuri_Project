@@ -19,7 +19,8 @@ namespace GesCPSI_Project.Data
         public DbSet<JournalisationModel> JournalisationModels { get; set; } = default!;
         public DbSet<PretModel> PretModels { get; set; } = default!;
         public DbSet<RolesClientActModel> RolesClientActModels { get; set; } = default!;
-        public DbSet<TypesActModel> TypesActModels { get; set; } = default!; 
+        public DbSet<TypesActModel> TypesActModels { get; set; } = default!;
+        public DbSet<AuditLogModel> AuditLogs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

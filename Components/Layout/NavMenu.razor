@@ -1,7 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
 
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IActeWorkflow WorkflowService
 
 <div class="sidebar">
 
@@ -40,11 +42,15 @@
                 </NavLink>
             </AuthorizeView>
 
-            <!-- RESPONSABLE JURIDIQUE & ADMIN : validation -->
+            <!-- RESPONSABLE JURIDIQUE & ADMIN : validation avec badge -->
             <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
                 <NavLink class="nav-item" href="validationAct" Match="NavLinkMatch.All" title="Valider les actes">
                     <div class="nav-icon"><i class="bi bi-check2-circle"></i></div>
                     <div class="nav-text">Validation</div>
+                    @if (_pendingCount > 0)
+                    {
+                        <div class="nav-badge-pending">@_pendingCount</div>
+                    }
                 </NavLink>
             </AuthorizeView>
 
@@ -124,6 +130,8 @@
     private string _initials = "U";
     private string _roleLabel = "—";
 
+    private int _pendingCount = 0;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -131,24 +139,37 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            // Email = UserName par défaut dans Identity
             var email = user.Identity.Name ?? "";
-
-            // Récupère le claim "name" custom s'il existe, sinon utilise l'email
             _displayName = email.Contains('@') ? email.Split('@')[0] : email;
 
-            // Génère les initiales (2 premières lettres en majuscule)
             _initials = string.IsNullOrEmpty(_displayName) ? "U"
                       : _displayName.Length >= 2 ? _displayName[..2].ToUpper()
                       : _displayName[..1].ToUpper();
 
-            // Détermine le rôle prioritaire
             if (user.IsInRole(RoleNames.Admin))
                 _roleLabel = "Administrateur";
             else if (user.IsInRole(RoleNames.Responsable))
                 _roleLabel = "Resp. Juridique";
             else if (user.IsInRole(RoleNames.Agent))
                 _roleLabel = "Agent Juridique";
+
+            // 🆕 Charger le compteur d'actes en attente (Admin + Responsable)
+            if (user.IsInRole(RoleNames.Admin) || user.IsInRole(RoleNames.Responsable))
+            {
+                await RefreshPendingCountAsync();
+            }
+        }
+    }
+
+    private async Task RefreshPendingCountAsync()
+    {
+        try
+        {
+            _pendingCount = await WorkflowService.CountEnAttenteAsync();
+        }
+        catch
+        {
+            _pendingCount = 0;
         }
     }
 }
@@ -375,6 +396,36 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    /* ============ BADGE COMPTEUR PENDING ============ */
+    .nav-badge-pending {
+        background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+        animation: pulse-badge 2s ease-in-out infinite;
+        letter-spacing: 0.3px;
+    }
+
+    @@keyframes pulse-badge {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+        }
+
+        50% {
+            transform: scale(1.08);
+            box-shadow: 0 4px 16px rgba(220, 38, 38, 0.6);
+        }
     }
 
     .logout-btn {

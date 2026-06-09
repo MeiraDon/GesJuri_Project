@@ -5,6 +5,8 @@
 
 @using GesCPSI_Project.Models
 @using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 
 @inject ITypesAct TypesActService
@@ -17,6 +19,8 @@
 @inject ICharge ChargeService
 @inject IAutorisation AutorisationService
 @inject IEntiteJur EntiteJurService
+@inject IActeWorkflow WorkflowService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
@@ -53,58 +57,81 @@
     </div>
 
     <!-- Stats -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2-4 col-sm-6">
             <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
                 <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-primary-light p-3 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Large" />
+                    <div class="icon-stat bg-secondary-light p-2 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Secondary" />
                     </div>
                     <div>
                         <div class="text-muted small">Total</div>
-                        <div class="h3 fw-bold text-primary mb-0">@_actes.Count</div>
+                        <div class="h4 fw-bold text-primary mb-0">@_actes.Count</div>
                     </div>
                 </div>
             </MudPaper>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2-4 col-sm-6">
             <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
                 <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-success-light p-3 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
-                    </div>
-                    <div>
-                        <div class="text-muted small">En attente d'envoi</div>
-                        <div class="h3 fw-bold text-success mb-0">@_actes.Count(a => a.Statut == "EnAttenteEnvoi")</div>
-                    </div>
-                </div>
-            </MudPaper>
-        </div>
-
-        <div class="col-md-3">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-warning-light p-3 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Large" />
+                    <div class="icon-stat bg-default-light p-2 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Default" />
                     </div>
                     <div>
                         <div class="text-muted small">Brouillons</div>
-                        <div class="h3 fw-bold text-warning mb-0">@_actes.Count(a => a.Statut == "Brouillon")</div>
+                        <div class="h4 fw-bold mb-0" style="color:#5E6B7D;">
+                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Brouillon)
+                        </div>
                     </div>
                 </div>
             </MudPaper>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2-4 col-sm-6">
             <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
                 <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-info-light p-3 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Large" />
+                    <div class="icon-stat bg-warning-light p-2 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" />
                     </div>
                     <div>
-                        <div class="text-muted small">Ce mois</div>
-                        <div class="h3 fw-bold text-info mb-0">@_actes.Count(a => a.DateCreation.Month == DateTime.Now.Month)</div>
+                        <div class="text-muted small">En attente</div>
+                        <div class="h4 fw-bold text-warning mb-0">
+                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation)
+                        </div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-2-4 col-sm-6">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-success-light p-2 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Validés</div>
+                        <div class="h4 fw-bold text-success mb-0">
+                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Valide)
+                        </div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-2-4 col-sm-6">
+            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stat bg-error-light p-2 rounded-circle me-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
+                    </div>
+                    <div>
+                        <div class="text-muted small">Rejetés</div>
+                        <div class="h4 fw-bold text-error mb-0">
+                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Rejete)
+                        </div>
                     </div>
                 </div>
             </MudPaper>
@@ -116,8 +143,10 @@
         <MudTabs @bind-ActivePanelIndex="_activeTabIndex" Color="Color.Primary">
             <MudTabPanel Text="Tous" />
             <MudTabPanel Text="Brouillons" />
-            <MudTabPanel Text="En attente d'envoi" />
-            <MudTabPanel Text="Envoyés" />
+            <MudTabPanel Text="En attente" />
+            <MudTabPanel Text="Validés" />
+            <MudTabPanel Text="Rejetés" />
+            <MudTabPanel Text="Archivés" />
         </MudTabs>
 
         <!-- Filters -->
@@ -134,15 +163,17 @@
                 </div>
 
                 <div class="col-md-4">
-                    <MudSelect T="string" @bind-Value="_statutFilter"
+                    <MudSelect T="ActeStatut?" @bind-Value="_statutFilterEnum"
                                Variant="Variant.Outlined"
                                Label="Statut"
                                Clearable="true"
                                FullWidth="true">
-                        <MudSelectItem Value="@((string?)null)">Tous les statuts</MudSelectItem>
-                        <MudSelectItem Value="@("Brouillon")">Brouillon</MudSelectItem>
-                        <MudSelectItem Value="@("EnAttenteEnvoi")">En attente d'envoi</MudSelectItem>
-                        <MudSelectItem Value="@("Envoye")">Envoyé</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)null)">Tous les statuts</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Brouillon)">Brouillon</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.EnAttenteValidation)">En attente</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Valide)">Validé</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Rejete)">Rejeté</MudSelectItem>
+                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Archive)">Archivé</MudSelectItem>
                     </MudSelect>
                 </div>
 
@@ -164,7 +195,11 @@
                     </MudSelect>
                 </div>
 
-                <div class="col-12 d-flex justify-content-end">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <MudSwitch @bind-Value="_showOnlyMine"
+                               Color="Color.Primary"
+                               Label="Voir uniquement mes actes" />
+
                     <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetFilters">
                         Effacer filtres
                     </MudButton>
@@ -241,13 +276,19 @@
                     </MudTd>
 
                     <MudTd>
-                        <MudChip T="string"
-                                 Color="@GetStatusColor(acte.Statut)"
-                                 Variant="Variant.Filled"
-                                 Size="Size.Small"
-                                 Class="fw-medium">
-                            @((string.IsNullOrWhiteSpace(acte.Statut)) ? "Brouillon" : acte.Statut)
-                        </MudChip>
+                        <div class="d-flex align-items-center gap-1">
+                            <ActeStatutBadge Statut="acte.StatutWorkflow" />
+
+                            @* Tooltip pour montrer le motif de rejet si l'acte est rejeté *@
+                            @if (acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet))
+                            {
+                                <MudTooltip Text="@($"Motif : {acte.MotifRejet}")" Placement="Placement.Top">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info"
+                                             Size="Size.Small"
+                                             Color="Color.Error" />
+                                </MudTooltip>
+                            }
+                        </div>
                     </MudTd>
 
                     <MudTd class="text-end">
@@ -262,10 +303,11 @@
                             </MudTooltip>
 
                             <!-- ✏️ MODIFIER -->
-                            <MudTooltip Text="Modifier">
+                            <MudTooltip Text="@(CanEditActe(acte) ? "Modifier" : "Modification impossible (acte en cours de validation ou validé)")">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                                Color="Color.Primary"
                                                Size="Size.Small"
+                                               Disabled="@(!CanEditActe(acte))"
                                                OnClick="@(() => Edit(acte))" />
                             </MudTooltip>
 
@@ -289,11 +331,24 @@
                                                OnClick="@(() => SendActeAsync(acte))" />
                             </MudTooltip>
 
+                            <!-- ↻ RÉ-OUVRIR un acte rejeté -->
+                            @if (acte.StatutWorkflow == ActeStatut.Rejete)
+                            {
+                                <MudTooltip Text="Ré-ouvrir l'acte pour modification">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                                   Color="Color.Warning"
+                                                   Size="Size.Small"
+                                                   Disabled="@_loading"
+                                                   OnClick="@(() => RouvrirActeAsync(acte))" />
+                                </MudTooltip>
+                            }
+
                             <!-- 🗑️ SUPPRIMER -->
-                            <MudTooltip Text="Supprimer">
+                            <MudTooltip Text="@(CanDeleteActe(acte) ? "Supprimer" : "Suppression impossible")">
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                Color="Color.Error"
                                                Size="Size.Small"
+                                               Disabled="@(!CanDeleteActe(acte))"
                                                OnClick="@(() => ConfirmDelete(acte))" />
                             </MudTooltip>
 
@@ -317,8 +372,13 @@
     private List<TypesActModel> _actes = new();
     private bool _loading = true;
 
+    private bool _showOnlyMine = false;
+    private int? _currentUserId;
+    private bool _isAgent = false;
+
     private string _search = "";
-    private string? _statutFilter = null;
+    private ActeStatut? _statutFilterEnum = null;
+    private string? _statutFilter = null; // (gardé pour compat, mais inutilisé)
     private int? _selectedTypeId = null;
     private int _activeTabIndex = 0;
 
@@ -329,7 +389,32 @@
 
     private List<TypesActModel> FilteredActes => GetFilteredActes();
 
-    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await IdentifyCurrentUserAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task IdentifyCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            // Récupère l'ID via le claim NameIdentifier
+            var nameIdentifier = user.Claims
+                .FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+
+            if (int.TryParse(nameIdentifier, out var id))
+                _currentUserId = id;
+
+            // Si l'utilisateur est un Agent, on coche "Mes actes" par défaut
+            _isAgent = user.IsInRole(RoleNames.Agent);
+            if (_isAgent)
+                _showOnlyMine = true;
+        }
+    }
 
     private bool _disposed;
     private CancellationTokenSource? _cts = new CancellationTokenSource();
@@ -485,18 +570,24 @@
     {
         IEnumerable<TypesActModel> filtered = _actes;
 
-        // Tabs
+        // Tabs (5 panneaux)
         filtered = _activeTabIndex switch
         {
-            1 => filtered.Where(a => a.Statut == "Brouillon"),
-            2 => filtered.Where(a => a.Statut == "EnAttenteEnvoi"),
-            3 => filtered.Where(a => a.Statut == "Envoye"),
+            1 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Brouillon),
+            2 => filtered.Where(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation),
+            3 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Valide),
+            4 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Rejete),
+            5 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Archive),
             _ => filtered
         };
 
-        // Statut
-        if (!string.IsNullOrWhiteSpace(_statutFilter))
-            filtered = filtered.Where(a => a.Statut == _statutFilter);
+        // Filtre Statut (combobox)
+        if (_statutFilterEnum.HasValue)
+            filtered = filtered.Where(a => a.StatutWorkflow == _statutFilterEnum.Value);
+
+        // Filtre "Mes actes" (uniquement pour Agent — Admin et Responsable voient tout)
+        if (_showOnlyMine && _currentUserId.HasValue)
+            filtered = filtered.Where(a => a.IdUser == _currentUserId.Value);
 
         // Type
         if (_selectedTypeId.HasValue)
@@ -509,10 +600,9 @@
             filtered = filtered.Where(a =>
                 a.IdActe.ToString().Contains(s) ||
                 (a.NomTypesActe ?? "").ToLowerInvariant().Contains(s) ||
-                (a.Statut ?? "").ToLowerInvariant().Contains(s) ||
+                ActeStatutHelper.GetLabel(a.StatutWorkflow).ToLowerInvariant().Contains(s) ||
                 GetDebiteurName(a.IdActe).ToLowerInvariant().Contains(s) ||
                 GetCautionName(a.IdActe).ToLowerInvariant().Contains(s));
-        
         }
 
         return filtered.OrderByDescending(a => a.DateMaj).ToList();
@@ -530,6 +620,7 @@
     {
         _search = "";
         _statutFilter = null;
+        _statutFilterEnum = null;
         _selectedTypeId = null;
         _activeTabIndex = 0;
         StateHasChanged();
@@ -623,59 +714,74 @@
         await TypesActService.DeleteByIdAsync(acteId);
     }
 
-    private bool IsAlreadySent(TypesActModel acte)
-    {
-        return string.Equals(acte.Statut, "Envoye", StringComparison.OrdinalIgnoreCase);
-    }
-
     private bool CanSendActe(TypesActModel acte)
     {
-        return string.Equals(acte.Statut, "EnAttenteEnvoi", StringComparison.OrdinalIgnoreCase);
+        // L'agent peut envoyer ses actes en Brouillon ou ré-envoyer un acte Rejeté
+        return acte.StatutWorkflow == ActeStatut.Brouillon
+            || acte.StatutWorkflow == ActeStatut.Rejete;
+    }
+
+    private bool CanEditActe(TypesActModel acte)
+    {
+        // On ne peut éditer que les actes en Brouillon ou Rejeté
+        return acte.StatutWorkflow == ActeStatut.Brouillon
+            || acte.StatutWorkflow == ActeStatut.Rejete;
+    }
+
+    private bool CanDeleteActe(TypesActModel acte)
+    {
+        // On ne peut supprimer que les actes en Brouillon
+        return acte.StatutWorkflow == ActeStatut.Brouillon;
     }
 
     private async Task SendActeAsync(TypesActModel acte)
     {
-        if (_loading)
-            return;
+        if (_loading) return;
 
-        if (!string.Equals(acte.Statut, "EnAttenteEnvoi", StringComparison.OrdinalIgnoreCase))
+        if (acte.StatutWorkflow != ActeStatut.Brouillon && acte.StatutWorkflow != ActeStatut.Rejete)
         {
-            Snackbar.Add("Seuls les actes validés et complets peuvent être envoyés au responsable.", Severity.Warning);
+            Snackbar.Add("Cet acte ne peut pas être envoyé en validation depuis son statut actuel.", Severity.Warning);
             return;
         }
 
+        var motifText = acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet)
+            ? $"\n\n⚠️ Cet acte avait été rejeté.\nMotif précédent : {acte.MotifRejet}\nAssurez-vous que les corrections ont été apportées."
+            : "";
+
         var ok = await DialogService.ShowMessageBox(
-            "Envoi de l'acte",
-            $"Voulez-vous marquer l'acte #{acte.IdActe} comme envoyé au responsable ?\n\nL'envoi réel n'est pas encore implémenté.",
+            "Envoyer l'acte en validation ?",
+            $"L'acte #{acte.IdActe} sera envoyé au Responsable Juridique pour validation.{motifText}\n\nVous ne pourrez plus le modifier tant qu'il n'aura pas été validé ou rejeté.",
             yesText: "Envoyer",
             cancelText: "Annuler");
 
-        if (ok != true)
-            return;
+        if (ok != true) return;
 
         try
         {
             _loading = true;
             await SafeStateHasChanged();
 
-            acte.Statut = "Envoye";
-            acte.DateMaj = DateTime.UtcNow;
-
-            var res = await TypesActService.UpdateAsync(acte);
-            if (!res.IsSuccess)
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null)
             {
-                Snackbar.Add(res.ErrorMessage ?? "Erreur lors de l'envoi de l'acte.", Severity.Error);
+                Snackbar.Add("Impossible d'identifier votre compte. Reconnectez-vous.", Severity.Error);
                 return;
             }
 
-            Snackbar.Add($"Acte #{acte.IdActe} marqué comme envoyé au responsable.", Severity.Success);
-            Snackbar.Add("Le module d'envoi réel au responsable n'est pas encore implémenté.", Severity.Info);
+            var result = await WorkflowService.SoumettreAsync(acte.IdActe, userId.Value);
 
+            if (!result.Success)
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l'envoi.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Acte #{acte.IdActe} envoyé en validation au Responsable Juridique.", Severity.Success);
             await LoadDataAsync();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erreur envoi : {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -728,6 +834,68 @@
         "Envoye" => Color.Success,
         _ => Color.Default
     };
+
+    private async Task RouvrirActeAsync(TypesActModel acte)
+    {
+        if (_loading) return;
+
+        if (acte.StatutWorkflow != ActeStatut.Rejete)
+        {
+            Snackbar.Add("Seul un acte rejeté peut être ré-ouvert.", Severity.Warning);
+            return;
+        }
+
+        var motifText = !string.IsNullOrWhiteSpace(acte.MotifRejet)
+            ? $"\n\n💬 Motif du rejet : {acte.MotifRejet}"
+            : "";
+
+        var ok = await DialogService.ShowMessageBox(
+            "Ré-ouvrir l'acte ?",
+            $"L'acte #{acte.IdActe} repassera en Brouillon. Vous pourrez le modifier et le renvoyer en validation.{motifText}",
+            yesText: "Ré-ouvrir",
+            cancelText: "Annuler");
+
+        if (ok != true) return;
+
+        try
+        {
+            _loading = true;
+            await SafeStateHasChanged();
+
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null)
+            {
+                Snackbar.Add("Impossible d'identifier votre compte.", Severity.Error);
+                return;
+            }
+
+            var result = await WorkflowService.RouvrirAsync(acte.IdActe, userId.Value);
+
+            if (!result.Success)
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de la ré-ouverture.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Acte #{acte.IdActe} ré-ouvert. Vous pouvez maintenant le modifier.", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            await SafeStateHasChanged();
+        }
+    }
+
+    private Task<int?> GetCurrentUserIdAsync()
+    {
+        return Task.FromResult(_currentUserId);
+    }
+
 }
 
 <style>
@@ -766,4 +934,32 @@
         white-space: pre-line;
         line-height: 1.35;
     }
+    /* Pour 5 cards alignées */
+    .col-md-2-4 {
+        flex: 0 0 auto;
+        width: 20%;
+    }
+
+    @@media (max-width: 768px) {
+        .col-md-2-4 {
+            width: 50%;
+        }
+    }
+
+    .bg-default-light {
+        background-color: rgba(108, 117, 125, .12);
+    }
+
+    .bg-secondary-light {
+        background-color: rgba(108, 117, 125, .15);
+    }
+
+    .bg-error-light {
+        background-color: rgba(220, 53, 69, .12);
+    }
+
+    .text-error {
+        color: #dc3545 !important;
+    }
+
 </style>

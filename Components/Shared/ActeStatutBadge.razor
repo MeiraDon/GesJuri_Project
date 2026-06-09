@@ -1,0 +1,46 @@
+﻿@using GesCPSI_Project.Models
+
+<MudChip T="string"
+         Size="@Size"
+         Color="@_color"
+         Variant="@Variant"
+         Icon="@_icon"
+         Class="@Class">
+    @_label
+</MudChip>
+
+@code {
+    [Parameter] public ActeStatut Statut { get; set; }
+    [Parameter] public Size Size { get; set; } = Size.Small;
+    [Parameter] public Variant Variant { get; set; } = Variant.Filled;
+    [Parameter] public string Class { get; set; } = "fw-medium";
+
+    private Color _color = Color.Default;
+    private string _label = "";
+    private string _icon = "";
+
+    protected override void OnParametersSet()
+    {
+        _label = ActeStatutHelper.GetLabel(Statut);
+
+        _color = Statut switch
+        {
+            ActeStatut.Brouillon => Color.Default,
+            ActeStatut.EnAttenteValidation => Color.Warning,
+            ActeStatut.Valide => Color.Success,
+            ActeStatut.Rejete => Color.Error,
+            ActeStatut.Archive => Color.Info,
+            _ => Color.Default
+        };
+
+        _icon = Statut switch
+        {
+            ActeStatut.Brouillon => Icons.Material.Filled.Edit,
+            ActeStatut.EnAttenteValidation => Icons.Material.Filled.Schedule,
+            ActeStatut.Valide => Icons.Material.Filled.CheckCircle,
+            ActeStatut.Rejete => Icons.Material.Filled.Cancel,
+            ActeStatut.Archive => Icons.Material.Filled.Archive,
+            _ => Icons.Material.Filled.HelpOutline
+        };
+    }
+}

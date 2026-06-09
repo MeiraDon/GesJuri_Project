@@ -1,17 +1,598 @@
-﻿@* @page "/validationAct"
-@attribute [Authorize(Roles = "Validation")]
+﻿@page "/validationAct"
+@attribute [Authorize(Roles = "Admin,Responsable")]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Components.Shared
+@using GesCPSI_Project.Components.Dialogs
+@using Microsoft.AspNetCore.Components.Authorization
 
 @inject ITypesAct TypesActService
-@inject IUser UserService
+@inject IClientAct ClientActService
+@inject IRolesClientAct RolesClientActService
+@inject IClient ClientService
+@inject IActeWorkflow WorkflowService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
 
+<PageTitle>Validation des actes — GesCPSI</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
 
-private async Task<List<TypesActModel>> GetActesEnAttente()
-{
-    var actes = await TypesActService.GetAllAsync();
-    return actes.Where(a => a.Statut == "EnAttenteValidation").ToList();
+    <!-- ============= HEADER ============= -->
+    <MudPaper Class="validation-header" Elevation="0">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.FactCheck" Style="font-size: 2.5rem; color: white;" />
+                </div>
+                <div>
+                    <MudText Typo="Typo.h4" Style="color:white; font-weight:700;">
+                        Validation des actes
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">
+                        @if (_actesEnAttente.Count == 0)
+                        {
+                            <span>Aucun acte en attente de validation</span>
+                        }
+                        else
+                        {
+                            <span>
+                                <strong>@_actesEnAttente.Count</strong> acte@(_actesEnAttente.Count > 1 ? "s" : "") en attente de votre décision
+                            </span>
+                        }
+                    </MudText>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Large">
+                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="me-1" />
+                    @_actesEnAttente.Count en attente
+                </MudChip>
+                <MudTooltip Text="Actualiser">
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                   Color="Color.Inherit"
+                                   Style="color:white;"
+                                   Disabled="@_loading"
+                                   OnClick="ReloadAsync" />
+                </MudTooltip>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- ============= FILTRES ============= -->
+    <MudPaper Class="filters-card my-3" Elevation="0">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Rechercher (ID, type, débiteur...)"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              FullWidth="true" />
+            </div>
+            <div class="col-md-6">
+                <MudSelect T="string"
+                           @bind-Value="_sortBy"
+                           Label="Trier par"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           FullWidth="true">
+                    <MudSelectItem Value="@("oldest")">Plus anciens d'abord</MudSelectItem>
+                    <MudSelectItem Value="@("newest")">Plus récents d'abord</MudSelectItem>
+                </MudSelect>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- ============= LISTE DES ACTES ============= -->
+    @if (_loading)
+    {
+        <div class="text-center py-5">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <div class="text-muted mt-3">Chargement des actes...</div>
+        </div>
+    }
+    else if (!FilteredActes.Any())
+    {
+        <MudPaper Class="empty-state" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline"
+                     Style="font-size: 5rem; color: #0E7C5C;" />
+            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#0A2540; font-weight:600;">
+                Tout est à jour ! 🎉
+            </MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">
+                Aucun acte n'est en attente de votre validation pour le moment.
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <div class="actes-list">
+            @foreach (var acte in FilteredActes)
+            {
+                <MudPaper Class="acte-card" Elevation="0">
+                    <div class="acte-card-content">
+
+                        <!-- Header de l'acte -->
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="acte-id">#@acte.IdActe</span>
+                                    <ActeStatutBadge Statut="acte.StatutWorkflow" />
+                                </div>
+                                <MudText Typo="Typo.h6" Style="color:#0A2540; font-weight:600;">
+                                    @acte.NomTypesActe
+                                </MudText>
+                            </div>
+                            <div class="text-end">
+                                <div class="waiting-time">
+                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                                    @GetWaitingTime(acte.DateEnvoiValidation)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Détails participants -->
+                        <div class="acte-participants">
+                            <div class="participant">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Color="Color.Primary" />
+                                <div>
+                                    <span class="participant-label">Débiteur</span>
+                                    <span class="participant-value">@GetDebiteurName(acte.IdActe)</span>
+                                </div>
+                            </div>
+                            <div class="participant">
+                                <MudIcon Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Secondary" />
+                                <div>
+                                    <span class="participant-label">Caution</span>
+                                    <span class="participant-value">@GetCautionName(acte.IdActe)</span>
+                                </div>
+                            </div>
+                            <div class="participant">
+                                <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info" />
+                                <div>
+                                    <span class="participant-label">Envoyé le</span>
+                                    <span class="participant-value">
+                                        @(acte.DateEnvoiValidation?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="acte-actions">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Visibility"
+                                       OnClick="@(() => PreviewActe(acte))">
+                                Examiner l'acte
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Cancel"
+                                       Disabled="@_processing"
+                                       OnClick="@(() => OpenRejectDialog(acte))">
+                                Rejeter
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                                       Disabled="@_processing"
+                                       OnClick="@(() => ValiderActeAsync(acte))">
+                                Valider
+                            </MudButton>
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+        </div>
+    }
+
+</MudContainer>
+
+@code {
+    private List<TypesActModel> _actesEnAttente = new();
+    private bool _loading = true;
+    private bool _processing = false;
+    private int? _currentUserId;
+
+    private string _search = "";
+    private string _sortBy = "oldest";
+
+    private Dictionary<int, string> _debiteurs = new();
+    private Dictionary<int, string> _cautions = new();
+
+    private IEnumerable<TypesActModel> FilteredActes
+    {
+        get
+        {
+            IEnumerable<TypesActModel> filtered = _actesEnAttente;
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var s = _search.Trim().ToLowerInvariant();
+                filtered = filtered.Where(a =>
+                    a.IdActe.ToString().Contains(s) ||
+                    (a.NomTypesActe ?? "").ToLowerInvariant().Contains(s) ||
+                    GetDebiteurName(a.IdActe).ToLowerInvariant().Contains(s) ||
+                    GetCautionName(a.IdActe).ToLowerInvariant().Contains(s));
+            }
+
+            filtered = _sortBy == "oldest"
+                ? filtered.OrderBy(a => a.DateEnvoiValidation ?? DateTime.MaxValue)
+                : filtered.OrderByDescending(a => a.DateEnvoiValidation ?? DateTime.MinValue);
+
+            return filtered.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await IdentifyCurrentUserAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task IdentifyCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var nameIdentifier = user.Claims.FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+        if (int.TryParse(nameIdentifier, out var id))
+            _currentUserId = id;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            var allActes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
+            _actesEnAttente = allActes
+                .Where(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation)
+                .ToList();
+
+            await LoadActeParticipantsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        await LoadDataAsync();
+        Snackbar.Add("Liste actualisée", Severity.Info);
+    }
+
+    private async Task LoadActeParticipantsAsync()
+    {
+        var links = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+        var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+        var clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+
+        var roleDebiteurIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle) &&
+                        (string.Equals(r.Libelle.Trim(), "Debiteur", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(r.Libelle.Trim(), "Débiteur", StringComparison.OrdinalIgnoreCase)))
+            .Select(r => r.IdRole).ToHashSet();
+
+        var roleCautionIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle) &&
+                        string.Equals(r.Libelle.Trim(), "Caution", StringComparison.OrdinalIgnoreCase))
+            .Select(r => r.IdRole).ToHashSet();
+
+        _debiteurs.Clear();
+        _cautions.Clear();
+
+        foreach (var link in links)
+        {
+            var client = clients.FirstOrDefault(c => c.IdClt == link.IdClt);
+            var display = client is null ? "Non spécifié"
+                : !string.IsNullOrWhiteSpace(client.NomRaisonsociale) ? client.NomRaisonsociale
+                : $"{client.Nom} {client.Prenoms}".Trim();
+
+            if (roleDebiteurIds.Contains(link.IdRole) && !_debiteurs.ContainsKey(link.IdActe))
+                _debiteurs[link.IdActe] = display;
+
+            if (roleCautionIds.Contains(link.IdRole) && !_cautions.ContainsKey(link.IdActe))
+                _cautions[link.IdActe] = display;
+        }
+    }
+
+    private string GetDebiteurName(int acteId)
+        => _debiteurs.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+
+    private string GetCautionName(int acteId)
+        => _cautions.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+
+    private string GetWaitingTime(DateTime? dateEnvoi)
+    {
+        if (!dateEnvoi.HasValue) return "—";
+        var diff = DateTime.UtcNow - dateEnvoi.Value;
+
+        if (diff.TotalDays >= 1)
+            return $"{(int)diff.TotalDays}j {(int)diff.Hours}h";
+        if (diff.TotalHours >= 1)
+            return $"{(int)diff.TotalHours}h {(int)diff.Minutes}min";
+        return $"{(int)diff.TotalMinutes} min";
+    }
+
+    private async Task PreviewActe(TypesActModel acte)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(GesCPSI_Project.Components.Dialogs.ActePreviewDialog.ActeId), acte.IdActe }
+        };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                Position = DialogPosition.Center
+            };
+
+        await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ActePreviewDialog>(
+            "Examen de l'acte", parameters, options);
+    }
+
+    private async Task ValiderActeAsync(TypesActModel acte)
+    {
+        if (_processing || _currentUserId is null) return;
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Valider cet acte ?",
+            new MarkupString(
+                $"Vous êtes sur le point de <strong>valider</strong> l'acte #{acte.IdActe} ({acte.NomTypesActe}).<br/><br/>" +
+                "✅ L'acte sera marqué comme validé et l'agent en sera informé.<br/>" +
+                "📄 Vous pourrez ensuite générer le PDF officiel."),
+            yesText: "Valider",
+            cancelText: "Annuler");
+
+        if (confirmed != true) return;
+
+        _processing = true;
+        StateHasChanged();
+        try
+        {
+            var result = await WorkflowService.ValiderAsync(acte.IdActe, _currentUserId.Value);
+
+            if (!result.Success)
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de la validation.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Acte #{acte.IdActe} validé avec succès. ✅", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenRejectDialog(TypesActModel acte)
+    {
+        if (_processing || _currentUserId is null) return;
+
+        var parameters = new DialogParameters { ["Acte"] = acte };
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            };
+
+        var dialog = await DialogService.ShowAsync<RejectActeDialog>("Rejeter l'acte", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled) return;
+
+        var motif = result.Data?.ToString();
+        if (string.IsNullOrWhiteSpace(motif)) return;
+
+        _processing = true;
+        StateHasChanged();
+        try
+        {
+            var wfResult = await WorkflowService.RejeterAsync(acte.IdActe, _currentUserId.Value, motif);
+
+            if (!wfResult.Success)
+            {
+                Snackbar.Add(wfResult.ErrorMessage ?? "Erreur lors du rejet.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"Acte #{acte.IdActe} rejeté. L'agent sera informé.", Severity.Warning);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
 }
 
- *@
+<style>
+    /* ============= HEADER ============= */
+    .validation-header {
+        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%) !important;
+        padding: 28px 32px !important;
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+        .validation-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(201, 168, 106, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 12px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ============= FILTRES ============= */
+    .filters-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+    }
+
+    /* ============= LISTE ACTES ============= */
+    .actes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .acte-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+        .acte-card:hover {
+            border-color: #0A2540 !important;
+            box-shadow: 0 8px 24px rgba(10, 37, 64, 0.08) !important;
+            transform: translateY(-2px);
+        }
+
+    .acte-card-content {
+        padding: 20px 24px;
+    }
+
+    .acte-id {
+        background: #F1F3F5;
+        color: #5E6B7D;
+        font-family: 'Inter', monospace;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    .waiting-time {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        color: #92400E;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .acte-participants {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #F8FAFC;
+        border-radius: 8px;
+    }
+
+    .participant {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .participant-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6B7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .participant-value {
+        display: block;
+        font-size: 0.9rem;
+        color: #0A2540;
+        font-weight: 600;
+    }
+
+    .acte-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        border-top: 1px solid #F1F3F5;
+        padding-top: 16px;
+    }
+
+    /* ============= EMPTY STATE ============= */
+    .empty-state {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 60px 40px !important;
+        text-align: center;
+    }
+
+    /* ============= RESPONSIVE ============= */
+    @@media (max-width: 768px) {
+        .validation-header {
+            padding: 20px !important;
+        }
+
+        .acte-card-content {
+            padding: 16px;
+        }
+
+        .acte-actions {
+            flex-direction: column;
+        }
+
+            .acte-actions .mud-button {
+                width: 100%;
+            }
+    }
+</style>

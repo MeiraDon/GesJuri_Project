@@ -1,0 +1,181 @@
+﻿@using GesCPSI_Project.Models
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
+            <MudText Typo="Typo.h6">Rejeter l'acte</MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <MudPaper Class="acte-summary" Elevation="0">
+            <div class="d-flex align-items-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Description"
+                         Style="font-size: 2rem; color: #0A2540;" />
+                <div>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Acte concerné</MudText>
+                    <MudText Typo="Typo.h6" Style="color:#0A2540; font-weight:600;">
+                        #@Acte.IdActe — @Acte.NomTypesActe
+                    </MudText>
+                    @if (Acte.DateEnvoiValidation.HasValue)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Envoyé le @Acte.DateEnvoiValidation.Value.ToLocalTime().ToString("dd/MM/yyyy à HH:mm")
+                        </MudText>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3 mt-3" Dense="true">
+            <strong>Action importante :</strong> en rejetant cet acte, vous le renverrez à l'agent qui devra le corriger.
+            Le motif que vous saisissez sera <strong>visible par l'agent</strong>.
+        </MudAlert>
+
+        <MudTextField @bind-Value="Motif"
+                      Label="Motif du rejet *"
+                      Variant="Variant.Outlined"
+                      FullWidth="true"
+                      Lines="5"
+                      MaxLength="500"
+                      Counter="500"
+                      Immediate="true"
+                      Required="true"
+                      Placeholder="Expliquez clairement pourquoi cet acte est rejeté. Soyez précis pour aider l'agent à corriger.
+
+Exemples :
+- Le montant ne correspond pas au contrat
+- Manque la copie de la CNI du débiteur
+- Le nom du caution est incorrect"
+                      HelperText="@_helperText"
+                      Error="@(!_isValid && _showValidation)"
+                      Class="mb-2" />
+
+        @* Suggestions de motifs courants *@
+        <div class="motif-suggestions">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2 d-block">
+                💡 Motifs fréquents (cliquer pour pré-remplir) :
+            </MudText>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var suggestion in _suggestions)
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Variant="Variant.Outlined"
+                             Color="Color.Default"
+                             OnClick="@(() => AppendSuggestion(suggestion))"
+                             Class="motif-chip">
+                        @suggestion
+                    </MudChip>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">
+                @_errorMessage
+            </MudAlert>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Disabled="@_isSubmitting">
+            Annuler
+        </MudButton>
+        <MudButton OnClick="HandleSubmit"
+                   Color="Color.Error"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Cancel"
+                   Disabled="@_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Rejet en cours...</span>
+            }
+            else
+            {
+                <span>Confirmer le rejet</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public TypesActModel Acte { get; set; } = default!;
+
+    private string Motif { get; set; } = "";
+    private bool _isSubmitting;
+    private bool _showValidation;
+    private string? _errorMessage;
+
+    private readonly List<string> _suggestions = new()
+    {
+        "Document manquant",
+        "Montant incorrect",
+        "Erreur sur l'identité du caution",
+        "Erreur sur l'identité du débiteur",
+        "Date(s) incohérente(s)",
+        "Information bancaire incorrecte",
+        "Numéro de compte erroné"
+    };
+
+    private bool _isValid => !string.IsNullOrWhiteSpace(Motif) && Motif.Trim().Length >= 10;
+
+    private string _helperText => _isValid
+        ? $"✓ {Motif.Trim().Length} caractères"
+        : "Minimum 10 caractères requis";
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void AppendSuggestion(string suggestion)
+    {
+        if (string.IsNullOrWhiteSpace(Motif))
+            Motif = $"- {suggestion}";
+        else
+            Motif = $"{Motif.TrimEnd()}\n- {suggestion}";
+    }
+
+    private void HandleSubmit()
+    {
+        _showValidation = true;
+        _errorMessage = null;
+
+        if (!_isValid)
+        {
+            _errorMessage = "Le motif est obligatoire et doit faire au moins 10 caractères.";
+            return;
+        }
+
+        // Renvoie le motif au composant parent qui appellera le service
+        MudDialog.Close(DialogResult.Ok(Motif.Trim()));
+    }
+}
+
+<style>
+    .acte-summary {
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F3F5 100%) !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+    }
+
+    .motif-suggestions {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #E1E4E8;
+    }
+
+    .motif-chip {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .motif-chip:hover {
+            background: #FEE2E2 !important;
+            border-color: #9B1C2D !important;
+            color: #9B1C2D !important;
+        }
+</style>

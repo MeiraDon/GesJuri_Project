@@ -1,0 +1,277 @@
+﻿@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IFileUpload UploadService
+@inject IActeWorkflow WorkflowService
+@inject ITypesAct TypesActService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Téléverser le document signé</MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        @* Récapitulatif de l'acte *@
+        <MudPaper Class="acte-summary mb-3" Elevation="0">
+            <div class="d-flex align-items-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Description"
+                         Style="font-size: 2.5rem; color: #0E7C5C;" />
+                <div>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Acte à archiver</MudText>
+                    <MudText Typo="Typo.h6" Style="color:#0A2540; font-weight:600;">
+                        #@Acte.IdActe — @Acte.NomTypesActe
+                    </MudText>
+                    @if (Acte.DateValidation.HasValue)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Validé le @Acte.DateValidation.Value.ToLocalTime().ToString("dd/MM/yyyy à HH:mm")
+                        </MudText>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+
+        @* Zone de drop *@
+        <MudPaper Class="@($"upload-zone {(_selectedFile != null ? "has-file" : "")}")" Elevation="0">
+            <MudFileUpload T="IBrowserFile"
+                           Accept=".pdf"
+                           FilesChanged="OnFileSelected"
+                           MaximumFileCount="1"
+                           Class="upload-input">
+                <ActivatorContent>
+                    @if (_selectedFile is null)
+                    {
+                        <div class="upload-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.CloudUpload"
+                                     Style="font-size: 4rem; color: #0A2540;" />
+                            <MudText Typo="Typo.h6" Class="mt-2" Style="color:#0A2540; font-weight:600;">
+                                Glissez-déposez le PDF signé
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                ou cliquez pour sélectionner un fichier
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block">
+                                Format : PDF uniquement • Taille max : 10 Mo
+                            </MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="upload-file-selected">
+                            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf"
+                                     Style="font-size: 3rem; color: #DC2626;" />
+                            <div class="file-info">
+                                <MudText Typo="Typo.body1" Style="font-weight:600; color:#0A2540;">
+                                    @_selectedFile.Name
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @FormatFileSize(_selectedFile.Size)
+                                </MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="ClearFile" />
+                        </div>
+                    }
+                </ActivatorContent>
+            </MudFileUpload>
+        </MudPaper>
+
+        @* Avertissement *@
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3" Dense="true">
+            <strong>Action irréversible :</strong> une fois archivé, l'acte ne pourra plus être modifié.
+            Assurez-vous que le document est correctement signé par toutes les parties.
+        </MudAlert>
+
+        @* Checkbox de confirmation *@
+        <MudCheckBox @bind-Value="_confirmed" Color="Color.Primary" Class="mt-2">
+            <MudText Typo="Typo.body2">
+                Je confirme que ce document est <strong>signé par toutes les parties</strong>
+                (banque, débiteur, caution, témoins).
+            </MudText>
+        </MudCheckBox>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">
+                @_errorMessage
+            </MudAlert>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Disabled="@_isUploading">
+            Annuler
+        </MudButton>
+        <MudButton OnClick="HandleUpload"
+                   Color="Color.Success"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Archive"
+                   Disabled="@(_isUploading || _selectedFile is null || !_confirmed)">
+            @if (_isUploading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Upload en cours...</span>
+            }
+            else
+            {
+                <span>Archiver l'acte</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public TypesActModel Acte { get; set; } = default!;
+    [Parameter] public int CurrentUserId { get; set; }
+
+    private IBrowserFile? _selectedFile;
+    private bool _confirmed;
+    private bool _isUploading;
+    private string? _errorMessage;
+
+    private void OnFileSelected(IBrowserFile file)
+    {
+        _selectedFile = file;
+        _errorMessage = null;
+    }
+
+    private void ClearFile()
+    {
+        _selectedFile = null;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task HandleUpload()
+    {
+        _errorMessage = null;
+
+        if (_selectedFile is null)
+        {
+            _errorMessage = "Veuillez sélectionner un fichier.";
+            return;
+        }
+
+        if (!_confirmed)
+        {
+            _errorMessage = "Veuillez cocher la case de confirmation.";
+            return;
+        }
+
+        _isUploading = true;
+        try
+        {
+            // ============ ÉTAPE 1 : Upload du fichier ============
+            var uploadResult = await UploadService.UploadSignedPdfAsync(Acte.IdActe, _selectedFile);
+            if (!uploadResult.Success)
+            {
+                _errorMessage = uploadResult.ErrorMessage;
+                return;
+            }
+
+            // ============ ÉTAPE 2 : Mise à jour de l'acte ============
+            // Recharger l'acte pour avoir une version fraîche tracée par EF
+            var acte = await TypesActService.GetByIdAsync(Acte.IdActe);
+            if (acte is null)
+            {
+                _errorMessage = "Acte introuvable.";
+                return;
+            }
+
+            acte.PdfSignePath = uploadResult.FilePath;
+            acte.DateUploadSignature = DateTime.UtcNow;
+
+            var updateResult = await TypesActService.UpdateAsync(acte);
+            if (!updateResult.IsSuccess)
+            {
+                _errorMessage = updateResult.ErrorMessage ?? "Erreur de mise à jour.";
+                return;
+            }
+
+            // ============ ÉTAPE 3 : Archivage workflow ============
+            var workflowResult = await WorkflowService.ArchiverAsync(Acte.IdActe, CurrentUserId);
+            if (!workflowResult.Success)
+            {
+                _errorMessage = workflowResult.ErrorMessage;
+                return;
+            }
+
+            // ============ ÉTAPE 4 : Succès ============
+            Snackbar.Add($"Acte #{Acte.IdActe} archivé avec succès. 📦", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} o";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} Ko";
+        return $"{bytes / (1024.0 * 1024.0):F2} Mo";
+    }
+}
+
+<style>
+    .acte-summary {
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
+        border: 1px solid #0E7C5C !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+    }
+
+    .upload-zone {
+        background: #FAFAF7 !important;
+        border: 2px dashed #C7CCD4 !important;
+        border-radius: 12px !important;
+        padding: 32px !important;
+        text-align: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+        .upload-zone:hover {
+            border-color: #0A2540 !important;
+            background: #F8FAFC !important;
+        }
+
+        .upload-zone.has-file {
+            border-style: solid !important;
+            border-color: #0E7C5C !important;
+            background: #F0FDF4 !important;
+        }
+
+    .upload-input {
+        width: 100%;
+    }
+
+    .upload-empty {
+        padding: 24px 16px;
+    }
+
+    .upload-file-selected {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px;
+    }
+
+    .file-info {
+        flex: 1;
+        text-align: left;
+    }
+</style>

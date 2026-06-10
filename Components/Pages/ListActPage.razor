@@ -322,6 +322,30 @@
                                 </MudTooltip>
                             }
 
+                            <!-- 📤 UPLOADER SIGNATURE - si Validé et pas encore archivé -->
+                            @if (acte.StatutWorkflow == ActeStatut.Valide)
+                            {
+                                <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
+                                    <MudTooltip Text="Téléverser le document signé">
+                                        <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
+                                                       Color="Color.Tertiary"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => OpenUploadDialogAsync(acte))" />
+                                    </MudTooltip>
+                                </AuthorizeView>
+                            }
+
+                            <!-- 📄 VOIR PDF SIGNÉ - si archivé -->
+                            @if (acte.StatutWorkflow == ActeStatut.Archive && !string.IsNullOrWhiteSpace(acte.PdfSignePath))
+                            {
+                                <MudTooltip Text="Voir le PDF signé archivé">
+                                    <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser"
+                                                   Color="Color.Info"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => OpenSignedPdf(acte))" />
+                                </MudTooltip>
+                            }
+
                             <!-- 📤 ENVOYER -->
                             <MudTooltip Text="Envoyer au responsable">
                                 <MudIconButton Icon="@Icons.Material.Filled.Send"
@@ -888,6 +912,56 @@
         {
             _loading = false;
             await SafeStateHasChanged();
+        }
+    }
+
+    private async Task OpenUploadDialogAsync(TypesActModel acte)
+    {
+        if (_currentUserId is null)
+        {
+            Snackbar.Add("Impossible d'identifier votre compte.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+            {
+                ["Acte"] = acte,
+                ["CurrentUserId"] = _currentUserId.Value
+            };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseOnEscapeKey = false
+            };
+
+        var dialog = await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.UploadSignedActeDialog>(
+            "Téléverser le document signé", parameters, options);
+
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenSignedPdf(TypesActModel acte)
+    {
+        if (string.IsNullOrWhiteSpace(acte.PdfSignePath))
+        {
+            Snackbar.Add("Aucun PDF signé disponible.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var url = acte.PdfSignePath.StartsWith("/") ? acte.PdfSignePath : "/" + acte.PdfSignePath;
+            await JS.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
         }
     }
 

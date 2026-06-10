@@ -92,6 +92,8 @@ builder.Services.AddScoped<ActReportWorkflowService>();
 
 builder.Services.AddScoped<IUserAdmin, UserAdminService>();
 
+builder.Services.AddScoped<IFileUpload, FileUploadService>();
+
 builder.Services.AddHttpContextAccessor();
 
 

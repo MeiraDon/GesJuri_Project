@@ -314,7 +314,7 @@
                             <!-- ⬇️ TÉLÉCHARGER PDF - si PdfGenerePath existe -->
                             @if (!string.IsNullOrWhiteSpace(acte.PdfGenerePath))
                             {
-                                <MudTooltip Text="Télécharger le PDF">
+                                <MudTooltip Text="@($"PDF officiel généré le {acte.DateGenerationPdf?.ToLocalTime():dd/MM/yyyy HH:mm}")">
                                     <MudIconButton Icon="@Icons.Material.Filled.Download"
                                                    Color="Color.Success"
                                                    Size="Size.Small"

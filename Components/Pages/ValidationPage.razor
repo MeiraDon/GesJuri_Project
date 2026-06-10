@@ -7,6 +7,7 @@
 @using GesCPSI_Project.Components.Shared
 @using GesCPSI_Project.Components.Dialogs
 @using Microsoft.AspNetCore.Components.Authorization
+@using GesCPSI_Project.Reports
 
 @inject ITypesAct TypesActService
 @inject IClientAct ClientActService
@@ -17,6 +18,8 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
+@inject ActReportWorkflowService ReportWorkflow
+@inject IJSRuntime JS
 
 <PageTitle>Validation des actes — GesCPSI</PageTitle>
 
@@ -360,26 +363,55 @@
             "Valider cet acte ?",
             new MarkupString(
                 $"Vous êtes sur le point de <strong>valider</strong> l'acte #{acte.IdActe} ({acte.NomTypesActe}).<br/><br/>" +
-                "✅ L'acte sera marqué comme validé et l'agent en sera informé.<br/>" +
-                "📄 Vous pourrez ensuite générer le PDF officiel."),
-            yesText: "Valider",
+                "✅ L'acte sera marqué comme validé.<br/>" +
+                "📄 Le <strong>PDF officiel sera généré automatiquement</strong>.<br/>" +
+                "🖨️ Vous pourrez ensuite l'imprimer pour signature."),
+            yesText: "Valider et générer PDF",
             cancelText: "Annuler");
 
         if (confirmed != true) return;
 
         _processing = true;
         StateHasChanged();
+
         try
         {
-            var result = await WorkflowService.ValiderAsync(acte.IdActe, _currentUserId.Value);
+            // ============ ÉTAPE 1 : Validation workflow ============
+            var workflowResult = await WorkflowService.ValiderAsync(acte.IdActe, _currentUserId.Value);
 
-            if (!result.Success)
+            if (!workflowResult.Success)
             {
-                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de la validation.", Severity.Error);
+                Snackbar.Add(workflowResult.ErrorMessage ?? "Erreur lors de la validation.", Severity.Error);
                 return;
             }
 
-            Snackbar.Add($"Acte #{acte.IdActe} validé avec succès. ✅", Severity.Success);
+            // ============ ÉTAPE 2 : Génération du PDF ============
+            string? pdfPath = null;
+            try
+            {
+                Snackbar.Add($"Génération du PDF en cours...", Severity.Info);
+                var (jsonPath, generatedPdfPath) = await ReportWorkflow.GenerateAndSaveAsync(acte.IdActe);
+                pdfPath = generatedPdfPath;
+            }
+            catch (Exception pdfEx)
+            {
+                // ⚠️ La validation a réussi mais le PDF a échoué
+                // On informe le Responsable mais on ne casse pas le workflow
+                Snackbar.Add($"Acte validé mais erreur PDF : {pdfEx.Message}", Severity.Warning);
+                await LoadDataAsync();
+                return;
+            }
+
+            // ============ ÉTAPE 3 : Succès complet ============
+            Snackbar.Add($"Acte #{acte.IdActe} validé et PDF généré avec succès ✅", Severity.Success);
+
+            // Ouvrir le PDF dans un nouvel onglet automatiquement
+            if (!string.IsNullOrWhiteSpace(pdfPath))
+            {
+                var url = pdfPath.StartsWith("/") ? pdfPath : "/" + pdfPath;
+                await JS.InvokeVoidAsync("open", url, "_blank");
+            }
+
             await LoadDataAsync();
         }
         catch (Exception ex)

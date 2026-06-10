@@ -10,6 +10,8 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using GesCPSI_Project.Components.Shared
 @using GesCPSI_Project.ViewModels
+@using Microsoft.AspNetCore.Components.Authorization
+
 
 @inject IClientAct ClientActService
 @inject ITypesAct TypesActService
@@ -26,6 +28,8 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject IActeWorkflow WorkflowService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container py-4" lang="fr">
     <div class="row justify-content-center">
@@ -405,6 +409,15 @@
 
     private static DateTime NowUtc() => DateTime.UtcNow;
 
+
+    private async Task<int?> GetCurrentUserIdAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var nameIdentifier = authState.User.Claims
+        .FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+
+        return int.TryParse(nameIdentifier, out var id) ? id : null;
+    }
     
 
     // ======== PARTICIPANTS (IDs ONLY) ========
@@ -1048,45 +1061,62 @@ private bool ValidateParticipants()
 
 // =================== SAVE / LOAD ===================
 
-private async Task EnsureActeAsync()
-{
-    if (currentActeId.HasValue && currentActeId.Value > 0)
-        return;
-
-    if (ActeId.HasValue && ActeId.Value > 0)
+    private async Task EnsureActeAsync()
     {
-        currentActeId = ActeId.Value;
-        return;
-    }
+        if (currentActeId.HasValue && currentActeId.Value > 0)
+            return;
 
-    var boaId = await GetBoaBankIdAsync();
-    if (!boaId.HasValue)
+        if (ActeId.HasValue && ActeId.Value > 0)
+        {
+            currentActeId = ActeId.Value;
+            return;
+        }
+
+        var boaId = await GetBoaBankIdAsync();
+        if (!boaId.HasValue)
             throw new InvalidOperationException("La banque BOA-TOGO n'est pas configurée. Impossible de créer un acte.");
 
-    selectedBanqueId = boaId.Value;
+        selectedBanqueId = boaId.Value;
 
-    // Création d’un acte brouillon à la première sauvegarde (step Participants)
-    var userId = 1; // TODO: récupérer depuis auth / Keycloak
-    var nomActe = ajoutAct?.NomAct ?? "Cautionnement";
+        // 🔥 Récupère le vrai user connecté (fini le hardcodé "userId = 1")
+        var userId = await GetCurrentUserIdAsync();
+        if (userId is null)
+            throw new InvalidOperationException("Impossible d'identifier l'utilisateur connecté. Reconnectez-vous.");
 
-    var acte = new TypesActModel
-    {
-        NomTypesActe = nomActe,
-        DateCreation = NowUtc(),
-        DateMaj = NowUtc(),
-        Statut = "Brouillon",
-        IdAjout = IdAjout,
-        IdUser = userId,
-        IdBnq = boaId.Value
-    };
+        var nomActe = ajoutAct?.NomAct ?? "Cautionnement";
 
-    var res = await TypesActService.AddAsync(acte);
-    if (!res.IsSuccess || res.Data is null)
-        throw new InvalidOperationException(res.ErrorMessage ?? "Création acte impossible.");
+        var acte = new TypesActModel
+            {
+                NomTypesActe = nomActe,
+                DateCreation = NowUtc(),
+                DateMaj = NowUtc(),
+                Statut = "Brouillon",
+                StatutWorkflow = ActeStatut.Brouillon,
+                IdAjout = IdAjout,
+                IdUser = userId.Value,
+                IdBnq = boaId.Value
+            };
 
-    currentActeId = res.Data.IdActe;
-    Snackbar.Add($"Brouillon créé (Acte #{currentActeId}).", Severity.Info);
-}
+        var res = await TypesActService.AddAsync(acte);
+        if (!res.IsSuccess || res.Data is null)
+            throw new InvalidOperationException(res.ErrorMessage ?? "Création acte impossible.");
+
+        currentActeId = res.Data.IdActe;
+
+        // 🆕 Tracer la création dans le journal d'audit
+        try
+        {
+            await WorkflowService.LogCreationAsync(currentActeId.Value, userId.Value);
+        }
+        catch (Exception ex)
+        {
+            // On ne casse pas le workflow si le log d'audit échoue
+            // (les données métier sont déjà sauvées, c'est juste l'historique qui n'est pas tracé)
+            Console.WriteLine($"[AUDIT] Erreur log création acte #{currentActeId} : {ex.Message}");
+        }
+
+        Snackbar.Add($"Brouillon créé (Acte #{currentActeId}).", Severity.Info);
+    }
 
 private async Task SaveStepAsync()
 {

@@ -50,5 +50,6 @@ namespace GesCPSI_Project.Interfaces
         /// Compte les actes en attente de validation (pour le badge du NavMenu).
         /// </summary>
         Task<int> CountEnAttenteAsync();
+        Task LogCreationAsync(int acteId, int userId);
     }
 }

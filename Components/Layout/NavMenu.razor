@@ -59,13 +59,11 @@
                 <div class="nav-text">Archives</div>
             </NavLink>
 
-            <!-- ADMIN UNIQUEMENT : historique complet et tests -->
-            <AuthorizeView Roles="@RoleNames.Admin">
-                <NavLink class="nav-item" href="securite" Match="NavLinkMatch.All" title="Historique et traçabilité">
-                    <div class="nav-icon"><i class="bi bi-clock-history"></i></div>
-                    <div class="nav-text">Historique</div>
-                </NavLink>
-            </AuthorizeView>
+            <!-- historique complet et tests -->
+            <NavLink class="nav-item" href="historique" Match="NavLinkMatch.All" title="Journal d'audit">
+                <div class="nav-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="nav-text">Historique</div>
+            </NavLink>
         </div>
 
         <!-- ADMINISTRATION : ADMIN UNIQUEMENT -->

@@ -1,0 +1,375 @@
+﻿@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+
+@inject IAuditLog AuditService
+@inject ITypesAct TypesActService
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Historique de l'acte</MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="history-container">
+            @* ============ HEADER ACTE ============ *@
+            @if (_acte is not null)
+            {
+                <MudPaper Class="acte-header-card" Elevation="0">
+                    <div class="d-flex align-items-center gap-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Description"
+                                 Style="font-size: 2.5rem; color: #0A2540;" />
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="acte-id">#@_acte.IdActe</span>
+                                <ActeStatutBadge Statut="_acte.StatutWorkflow" />
+                            </div>
+                            <MudText Typo="Typo.h6" Style="color:#0A2540; font-weight:600;">
+                                @_acte.NomTypesActe
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Créé le @_acte.DateCreation.ToLocalTime().ToString("dd MMMM yyyy à HH:mm")
+                            </MudText>
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+
+            @* ============ TIMELINE ============ *@
+            @if (_loading)
+            {
+                <div class="text-center py-5">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                </div>
+            }
+            else if (!_entries.Any())
+            {
+                <div class="text-center py-5">
+                    <MudIcon Icon="@Icons.Material.Filled.HistoryToggleOff"
+                             Style="font-size: 4rem; color: #A0A8B5;" />
+                    <MudText Typo="Typo.h6" Class="mt-3" Style="color:#5E6B7D;">
+                        Aucun événement enregistré
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        L'historique se construit au fil des actions sur l'acte.
+                    </MudText>
+                </div>
+            }
+            else
+            {
+                <div class="timeline">
+                    @foreach (var entry in _entries)
+                    {
+                        <div class="timeline-item">
+                            @* Pastille colorée *@
+                            <div class="timeline-marker" style="background: @GetActionColor(entry.Action);">
+                                <MudIcon Icon="@GetActionIcon(entry.Action)" Style="color: white; font-size: 18px;" />
+                            </div>
+
+                            @* Contenu *@
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-action" style="color: @GetActionColor(entry.Action);">
+                                        @GetActionLabel(entry.Action)
+                                    </span>
+                                    <span class="timeline-date">
+                                        @entry.DateAction.ToLocalTime().ToString("dd MMM yyyy à HH:mm")
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(entry.UserNomComplet))
+                                {
+                                    <div class="timeline-user">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                        <strong>@entry.UserNomComplet</strong>
+                                        @if (!string.IsNullOrEmpty(entry.UserRole))
+                                        {
+                                            <MudChip T="string"
+                                                     Size="Size.Small"
+                                                     Color="@GetRoleColor(entry.UserRole)"
+                                                     Variant="Variant.Outlined"
+                                                     Class="ms-2">
+                                                @GetRoleLabel(entry.UserRole)
+                                            </MudChip>
+                                        }
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(entry.Details))
+                                {
+                                    <div class="timeline-details">
+                                        @entry.Details
+                                    </div>
+                                }
+
+                                @* Transition de statut visualisée *@
+                                @if (entry.StatutAvant.HasValue && entry.StatutApres.HasValue
+                                     && entry.StatutAvant != entry.StatutApres)
+                                {
+                                    <div class="timeline-transition">
+                                        <ActeStatutBadge Statut="entry.StatutAvant.Value" Size="Size.Small" />
+                                        <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt"
+                                                 Size="Size.Small"
+                                                 Style="color: #5E6B7D;" />
+                                        <ActeStatutBadge Statut="entry.StatutApres.Value" Size="Size.Small" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">
+            Fermer
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public int ActeId { get; set; }
+
+    private TypesActModel? _acte;
+    private List<AuditLogEntry> _entries = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        try
+        {
+            // Charge l'acte (pour afficher le header)
+            _acte = await TypesActService.GetByIdAsync(ActeId);
+
+            // Charge l'historique
+            _entries = await AuditService.GetForActeAsync(ActeId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Close() => MudDialog.Close();
+
+    // ============ HELPERS UI ============
+
+    private static string GetActionLabel(string action) => action switch
+    {
+        "CREATION" => "Création",
+        "SOUMISSION" => "Envoyé en validation",
+        "VALIDATION" => "Validé",
+        "REJET" => "Rejeté",
+        "REOUVERTURE" => "Ré-ouvert pour modification",
+        "ARCHIVAGE" => "Archivé",
+        "GENERATION_PDF" => "PDF généré",
+        _ => action
+    };
+
+    private static string GetActionIcon(string action) => action switch
+    {
+        "CREATION" => Icons.Material.Filled.Add,
+        "SOUMISSION" => Icons.Material.Filled.Send,
+        "VALIDATION" => Icons.Material.Filled.CheckCircle,
+        "REJET" => Icons.Material.Filled.Cancel,
+        "REOUVERTURE" => Icons.Material.Filled.Refresh,
+        "ARCHIVAGE" => Icons.Material.Filled.Archive,
+        "GENERATION_PDF" => Icons.Material.Filled.PictureAsPdf,
+        _ => Icons.Material.Filled.Circle
+    };
+
+    private static string GetActionColor(string action) => action switch
+    {
+        "CREATION" => "#5E6B7D",
+        "SOUMISSION" => "#D97706",
+        "VALIDATION" => "#0E7C5C",
+        "REJET" => "#9B1C2D",
+        "REOUVERTURE" => "#D97706",
+        "ARCHIVAGE" => "#1F3C88",
+        "GENERATION_PDF" => "#7A1623",
+        _ => "#5E6B7D"
+    };
+
+    private static string GetRoleLabel(string? role) => role switch
+    {
+        RoleNames.Admin => "Administrateur",
+        RoleNames.Agent => "Agent",
+        RoleNames.Responsable => "Responsable",
+        _ => role ?? "—"
+    };
+
+    private static Color GetRoleColor(string? role) => role switch
+    {
+        RoleNames.Admin => Color.Error,
+        RoleNames.Agent => Color.Info,
+        RoleNames.Responsable => Color.Success,
+        _ => Color.Default
+    };
+}
+
+<style>
+    .history-container {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    /* ===== HEADER ACTE ===== */
+    .acte-header-card {
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F3F5 100%) !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+        margin-bottom: 24px;
+    }
+
+    .acte-id {
+        background: #F1F3F5;
+        color: #5E6B7D;
+        font-family: 'Inter', monospace;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    /* ===== TIMELINE ===== */
+    .timeline {
+        position: relative;
+        padding-left: 40px;
+    }
+
+    /* Ligne verticale */
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 19px;
+        top: 12px;
+        bottom: 12px;
+        width: 2px;
+        background: linear-gradient(180deg, #E1E4E8 0%, #C7CCD4 100%);
+        border-radius: 1px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Pastille (marker) */
+    .timeline-marker {
+        position: absolute;
+        left: -32px;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        z-index: 2;
+    }
+
+    /* Contenu */
+    .timeline-content {
+        background: white;
+        border: 1px solid #E1E4E8;
+        border-radius: 10px;
+        padding: 14px 16px;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-content:hover {
+        border-color: #C7CCD4;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .timeline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+    }
+
+    .timeline-action {
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.2px;
+    }
+
+    .timeline-date {
+        font-size: 0.8rem;
+        color: #6B7280;
+        font-weight: 500;
+    }
+
+    .timeline-user {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.875rem;
+        color: #4B5563;
+        margin-bottom: 6px;
+    }
+
+    .timeline-details {
+        font-size: 0.875rem;
+        color: #374151;
+        background: #F8FAFC;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #E1E4E8;
+        margin-top: 8px;
+        line-height: 1.5;
+    }
+
+    .timeline-transition {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #E1E4E8;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    .history-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .history-container::-webkit-scrollbar-thumb {
+        background: #C7CCD4;
+        border-radius: 3px;
+    }
+
+    .history-container::-webkit-scrollbar-thumb:hover {
+        background: #5E6B7D;
+    }
+</style>

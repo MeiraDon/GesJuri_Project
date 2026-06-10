@@ -1,0 +1,622 @@
+﻿@page "/historique"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IAuditLog AuditService
+@inject ITypesAct TypesActService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+
+<PageTitle>Historique — GesCPSI</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+
+    <!-- ============ HEADER ============ -->
+    <MudPaper Class="history-header" Elevation="0">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.History"
+                             Style="font-size: 2.5rem; color: white;" />
+                </div>
+                <div>
+                    <MudText Typo="Typo.h4" Style="color:white; font-weight:700;">
+                        Journal d'audit
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">
+                        @if (_isAgent)
+                        {
+                            <span>Historique des actions sur <strong>vos</strong> actes</span>
+                        }
+                        else
+                        {
+                            <span>Historique complet des actions sur l'application</span>
+                        }
+                    </MudText>
+                </div>
+            </div>
+
+            <MudTooltip Text="Actualiser">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Style="color:white;"
+                               Disabled="@_loading"
+                               OnClick="LoadDataAsync" />
+            </MudTooltip>
+        </div>
+    </MudPaper>
+
+    <!-- ============ STATS ============ -->
+    <div class="row g-3 my-3">
+        <div class="col-md-3 col-sm-6">
+            <MudPaper Class="stat-card" Elevation="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon stat-icon-primary">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory" />
+                    </div>
+                    <div>
+                        <div class="stat-label">Total des actions</div>
+                        <div class="stat-value">@_stats.Total</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <MudPaper Class="stat-card" Elevation="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon stat-icon-info">
+                        <MudIcon Icon="@Icons.Material.Filled.Today" />
+                    </div>
+                    <div>
+                        <div class="stat-label">Aujourd'hui</div>
+                        <div class="stat-value">@_stats.Today</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <MudPaper Class="stat-card" Elevation="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon stat-icon-warning">
+                        <MudIcon Icon="@Icons.Material.Filled.DateRange" />
+                    </div>
+                    <div>
+                        <div class="stat-label">Cette semaine</div>
+                        <div class="stat-value">@_stats.ThisWeek</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <MudPaper Class="stat-card" Elevation="0">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon stat-icon-success">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" />
+                    </div>
+                    <div>
+                        <div class="stat-label">Ce mois</div>
+                        <div class="stat-value">@_stats.ThisMonth</div>
+                    </div>
+                </div>
+            </MudPaper>
+        </div>
+    </div>
+
+    <!-- ============ FILTRES ============ -->
+    <MudPaper Class="filters-card mb-3" Elevation="0">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <MudTextField @bind-Value="_search"
+                              Placeholder="Rechercher dans les détails, ID acte..."
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              FullWidth="true" />
+            </div>
+            <div class="col-md-3">
+                <MudSelect T="string"
+                           @bind-Value="_actionFilter"
+                           Label="Type d'action"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Clearable="true"
+                           FullWidth="true">
+                    <MudSelectItem Value="@((string?)null)">Toutes</MudSelectItem>
+                    <MudSelectItem Value="@("CREATION")">Création</MudSelectItem>
+                    <MudSelectItem Value="@("SOUMISSION")">Soumission</MudSelectItem>
+                    <MudSelectItem Value="@("VALIDATION")">Validation</MudSelectItem>
+                    <MudSelectItem Value="@("REJET")">Rejet</MudSelectItem>
+                    <MudSelectItem Value="@("REOUVERTURE")">Ré-ouverture</MudSelectItem>
+                    <MudSelectItem Value="@("ARCHIVAGE")">Archivage</MudSelectItem>
+                </MudSelect>
+            </div>
+            <div class="col-md-2">
+                <MudDatePicker @bind-Date="_dateFrom"
+                               Label="Depuis"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true" />
+            </div>
+            <div class="col-md-2">
+                <MudDatePicker @bind-Date="_dateTo"
+                               Label="Jusqu'à"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true" />
+            </div>
+            <div class="col-md-1 d-flex">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           OnClick="ResetFilters"
+                           FullWidth="true">
+                    Reset
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- ============ LISTE DES LOGS ============ -->
+    @if (_loading)
+    {
+        <div class="text-center py-5">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else if (!FilteredLogs.Any())
+    {
+        <MudPaper Class="empty-state" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.HistoryToggleOff"
+                     Style="font-size: 5rem; color: #A0A8B5;" />
+            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#5E6B7D;">
+                Aucun événement trouvé
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                Modifiez vos filtres ou attendez de nouvelles actions.
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <div class="logs-list">
+            @foreach (var log in FilteredLogs)
+            {
+                <MudPaper Class="log-entry" Elevation="0" @onclick="@(() => ShowActeHistory(log.IdActe))">
+                    <div class="log-marker" style="background: @GetActionColor(log.Action);">
+                        <MudIcon Icon="@GetActionIcon(log.Action)"
+                                 Style="color: white; font-size: 18px;" />
+                    </div>
+
+                    <div class="log-content">
+                        <div class="log-header">
+                            <div class="log-action-info">
+                                <span class="log-action-label" style="color: @GetActionColor(log.Action);">
+                                    @GetActionLabel(log.Action)
+                                </span>
+                                <span class="log-acte-link">
+                                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" />
+                                    Acte #@log.IdActe
+                                </span>
+                            </div>
+                            <span class="log-date">
+                                @log.DateAction.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(log.UserNomComplet))
+                        {
+                            <div class="log-user">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                <strong>@log.UserNomComplet</strong>
+                                @if (!string.IsNullOrEmpty(log.UserRole))
+                                {
+                                    <MudChip T="string"
+                                             Size="Size.Small"
+                                             Color="@GetRoleColor(log.UserRole)"
+                                             Variant="Variant.Outlined"
+                                             Class="ms-2">
+                                        @GetRoleLabel(log.UserRole)
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+
+                        @if (log.StatutAvant.HasValue && log.StatutApres.HasValue
+                       && log.StatutAvant != log.StatutApres)
+                        {
+                            <div class="log-transition">
+                                <ActeStatutBadge Statut="log.StatutAvant.Value" Size="Size.Small" />
+                                <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="color: #5E6B7D;" />
+                                <ActeStatutBadge Statut="log.StatutApres.Value" Size="Size.Small" />
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(log.Details))
+                        {
+                            <div class="log-details">@log.Details</div>
+                        }
+                    </div>
+                </MudPaper>
+            }
+        </div>
+    }
+
+</MudContainer>
+
+@code {
+    private List<AuditLogEntry> _logs = new();
+    private AuditLogStats _stats = new();
+    private bool _loading = true;
+    private bool _isAgent = false;
+    private int? _currentUserId;
+
+    // Filtres
+    private string _search = "";
+    private string? _actionFilter;
+    private DateTime? _dateFrom;
+    private DateTime? _dateTo;
+
+    private IEnumerable<AuditLogEntry> FilteredLogs
+    {
+        get
+        {
+            IEnumerable<AuditLogEntry> filtered = _logs;
+
+            if (!string.IsNullOrWhiteSpace(_actionFilter))
+                filtered = filtered.Where(l => l.Action == _actionFilter);
+
+            if (_dateFrom.HasValue)
+                filtered = filtered.Where(l => l.DateAction.Date >= _dateFrom.Value.Date);
+
+            if (_dateTo.HasValue)
+                filtered = filtered.Where(l => l.DateAction.Date <= _dateTo.Value.Date);
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var s = _search.Trim().ToLowerInvariant();
+                filtered = filtered.Where(l =>
+                    l.IdActe.ToString().Contains(s) ||
+                    (l.Details ?? "").ToLowerInvariant().Contains(s) ||
+                    (l.UserNomComplet ?? "").ToLowerInvariant().Contains(s) ||
+                    GetActionLabel(l.Action).ToLowerInvariant().Contains(s));
+            }
+
+            return filtered;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await IdentifyCurrentUserAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task IdentifyCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var nameIdentifier = user.Claims
+            .FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+
+        if (int.TryParse(nameIdentifier, out var id))
+            _currentUserId = id;
+
+        _isAgent = user.IsInRole(RoleNames.Agent)
+                   && !user.IsInRole(RoleNames.Admin)
+                   && !user.IsInRole(RoleNames.Responsable);
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Si Agent, on restreint à ses actes
+            var filter = new AuditLogFilter
+                {
+                    RestrictToAgentId = _isAgent ? _currentUserId : null
+                };
+
+            _logs = await AuditService.GetAllAsync(filter);
+            _stats = await AuditService.GetStatsAsync(_isAgent ? _currentUserId : null);
+        }
+        catch (Exception ex)
+        {
+            // log silencieux
+            Console.WriteLine($"Erreur chargement historique : {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetFilters()
+    {
+        _search = "";
+        _actionFilter = null;
+        _dateFrom = null;
+        _dateTo = null;
+    }
+
+    private async Task ShowActeHistory(int acteId)
+    {
+        var parameters = new DialogParameters { ["ActeId"] = acteId };
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+        await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ActeHistoryDialog>(
+            $"Historique acte #{acteId}", parameters, options);
+    }
+
+    // ============ HELPERS UI ============
+    private static string GetActionLabel(string action) => action switch
+    {
+        "CREATION" => "Création",
+        "SOUMISSION" => "Envoyé en validation",
+        "VALIDATION" => "Validé",
+        "REJET" => "Rejeté",
+        "REOUVERTURE" => "Ré-ouvert",
+        "ARCHIVAGE" => "Archivé",
+        _ => action
+    };
+
+    private static string GetActionIcon(string action) => action switch
+    {
+        "CREATION" => Icons.Material.Filled.Add,
+        "SOUMISSION" => Icons.Material.Filled.Send,
+        "VALIDATION" => Icons.Material.Filled.CheckCircle,
+        "REJET" => Icons.Material.Filled.Cancel,
+        "REOUVERTURE" => Icons.Material.Filled.Refresh,
+        "ARCHIVAGE" => Icons.Material.Filled.Archive,
+        _ => Icons.Material.Filled.Circle
+    };
+
+    private static string GetActionColor(string action) => action switch
+    {
+        "CREATION" => "#5E6B7D",
+        "SOUMISSION" => "#D97706",
+        "VALIDATION" => "#0E7C5C",
+        "REJET" => "#9B1C2D",
+        "REOUVERTURE" => "#D97706",
+        "ARCHIVAGE" => "#1F3C88",
+        _ => "#5E6B7D"
+    };
+
+    private static string GetRoleLabel(string? role) => role switch
+    {
+        RoleNames.Admin => "Admin",
+        RoleNames.Agent => "Agent",
+        RoleNames.Responsable => "Responsable",
+        _ => role ?? "—"
+    };
+
+    private static Color GetRoleColor(string? role) => role switch
+    {
+        RoleNames.Admin => Color.Error,
+        RoleNames.Agent => Color.Info,
+        RoleNames.Responsable => Color.Success,
+        _ => Color.Default
+    };
+}
+
+<style>
+    /* ============ HEADER ============ */
+    .history-header {
+        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%) !important;
+        padding: 28px 32px !important;
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .history-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(201, 168, 106, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    /* ============ STATS ============ */
+    .stat-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 18px !important;
+        transition: all 0.2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+        }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-primary {
+        background: linear-gradient(135deg, #0A2540, #06182E);
+    }
+
+    .stat-icon-info {
+        background: linear-gradient(135deg, #1F3C88, #3F3A8A);
+    }
+
+    .stat-icon-warning {
+        background: linear-gradient(135deg, #D97706, #B45309);
+    }
+
+    .stat-icon-success {
+        background: linear-gradient(135deg, #0E7C5C, #2F5D50);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #5E6B7D;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0A2540;
+        line-height: 1;
+    }
+
+    /* ============ FILTRES ============ */
+    .filters-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+    }
+
+    /* ============ LOG ENTRIES ============ */
+    .logs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .log-entry {
+        display: flex;
+        gap: 16px;
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 10px !important;
+        padding: 16px !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .log-entry:hover {
+            border-color: #0A2540 !important;
+            box-shadow: 0 4px 12px rgba(10, 37, 64, 0.08) !important;
+            transform: translateX(4px);
+        }
+
+    .log-marker {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .log-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .log-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+    .log-action-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .log-action-label {
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .log-acte-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #F1F3F5;
+        color: #5E6B7D;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .log-date {
+        font-size: 0.8rem;
+        color: #6B7280;
+        font-weight: 500;
+    }
+
+    .log-user {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #4B5563;
+        margin-bottom: 6px;
+    }
+
+    .log-transition {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+    }
+
+    .log-details {
+        font-size: 0.85rem;
+        color: #374151;
+        background: #F8FAFC;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #E1E4E8;
+        margin-top: 6px;
+    }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        padding: 60px 40px !important;
+        text-align: center;
+    }
+</style>

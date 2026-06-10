@@ -182,7 +182,19 @@ namespace GesCPSI_Project.Services
                 .CountAsync(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation);
         }
 
-        
+        // ============================================================
+        // LOG CRÉATION : tracé à la première sauvegarde d'un nouvel acte
+        // ============================================================
+        public async Task LogCreationAsync(int acteId, int userId)
+        {
+            LogAction(acteId, userId, "CREATION",
+                "Acte créé.",
+                null, ActeStatut.Brouillon);
+
+            await _db.SaveChangesAsync();
+        }
+
+
         // ============================================================
         // AUDIT : enregistre dans AuditLogModel
         // ============================================================

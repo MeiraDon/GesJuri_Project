@@ -1,0 +1,483 @@
+﻿@page "/profile"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IProfile ProfileService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Mon profil - GesCPSI</PageTitle>
+
+<div class="profile-page">
+
+    <!-- ═════════════ HEADER ═════════════ -->
+    <div class="profile-header">
+        <div class="header-left">
+            <div class="header-emoji">👤</div>
+            <div>
+                <div class="header-title">Mon profil</div>
+                <div class="header-subtitle">Gérez vos informations et votre sécurité</div>
+            </div>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="loading-zone">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (_profile is null)
+    {
+        <div class="empty-zone">
+            <MudText Color="Color.Error">Profil introuvable</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- ═════════════ ROW 1 : INFOS + SÉCURITÉ ═════════════ -->
+        <div class="profile-row">
+
+            <!-- INFOS PERSONNELLES -->
+            <div class="profile-card profile-info-card">
+                <div class="card-head">
+                    <span class="card-emoji">👤</span>
+                    <span class="card-title">Informations personnelles</span>
+                </div>
+                <div class="card-body">
+
+                    <div class="avatar-block">
+                        <div class="avatar-big">@GetInitials()</div>
+                        <div class="avatar-info">
+                            <div class="avatar-name">@(_profile.NomComplet ?? _profile.Email)</div>
+                            <div class="avatar-role">@_profile.RoleLabel</div>
+                        </div>
+                    </div>
+
+                    @if (!_editMode)
+                    {
+                        <!-- Mode VIEW -->
+                        <div class="info-list">
+                            <div class="info-row">
+                                <span class="info-icon">📧</span>
+                                <div class="info-content">
+                                    <div class="info-label">Email</div>
+                                    <div class="info-value">@_profile.Email</div>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-icon">📞</span>
+                                <div class="info-content">
+                                    <div class="info-label">Téléphone</div>
+                                    <div class="info-value">@(string.IsNullOrWhiteSpace(_profile.Telephone) ? "Non renseigné" : _profile.Telephone)</div>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-icon">👤</span>
+                                <div class="info-content">
+                                    <div class="info-label">Nom</div>
+                                    <div class="info-value">@(string.IsNullOrWhiteSpace(_profile.Nom) ? "Non renseigné" : _profile.Nom)</div>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-icon">👤</span>
+                                <div class="info-content">
+                                    <div class="info-label">Prénoms</div>
+                                    <div class="info-value">@(string.IsNullOrWhiteSpace(_profile.Prenoms) ? "Non renseigné" : _profile.Prenoms)</div>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-icon">📅</span>
+                                <div class="info-content">
+                                    <div class="info-label">Membre depuis</div>
+                                    <div class="info-value">@_profile.DateCreation.ToLocalTime().ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-actions">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       OnClick="EnterEditMode">
+                                Modifier mes informations
+                            </MudButton>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Mode EDIT -->
+                        <div class="edit-form">
+
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+                                L'email ne peut pas être modifié. Contactez un administrateur pour cela.
+                            </MudAlert>
+
+                            <MudTextField @bind-Value="_editInput.Nom"
+                                          Label="Nom de famille"
+                                          HelperText="Ex: KOUASSI"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          FullWidth="true"
+                                          Class="mb-3" />
+
+                            <MudTextField @bind-Value="_editInput.Prenoms"
+                                          Label="Prénoms"
+                                          HelperText="Ex: Jean Pierre"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          FullWidth="true"
+                                          Class="mb-3" />
+
+                            <MudTextField @bind-Value="_editInput.Telephone"
+                                          Label="Téléphone"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          FullWidth="true"
+                                          HelperText="Ex: +228 99 12 34 56" />
+
+                            <div class="card-actions mt-3">
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Default"
+                                           OnClick="CancelEdit"
+                                           Disabled="@_saving">
+                                    Annuler
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Success"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           OnClick="SaveProfile"
+                                           Disabled="@_saving">
+                                    @if (_saving)
+                                    {
+                                        <span>Enregistrement...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Enregistrer</span>
+                                    }
+                                </MudButton>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <!-- SÉCURITÉ -->
+            <div class="profile-card profile-security-card">
+                <div class="card-head">
+                    <span class="card-emoji">🔐</span>
+                    <span class="card-title">Sécurité</span>
+                </div>
+                <div class="card-body">
+
+                    <div class="info-list">
+                        <div class="info-row">
+                            <span class="info-icon">📅</span>
+                            <div class="info-content">
+                                <div class="info-label">Dernière connexion</div>
+                                <div class="info-value">
+                                    @if (_profile.DerniereConnexion.HasValue)
+                                    {
+                                        <span>@_profile.DerniereConnexion.Value.ToLocalTime().ToString("dd/MM/yyyy à HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Première connexion</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">🛡️</span>
+                            <div class="info-content">
+                                <div class="info-label">Statut du compte</div>
+                                <div class="info-value">
+                                    @if (_profile.IsActive)
+                                    {
+                                        <span class="status-active">✅ Actif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-inactive">❌ Désactivé</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">🎭</span>
+                            <div class="info-content">
+                                <div class="info-label">Rôle</div>
+                                <div class="info-value">@_profile.RoleLabel</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-actions">
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mb-3">
+                            Pour votre sécurité, changez régulièrement votre mot de passe.
+                        </MudAlert>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Lock"
+                                   OnClick="GoToChangePassword"
+                                   FullWidth="true">
+                            Changer mon mot de passe
+                        </MudButton>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═════════════ STATS D'ACTIVITÉ ═════════════ -->
+        <div class="profile-card stats-card">
+            <div class="card-head">
+                <span class="card-emoji">📊</span>
+                <span class="card-title">Mon activité</span>
+            </div>
+            <div class="card-body">
+
+                @if (_isAgent)
+                {
+                    <!-- Stats Agent -->
+                    <div class="stats-grid">
+                        <div class="stat-mini stat-mini-total">
+                            <div class="mini-value">@_stats.ActesCrees</div>
+                            <div class="mini-label">📝 Actes créés</div>
+                        </div>
+                        <div class="stat-mini stat-mini-valid">
+                            <div class="mini-value">@_stats.ActesValides</div>
+                            <div class="mini-label">✅ Validés</div>
+                        </div>
+                        <div class="stat-mini stat-mini-pending">
+                            <div class="mini-value">@_stats.ActesEnAttente</div>
+                            <div class="mini-label">⏳ En attente</div>
+                        </div>
+                        <div class="stat-mini stat-mini-reject">
+                            <div class="mini-value">@_stats.ActesRejetes</div>
+                            <div class="mini-label">❌ Rejetés</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Stats Responsable/Admin -->
+                    <div class="stats-grid">
+                        <div class="stat-mini stat-mini-valid">
+                            <div class="mini-value">@_stats.ActesValidesParMoi</div>
+                            <div class="mini-label">✅ Validés par moi</div>
+                        </div>
+                        <div class="stat-mini stat-mini-reject">
+                            <div class="mini-value">@_stats.ActesRejetesParMoi</div>
+                            <div class="mini-label">❌ Rejetés par moi</div>
+                        </div>
+                        <div class="stat-mini stat-mini-total">
+                            <div class="mini-value">@_stats.ActesCrees</div>
+                            <div class="mini-label">📝 Créés par moi</div>
+                        </div>
+                        <div class="stat-mini stat-mini-pending">
+                            <div class="mini-value">@_stats.ActesEnAttente</div>
+                            <div class="mini-label">⏳ En attente</div>
+                        </div>
+                    </div>
+                }
+
+                @if (_stats.LastActionDate.HasValue)
+                {
+                    <div class="last-action-block">
+                        <div class="last-action-label">Dernière action</div>
+                        <div class="last-action-content">
+                            <strong>@_stats.LastActionLabel</strong>
+                            @if (_stats.LastActionActeId.HasValue)
+                            {
+                                <span> sur l'acte <strong>#@_stats.LastActionActeId</strong></span>
+                            }
+                            <span class="last-action-time">@FormatRelative(_stats.LastActionDate.Value)</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    private ProfileDto? _profile;
+    private ProfileStats _stats = new();
+    private ProfileUpdateInput _editInput = new();
+
+    private bool _loading = true;
+    private bool _editMode = false;
+    private bool _saving = false;
+    private bool _isAgent = false;
+    private int? _currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await IdentifyCurrentUserAsync();
+        await LoadProfileAsync();
+    }
+
+    private async Task IdentifyCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var nameIdentifier = user.Claims.FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+        if (int.TryParse(nameIdentifier, out var id))
+        {
+            _currentUserId = id;
+        }
+
+        _isAgent = user.IsInRole(RoleNames.Agent)
+                   && !user.IsInRole(RoleNames.Admin)
+                   && !user.IsInRole(RoleNames.Responsable);
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        if (_currentUserId is null)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            _profile = await ProfileService.GetProfileAsync(_currentUserId.Value);
+
+            if (_profile != null)
+            {
+                _stats = await ProfileService.GetStatsAsync(_currentUserId.Value, _profile.Role);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement profil : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void EnterEditMode()
+    {
+        if (_profile is null) return;
+
+        _editInput = new ProfileUpdateInput
+            {
+                Nom = _profile.Nom,
+                Prenoms = _profile.Prenoms,
+                Telephone = _profile.Telephone
+            };
+
+        _editMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editMode = false;
+        _editInput = new ProfileUpdateInput();
+    }
+
+    private async Task SaveProfile()
+    {
+        if (_currentUserId is null || _saving) return;
+
+        _saving = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ProfileService.UpdateProfileAsync(_currentUserId.Value, _editInput);
+
+            if (!result.Success)
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de la mise à jour.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Profil mis à jour avec succès.", Severity.Success);
+            _editMode = false;
+
+            // Recharger le profil
+            await LoadProfileAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToChangePassword()
+    {
+        Navigation.NavigateTo("/change-password", forceLoad: true);
+    }
+
+    private string GetInitials()
+    {
+        if (_profile is null) return "U";
+
+        if (!string.IsNullOrWhiteSpace(_profile.NomComplet))
+        {
+            var parts = _profile.NomComplet.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+            {
+                return (parts[0][..1] + parts[1][..1]).ToUpper();
+            }
+            return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+        }
+
+        if (!string.IsNullOrWhiteSpace(_profile.Email))
+        {
+            return _profile.Email[..Math.Min(2, _profile.Email.Length)].ToUpper();
+        }
+
+        return "U";
+    }
+
+    private string FormatRelative(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+
+        if (diff.TotalDays >= 1)
+        {
+            return $"il y a {(int)diff.TotalDays} jour{(diff.TotalDays >= 2 ? "s" : "")}";
+        }
+        if (diff.TotalHours >= 1)
+        {
+            return $"il y a {(int)diff.TotalHours} heure{(diff.TotalHours >= 2 ? "s" : "")}";
+        }
+        if (diff.TotalMinutes >= 1)
+        {
+            return $"il y a {(int)diff.TotalMinutes} min";
+        }
+        return "à l'instant";
+    }
+}

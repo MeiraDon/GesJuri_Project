@@ -94,6 +94,7 @@ builder.Services.AddScoped<IUserAdmin, UserAdminService>();
 builder.Services.AddScoped<IFileUpload, FileUploadService>();
 builder.Services.AddScoped<IAuditLog, AuditLogService>();
 builder.Services.AddScoped<IDashboard, DashboardService>();
+builder.Services.AddScoped<IProfile, ProfileService>();
 
 builder.Services.AddHttpContextAccessor();
 

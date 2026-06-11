@@ -5,9 +5,9 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IActeWorkflow WorkflowService
 
-<div class="sidebar">
+<div class="sidebar @(IsMiniMode ? "mini-mode" : "")">
 
-    <!-- ============= HEADER (inchangé) ============= -->
+    <!-- ============= HEADER ============= -->
     <div class="sidebar-header">
         <div class="brand-container">
             <div class="brand-info">
@@ -45,9 +45,15 @@
             <!-- RESPONSABLE JURIDIQUE & ADMIN : validation avec badge -->
             <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
                 <NavLink class="nav-item" href="validationAct" Match="NavLinkMatch.All" title="Valider les actes">
-                    <div class="nav-icon"><i class="bi bi-check2-circle"></i></div>
+                    <div class="nav-icon">
+                        <i class="bi bi-check2-circle"></i>
+                        @if (IsMiniMode && _pendingCount > 0)
+                        {
+                            <span class="nav-icon-dot"></span>
+                        }
+                    </div>
                     <div class="nav-text">Validation</div>
-                    @if (_pendingCount > 0)
+                    @if (!IsMiniMode && _pendingCount > 0)
                     {
                         <div class="nav-badge-pending">@_pendingCount</div>
                     }
@@ -59,7 +65,6 @@
                 <div class="nav-text">Archives</div>
             </NavLink>
 
-            <!-- historique complet et tests -->
             <NavLink class="nav-item" href="historique" Match="NavLinkMatch.All" title="Journal d'audit">
                 <div class="nav-icon"><i class="bi bi-clock-history"></i></div>
                 <div class="nav-text">Historique</div>
@@ -107,7 +112,7 @@
 
     <!-- ============= FOOTER : USER PROFILE ============= -->
     <div class="sidebar-footer user-footer">
-        <a href="/profile" class="user-profile footer-profile" title="Voir mon profil">
+        <a href="/profile" class="user-profile footer-profile" title="@_displayName - @_roleLabel">
             <div class="avatar">
                 <span class="avatar-initials">@_initials</span>
             </div>
@@ -124,6 +129,8 @@
 </div>
 
 @code {
+    [Parameter] public bool IsMiniMode { get; set; }
+
     private string _displayName = "Utilisateur";
     private string _initials = "U";
     private string _roleLabel = "—";
@@ -151,7 +158,6 @@
             else if (user.IsInRole(RoleNames.Agent))
                 _roleLabel = "Agent Juridique";
 
-            // 🆕 Charger le compteur d'actes en attente (Admin + Responsable)
             if (user.IsInRole(RoleNames.Admin) || user.IsInRole(RoleNames.Responsable))
             {
                 await RefreshPendingCountAsync();
@@ -173,7 +179,7 @@
 }
 
 <style>
-    /* ====== VARIABLES ====== */
+    /* ====== VARIABLES (inchangées) ====== */
     :root {
         --sidebar-bg: linear-gradient(180deg, #0f2b5a 0%, #0a1a3a 100%);
         --sidebar-width: 46vh;
@@ -195,7 +201,6 @@
         --radius-lg: 16px;
     }
 
-    /* 🎨 CPSI - BOA Inspired Corporate Palette */
     :root {
         --cpsi-primary-purple: #3F3A8A;
         --cpsi-primary-green-dark: #2F5D50;
@@ -218,12 +223,11 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-        background: radial-gradient(900px 520px at 12% 8%, rgba(0,74,136,.20), transparent 55%),
-                    radial-gradient(900px 520px at 85% 18%, rgba(2,132,199,.12), transparent 58%),
-                    linear-gradient(180deg, #0A192F 0%, #0F2744 100%);
+        background: radial-gradient(900px 520px at 12% 8%, rgba(0,74,136,.20), transparent 55%), radial-gradient(900px 520px at 85% 18%, rgba(2,132,199,.12), transparent 58%), linear-gradient(180deg, #0A192F 0%, #0F2744 100%);
         padding: 10px;
         gap: 12px;
         border-right: 1px solid var(--border-color);
+        transition: var(--transition);
     }
 
     /* ====== HEADER ====== */
@@ -260,6 +264,7 @@
     .sidebar-nav {
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .nav-section {
@@ -289,19 +294,20 @@
         gap: 12px;
         margin: 1px 8px;
         padding: 8px;
+        white-space: nowrap;
     }
 
-    .nav-item:hover {
-        background: rgba(255,255,255,.06);
-        transform: translateX(5px);
-        filter: saturate(1.06);
-    }
+        .nav-item:hover {
+            background: rgba(255,255,255,.06);
+            transform: translateX(5px);
+            filter: saturate(1.06);
+        }
 
-    .nav-item.active {
-        background: linear-gradient(90deg, var(--cpsi-primary-green-dark), var(--cpsi-primary-green));
-        color: white;
-        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-    }
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--cpsi-primary-green-dark), var(--cpsi-primary-green));
+            color: white;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
 
     .nav-icon {
         width: 36px;
@@ -312,11 +318,15 @@
         background: rgba(255, 255, 255, 0.05);
         font-size: 16px;
         border-radius: var(--radius-sm);
+        flex-shrink: 0;
+        position: relative;
     }
 
     .nav-text {
         font-size: 14px;
         font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* ====== FOOTER USER PROFILE ====== */
@@ -347,9 +357,9 @@
         transition: var(--transition);
     }
 
-    .user-profile:hover {
-        background: rgba(255,255,255,.05);
-    }
+        .user-profile:hover {
+            background: rgba(255,255,255,.05);
+        }
 
     .avatar {
         width: 40px;
@@ -375,6 +385,7 @@
         flex-direction: column;
         min-width: 0;
         flex: 1;
+        overflow: hidden;
     }
 
     .user-name {
@@ -395,6 +406,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     /* ============ BADGE COMPTEUR PENDING ============ */
     .nav-badge-pending {
         background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
@@ -412,6 +424,20 @@
         box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
         animation: pulse-badge 2s ease-in-out infinite;
         letter-spacing: 0.3px;
+        flex-shrink: 0;
+    }
+
+    /* Pastille rouge sur icône en mode mini */
+    .nav-icon-dot {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 10px;
+        height: 10px;
+        background: #DC2626;
+        border-radius: 50%;
+        border: 2px solid #0A192F;
+        animation: pulse-badge 2s ease-in-out infinite;
     }
 
     @@keyframes pulse-badge {
@@ -443,10 +469,10 @@
         text-decoration: none;
     }
 
-    .logout-btn:hover {
-        background: rgba(255, 107, 107, 0.3);
-        transform: scale(1.05);
-    }
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: scale(1.05);
+        }
 
     /* ====== SCROLLBAR ====== */
     .sidebar-nav::-webkit-scrollbar {
@@ -456,5 +482,60 @@
     .sidebar-nav::-webkit-scrollbar-thumb {
         background: var(--primary-color);
         border-radius: 4px;
+    }
+
+    /* ════════════════════════════════════════════════════════════
+           🆕 MODE MINI : drawer fermé, on cache les textes
+           ════════════════════════════════════════════════════════════ */
+    .sidebar.mini-mode .brand-info,
+    .sidebar.mini-mode .nav-text,
+    .sidebar.mini-mode .section-label,
+    .sidebar.mini-mode .user-info,
+    .sidebar.mini-mode .logout-btn {
+        display: none;
+    }
+
+    .sidebar.mini-mode .nav-item {
+        justify-content: center;
+        gap: 0;
+        margin: 2px 4px;
+        padding: 6px 4px;
+    }
+
+        .sidebar.mini-mode .nav-item:hover {
+            transform: scale(1.08);
+        }
+
+    .sidebar.mini-mode .brand-container {
+        padding: 8px;
+        justify-content: center;
+    }
+
+        .sidebar.mini-mode .brand-container::before {
+            content: "G";
+            font-size: 20px;
+            font-weight: 900;
+            color: rgba(255,255,255,.96);
+            letter-spacing: 1px;
+        }
+
+    .sidebar.mini-mode .sidebar-footer {
+        padding: 6px;
+        justify-content: center;
+    }
+
+    .sidebar.mini-mode .user-profile {
+        justify-content: center;
+        gap: 0;
+        flex: none;
+    }
+
+    .sidebar.mini-mode .avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .sidebar.mini-mode .nav-badge-pending {
+        display: none;
     }
 </style>

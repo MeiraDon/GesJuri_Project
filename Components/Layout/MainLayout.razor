@@ -64,8 +64,13 @@
         </MudMenu>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Style="background: transparent; border-right: none;">
-        <NavMenu />
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Variant="@DrawerVariant.Mini"
+               OpenMiniOnHover="true"
+               Style="background: transparent; border-right: none;">
+        <NavMenu IsMiniMode="!_drawerOpen" />
     </MudDrawer>
 
     <MudMainContent>

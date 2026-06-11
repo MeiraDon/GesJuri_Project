@@ -1,0 +1,372 @@
+﻿@page "/archives"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using GesCPSI_Project.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject ITypesAct TypesActService
+@inject IClientAct ClientActService
+@inject IRolesClientAct RolesClientActService
+@inject IClient ClientService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Archives — GesCPSI</PageTitle>
+
+<div class="archives-page">
+
+    <!-- ═════════════ HEADER ═════════════ -->
+    <div class="archives-header">
+        <div class="header-left">
+            <div class="header-icon">📦</div>
+            <div>
+                <div class="header-title">Archives</div>
+                <div class="header-subtitle">Actes signés et archivés définitivement</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="archives-count">@_filteredActes.Count() acte@(_filteredActes.Count() > 1 ? "s" : "")</span>
+        </div>
+    </div>
+
+    <!-- ═════════════ STATS ═════════════ -->
+    <div class="stats-grid">
+        <div class="stat-card stat-total">
+            <div class="stat-emoji">📦</div>
+            <div class="stat-info">
+                <div class="stat-value">@_totalArchives</div>
+                <div class="stat-label">Total archivés</div>
+            </div>
+        </div>
+        <div class="stat-card stat-month">
+            <div class="stat-emoji">📅</div>
+            <div class="stat-info">
+                <div class="stat-value">@_archivesCeMois</div>
+                <div class="stat-label">Ce mois</div>
+            </div>
+        </div>
+        <div class="stat-card stat-year">
+            <div class="stat-emoji">📊</div>
+            <div class="stat-info">
+                <div class="stat-value">@_archivesCetteAnnee</div>
+                <div class="stat-label">Cette année</div>
+            </div>
+        </div>
+        <div class="stat-card stat-pdf">
+            <div class="stat-emoji">📄</div>
+            <div class="stat-info">
+                <div class="stat-value">@_archivesAvecPdf</div>
+                <div class="stat-label">Avec PDF signé</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═════════════ FILTRES ═════════════ -->
+    <div class="filters-bar">
+        <div class="filter-search">
+            <MudTextField @bind-Value="_search"
+                          Placeholder="Rechercher (ID, type, débiteur, caution...)"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Immediate="true" />
+        </div>
+        <div class="filter-date">
+            <MudDatePicker @bind-Date="_dateFrom"
+                           Label="Depuis"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Clearable="true" />
+        </div>
+        <div class="filter-date">
+            <MudDatePicker @bind-Date="_dateTo"
+                           Label="Jusqu'à"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Clearable="true" />
+        </div>
+        <div class="filter-action">
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ResetFilters">
+                Reset
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- ═════════════ LISTE ═════════════ -->
+    @if (_loading)
+    {
+        <div class="loading-zone">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (!_filteredActes.Any())
+    {
+        <div class="empty-zone">
+            <div class="empty-emoji">📦</div>
+            <div class="empty-title">Aucun acte archivé</div>
+            <div class="empty-subtitle">
+                @if (_archives.Any())
+                {
+                    <span>Aucun résultat ne correspond à vos filtres.</span>
+                }
+                else
+                {
+                    <span>Les actes apparaîtront ici une fois signés et uploadés.</span>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="archives-list">
+            @foreach (var acte in _filteredActes)
+            {
+                <div class="archive-card">
+                    <div class="archive-icon">📄</div>
+
+                    <div class="archive-info">
+                        <div class="archive-header">
+                            <span class="archive-id">#@acte.IdActe</span>
+                            <span class="archive-type">@acte.NomTypesActe</span>
+                        </div>
+                        <div class="archive-parties">
+                            <span class="party">
+                                <strong>Débiteur :</strong> @GetDebiteurName(acte.IdActe)
+                            </span>
+                            <span class="party-sep">•</span>
+                            <span class="party">
+                                <strong>Caution :</strong> @GetCautionName(acte.IdActe)
+                            </span>
+                        </div>
+                        <div class="archive-dates">
+                            <span class="date-info">
+                                <span class="date-label">Créé :</span>
+                                @acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")
+                            </span>
+                            @if (acte.DateArchivage.HasValue)
+                            {
+                                <span class="date-info">
+                                    <span class="date-label">Archivé :</span>
+                                    @acte.DateArchivage.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="archive-actions">
+                        @if (!string.IsNullOrWhiteSpace(acte.PdfGenerePath))
+                        {
+                            <MudTooltip Text="Télécharger le PDF officiel">
+                                <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => OpenPdf(acte.PdfGenerePath))" />
+                            </MudTooltip>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(acte.PdfSignePath))
+                        {
+                            <MudTooltip Text="Voir le PDF signé">
+                                <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser"
+                                               Color="Color.Success"
+                                               Size="Size.Small"
+                                               OnClick="@(() => OpenPdf(acte.PdfSignePath))" />
+                            </MudTooltip>
+                        }
+                        <MudTooltip Text="Voir l'historique">
+                            <MudIconButton Icon="@Icons.Material.Filled.History"
+                                           Color="Color.Default"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OpenHistoryDialog(acte))" />
+                        </MudTooltip>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    private List<TypesActModel> _archives = new();
+    private bool _loading = true;
+
+    private string _search = "";
+    private DateTime? _dateFrom;
+    private DateTime? _dateTo;
+
+    private int _totalArchives;
+    private int _archivesCeMois;
+    private int _archivesCetteAnnee;
+    private int _archivesAvecPdf;
+
+    private Dictionary<int, string> _debiteurs = new();
+    private Dictionary<int, string> _cautions = new();
+
+    private IEnumerable<TypesActModel> _filteredActes
+    {
+        get
+        {
+            IEnumerable<TypesActModel> filtered = _archives;
+
+            if (_dateFrom.HasValue)
+            {
+                filtered = filtered.Where(a => a.DateArchivage.HasValue
+                                            && a.DateArchivage.Value.Date >= _dateFrom.Value.Date);
+            }
+
+            if (_dateTo.HasValue)
+            {
+                filtered = filtered.Where(a => a.DateArchivage.HasValue
+                                            && a.DateArchivage.Value.Date <= _dateTo.Value.Date);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var s = _search.Trim().ToLowerInvariant();
+                filtered = filtered.Where(a =>
+                    a.IdActe.ToString().Contains(s) ||
+                    (a.NomTypesActe ?? "").ToLowerInvariant().Contains(s) ||
+                    GetDebiteurName(a.IdActe).ToLowerInvariant().Contains(s) ||
+                    GetCautionName(a.IdActe).ToLowerInvariant().Contains(s));
+            }
+
+            return filtered.OrderByDescending(a => a.DateArchivage ?? a.DateCreation);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadArchivesAsync();
+    }
+
+    private async Task LoadArchivesAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var allActes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
+            _archives = allActes.Where(a => a.StatutWorkflow == ActeStatut.Archive).ToList();
+
+            // Calcul des stats
+            _totalArchives = _archives.Count;
+            var now = DateTime.UtcNow;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var yearStart = new DateTime(now.Year, 1, 1);
+
+            _archivesCeMois = _archives.Count(a => a.DateArchivage.HasValue && a.DateArchivage.Value >= monthStart);
+            _archivesCetteAnnee = _archives.Count(a => a.DateArchivage.HasValue && a.DateArchivage.Value >= yearStart);
+            _archivesAvecPdf = _archives.Count(a => !string.IsNullOrWhiteSpace(a.PdfSignePath));
+
+            await LoadParticipantsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadParticipantsAsync()
+    {
+        var links = await ClientActService.GetAllAsync() ?? new List<ClientActModel>();
+        var roles = await RolesClientActService.GetAllAsync() ?? new List<RolesClientActModel>();
+        var clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+
+        var roleDebiteurIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle)
+                && (string.Equals(r.Libelle.Trim(), "Debiteur", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.Libelle.Trim(), "Débiteur", StringComparison.OrdinalIgnoreCase)))
+            .Select(r => r.IdRole).ToHashSet();
+
+        var roleCautionIds = roles
+            .Where(r => !string.IsNullOrWhiteSpace(r.Libelle)
+                && string.Equals(r.Libelle.Trim(), "Caution", StringComparison.OrdinalIgnoreCase))
+            .Select(r => r.IdRole).ToHashSet();
+
+        _debiteurs.Clear();
+        _cautions.Clear();
+
+        foreach (var link in links)
+        {
+            var client = clients.FirstOrDefault(c => c.IdClt == link.IdClt);
+            if (client is null) continue;
+
+            var display = !string.IsNullOrWhiteSpace(client.NomRaisonsociale)
+                ? client.NomRaisonsociale
+                : $"{client.Nom} {client.Prenoms}".Trim();
+
+            if (roleDebiteurIds.Contains(link.IdRole) && !_debiteurs.ContainsKey(link.IdActe))
+            {
+                _debiteurs[link.IdActe] = display;
+            }
+
+            if (roleCautionIds.Contains(link.IdRole) && !_cautions.ContainsKey(link.IdActe))
+            {
+                _cautions[link.IdActe] = display;
+            }
+        }
+    }
+
+    private string GetDebiteurName(int acteId)
+    {
+        return _debiteurs.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+    }
+
+    private string GetCautionName(int acteId)
+    {
+        return _cautions.TryGetValue(acteId, out var name) ? name : "Non spécifié";
+    }
+
+    private void ResetFilters()
+    {
+        _search = "";
+        _dateFrom = null;
+        _dateTo = null;
+    }
+
+    private async Task OpenPdf(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            Snackbar.Add("Aucun PDF disponible.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var url = path.StartsWith("/") ? path : "/" + path;
+            await JS.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur ouverture PDF : {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenHistoryDialog(TypesActModel acte)
+    {
+        var parameters = new DialogParameters { ["ActeId"] = acte.IdActe };
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+        await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ActeHistoryDialog>(
+            $"Historique de l'acte #{acte.IdActe}", parameters, options);
+    }
+}

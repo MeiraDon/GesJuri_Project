@@ -33,25 +33,25 @@
             @* <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
                 <i class="bi bi-folder2-open me-2"></i>Gestion des Actes
             </MudText> *@
-            
+
             <MudText Typo="Typo.body1" Color="Color.Secondary">
-                Gérez, suivez et reprenez vos actes (brouillon / validé).
+                Gérez vos actes en cours (les actes archivés sont dans la section dédiée).
             </MudText>
         </div>
 
         <div class="d-flex gap-2">
             <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))"
-                       Class="px-4 rounded-pill">
+            StartIcon="@Icons.Material.Filled.Add"
+            OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))"
+            Class="px-4 rounded-pill">
                 Nouvel acte
             </MudButton>
 
             <MudTooltip Text="Actualiser la liste">
                 <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                               Color="Color.Secondary"
-                               Disabled="@_loading"
-                               OnClick="ReloadAsync" /> @* Variant="Variant.Outlined" *@
+                Color="Color.Secondary"
+                Disabled="@_loading"
+                OnClick="ReloadAsync" /> @* Variant="Variant.Outlined" *@
             </MudTooltip>
         </div>
     </div>
@@ -146,7 +146,6 @@
             <MudTabPanel Text="En attente" />
             <MudTabPanel Text="Validés" />
             <MudTabPanel Text="Rejetés" />
-            <MudTabPanel Text="Archivés" />
         </MudTabs>
 
         <!-- Filters -->
@@ -154,35 +153,34 @@
             <div class="row g-3 align-items-center">
                 <div class="col-md-4">
                     <MudTextField @bind-Value="_search"
-                                  Placeholder="Rechercher (ID, type, débiteur...)"
-                                  Variant="Variant.Outlined"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true"
-                                  FullWidth="true" />
+                    Placeholder="Rechercher (ID, type, débiteur...)"
+                    Variant="Variant.Outlined"
+                    Adornment="Adornment.Start"
+                    AdornmentIcon="@Icons.Material.Filled.Search"
+                    Immediate="true"
+                    FullWidth="true" />
                 </div>
 
                 <div class="col-md-4">
                     <MudSelect T="ActeStatut?" @bind-Value="_statutFilterEnum"
-                               Variant="Variant.Outlined"
-                               Label="Statut"
-                               Clearable="true"
-                               FullWidth="true">
+                    Variant="Variant.Outlined"
+                    Label="Statut"
+                    Clearable="true"
+                    FullWidth="true">
                         <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)null)">Tous les statuts</MudSelectItem>
                         <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Brouillon)">Brouillon</MudSelectItem>
                         <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.EnAttenteValidation)">En attente</MudSelectItem>
                         <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Valide)">Validé</MudSelectItem>
                         <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Rejete)">Rejeté</MudSelectItem>
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Archive)">Archivé</MudSelectItem>
                     </MudSelect>
                 </div>
 
                 <div class="col-md-4">
                     <MudSelect T="int?" @bind-Value="_selectedTypeId"
-                               Variant="Variant.Outlined"
-                               Label="Type d'acte"
-                               Clearable="true"
-                               FullWidth="true">
+                    Variant="Variant.Outlined"
+                    Label="Type d'acte"
+                    Clearable="true"
+                    FullWidth="true">
 
                         <MudSelectItem T="int?" Value="@((int?)null)">Tous les types</MudSelectItem>
 
@@ -197,8 +195,8 @@
 
                 <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <MudSwitch @bind-Value="_showOnlyMine"
-                               Color="Color.Primary"
-                               Label="Voir uniquement mes actes" />
+                    Color="Color.Primary"
+                    Label="Voir uniquement mes actes" />
 
                     <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetFilters">
                         Effacer filtres
@@ -222,8 +220,8 @@
             <div class="h5 fw-bold mt-3">Aucun acte trouvé</div>
             <div class="text-muted mb-3">Change les filtres ou crée un nouvel acte.</div>
             <MudButton Color="Color.Primary" Variant="Variant.Outlined"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))">
+            StartIcon="@Icons.Material.Filled.Add"
+            OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))">
                 Créer un acte
             </MudButton>
         </div>
@@ -232,15 +230,15 @@
     {
         <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
             <MudTable Items="FilteredActes"
-                      Dense="true"
-                      Hover="true"
-                      Striped="true"
-                      FixedHeader="true"
-                      Height="520px"
-                      Breakpoint="Breakpoint.Sm"
-                      RowsPerPage="10">
+            Dense="true"
+            Hover="true"
+            Striped="true"
+            FixedHeader="true"
+            Height="520px"
+            Breakpoint="Breakpoint.Sm"
+            RowsPerPage="10">
                 <HeaderContent>
-                    
+
                     <MudTh>Date Création</MudTh>
                     <MudTh>Dernière Modification</MudTh>
                     <MudTh>Types Actes</MudTh>
@@ -251,7 +249,7 @@
                 </HeaderContent>
 
                 <RowTemplate Context="acte">
-                   
+
                     <MudTd>
 
                         <div class="text-nowrap">@acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
@@ -284,8 +282,8 @@
                             {
                                 <MudTooltip Text="@($"Motif : {acte.MotifRejet}")" Placement="Placement.Top">
                                     <MudIcon Icon="@Icons.Material.Filled.Info"
-                                             Size="Size.Small"
-                                             Color="Color.Error" />
+                                    Size="Size.Small"
+                                    Color="Color.Error" />
                                 </MudTooltip>
                             }
                         </div>
@@ -297,18 +295,18 @@
                             <!-- 👁️ APERÇU - toujours visible -->
                             <MudTooltip Text="Aperçu de l'acte">
                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                               Color="Color.Secondary"
-                                               Size="Size.Small"
-                                               OnClick="@(() => PreviewActe(acte))" />
+                                Color="Color.Secondary"
+                                Size="Size.Small"
+                                OnClick="@(() => PreviewActe(acte))" />
                             </MudTooltip>
 
                             <!-- ✏️ MODIFIER -->
                             <MudTooltip Text="@(CanEditActe(acte) ? "Modifier" : "Modification impossible (acte en cours de validation ou validé)")">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               Disabled="@(!CanEditActe(acte))"
-                                               OnClick="@(() => Edit(acte))" />
+                                Color="Color.Primary"
+                                Size="Size.Small"
+                                Disabled="@(!CanEditActe(acte))"
+                                OnClick="@(() => Edit(acte))" />
                             </MudTooltip>
 
                             <!-- ⬇️ TÉLÉCHARGER PDF - si PdfGenerePath existe -->
@@ -316,9 +314,9 @@
                             {
                                 <MudTooltip Text="@($"PDF officiel généré le {acte.DateGenerationPdf?.ToLocalTime():dd/MM/yyyy HH:mm}")">
                                     <MudIconButton Icon="@Icons.Material.Filled.Download"
-                                                   Color="Color.Success"
-                                                   Size="Size.Small"
-                                                   OnClick="@(() => DownloadPdf(acte))" />
+                                    Color="Color.Success"
+                                    Size="Size.Small"
+                                    OnClick="@(() => DownloadPdf(acte))" />
                                 </MudTooltip>
                             }
 
@@ -328,31 +326,20 @@
                                 <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
                                     <MudTooltip Text="Téléverser le document signé">
                                         <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
-                                                       Color="Color.Tertiary"
-                                                       Size="Size.Small"
-                                                       OnClick="@(() => OpenUploadDialogAsync(acte))" />
+                                        Color="Color.Tertiary"
+                                        Size="Size.Small"
+                                        OnClick="@(() => OpenUploadDialogAsync(acte))" />
                                     </MudTooltip>
                                 </AuthorizeView>
-                            }
-
-                            <!-- 📄 VOIR PDF SIGNÉ - si archivé -->
-                            @if (acte.StatutWorkflow == ActeStatut.Archive && !string.IsNullOrWhiteSpace(acte.PdfSignePath))
-                            {
-                                <MudTooltip Text="Voir le PDF signé archivé">
-                                    <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser"
-                                                   Color="Color.Info"
-                                                   Size="Size.Small"
-                                                   OnClick="@(() => OpenSignedPdf(acte))" />
-                                </MudTooltip>
                             }
 
                             <!-- 📤 ENVOYER -->
                             <MudTooltip Text="Envoyer au responsable">
                                 <MudIconButton Icon="@Icons.Material.Filled.Send"
-                                               Color="Color.Info"
-                                               Size="Size.Small"
-                                               Disabled="@(_loading || !CanSendActe(acte))"
-                                               OnClick="@(() => SendActeAsync(acte))" />
+                                Color="Color.Info"
+                                Size="Size.Small"
+                                Disabled="@(_loading || !CanSendActe(acte))"
+                                OnClick="@(() => SendActeAsync(acte))" />
                             </MudTooltip>
 
                             <!-- ↻ RÉ-OUVRIR un acte rejeté -->
@@ -360,20 +347,20 @@
                             {
                                 <MudTooltip Text="Ré-ouvrir l'acte pour modification">
                                     <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                                   Color="Color.Warning"
-                                                   Size="Size.Small"
-                                                   Disabled="@_loading"
-                                                   OnClick="@(() => RouvrirActeAsync(acte))" />
+                                    Color="Color.Warning"
+                                    Size="Size.Small"
+                                    Disabled="@_loading"
+                                    OnClick="@(() => RouvrirActeAsync(acte))" />
                                 </MudTooltip>
                             }
 
                             <!-- 🗑️ SUPPRIMER -->
                             <MudTooltip Text="@(CanDeleteActe(acte) ? "Supprimer" : "Suppression impossible")">
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Color="Color.Error"
-                                               Size="Size.Small"
-                                               Disabled="@(!CanDeleteActe(acte))"
-                                               OnClick="@(() => ConfirmDelete(acte))" />
+                                Color="Color.Error"
+                                Size="Size.Small"
+                                Disabled="@(!CanDeleteActe(acte))"
+                                OnClick="@(() => ConfirmDelete(acte))" />
                             </MudTooltip>
 
                         </div>
@@ -592,16 +579,17 @@
 
     private List<TypesActModel> GetFilteredActes()
     {
-        IEnumerable<TypesActModel> filtered = _actes;
+        // 🆕 EXCLURE les actes archivés (ils ont leur propre page /archives)
+        IEnumerable<TypesActModel> filtered = _actes
+            .Where(a => a.StatutWorkflow != ActeStatut.Archive);
 
-        // Tabs (5 panneaux)
+        // Tabs (4 panneaux - plus d'archivés)
         filtered = _activeTabIndex switch
         {
             1 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Brouillon),
             2 => filtered.Where(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation),
             3 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Valide),
             4 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Rejete),
-            5 => filtered.Where(a => a.StatutWorkflow == ActeStatut.Archive),
             _ => filtered
         };
 
@@ -946,24 +934,7 @@
         }
     }
 
-    private async Task OpenSignedPdf(TypesActModel acte)
-    {
-        if (string.IsNullOrWhiteSpace(acte.PdfSignePath))
-        {
-            Snackbar.Add("Aucun PDF signé disponible.", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            var url = acte.PdfSignePath.StartsWith("/") ? acte.PdfSignePath : "/" + acte.PdfSignePath;
-            await JS.InvokeVoidAsync("open", url, "_blank");
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
-        }
-    }
+    
 
     private Task<int?> GetCurrentUserIdAsync()
     {

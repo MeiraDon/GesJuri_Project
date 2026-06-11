@@ -1,0 +1,259 @@
+﻿.archives-page {
+    padding: 24px;
+    background: #FAFAF7;
+    min-height: 100vh;
+}
+
+/* ═══════════ HEADER ═══════════ */
+.archives-header {
+    background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%);
+    border-radius: 16px;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 8px 24px rgba(10, 37, 64, 0.15);
+    margin-bottom: 24px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.header-title {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.header-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.archives-count {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ═══════════ STATS ═══════════ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #E1E4E8;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.2s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+.stat-emoji {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0A2540;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #5E6B7D;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* ═══════════ FILTRES ═══════════ */
+.filters-bar {
+    background: white;
+    border: 1px solid #E1E4E8;
+    border-radius: 12px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* ═══════════ LISTE ═══════════ */
+.archives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.archive-card {
+    background: white;
+    border: 1px solid #E1E4E8;
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-left: 4px solid #1F3C88;
+}
+
+    .archive-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        transform: translateX(2px);
+    }
+
+.archive-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.archive-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.archive-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.archive-id {
+    background: #F1F3F5;
+    color: #0A2540;
+    font-family: 'Inter', monospace;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.archive-type {
+    color: #0A2540;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.archive-parties {
+    color: #5E6B7D;
+    font-size: 0.88rem;
+    margin-bottom: 6px;
+}
+
+.party-sep {
+    margin: 0 8px;
+    color: #A0A8B5;
+}
+
+.archive-dates {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.date-info {
+    color: #5E6B7D;
+    font-size: 0.8rem;
+}
+
+.date-label {
+    color: #A0A8B5;
+    font-weight: 500;
+}
+
+.archive-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ═══════════ EMPTY / LOADING ═══════════ */
+.empty-zone {
+    background: white;
+    border: 1px solid #E1E4E8;
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.empty-emoji {
+    font-size: 4rem;
+    margin-bottom: 12px;
+}
+
+.empty-title {
+    color: #0A2540;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.empty-subtitle {
+    color: #5E6B7D;
+    font-size: 0.9rem;
+}
+
+.loading-zone {
+    text-align: center;
+    padding: 80px 0;
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filters-bar {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .archives-page {
+        padding: 12px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .archive-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}

@@ -68,13 +68,43 @@
         await UserManager.UpdateAsync(user);
 
         // Redirection
+        // Redirection
         if (user.MustChangePassword)
         {
             Navigation.NavigateTo("/change-password", forceLoad: true);
         }
         else
         {
-            var target = !string.IsNullOrWhiteSpace(ReturnUrl) ? "/" + ReturnUrl : "/";
+            // Calcul sécurisé de l'URL cible
+            string target = "/";
+
+            if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            {
+                // Si ReturnUrl commence déjà par "/", on l'utilise tel quel
+                // Sinon on ajoute "/" devant
+                if (ReturnUrl.StartsWith("/"))
+                {
+                    target = ReturnUrl;
+                }
+                else if (ReturnUrl.StartsWith("http"))
+                {
+                    // URL absolue : on extrait juste le chemin
+                    try
+                    {
+                        var uri = new Uri(ReturnUrl);
+                        target = uri.PathAndQuery;
+                    }
+                    catch
+                    {
+                        target = "/";
+                    }
+                }
+                else
+                {
+                    target = "/" + ReturnUrl;
+                }
+            }
+
             Navigation.NavigateTo(target, forceLoad: true);
         }
     }

@@ -91,10 +91,9 @@ builder.Services.AddScoped<ActReportPdfService>();
 builder.Services.AddScoped<ActReportWorkflowService>();
 
 builder.Services.AddScoped<IUserAdmin, UserAdminService>();
-
 builder.Services.AddScoped<IFileUpload, FileUploadService>();
-
 builder.Services.AddScoped<IAuditLog, AuditLogService>();
+builder.Services.AddScoped<IDashboard, DashboardService>();
 
 builder.Services.AddHttpContextAccessor();
 

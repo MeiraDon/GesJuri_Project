@@ -8,10 +8,12 @@ namespace GesCPSI_Project.Services
     public class ActeWorkflowService : IActeWorkflow
     {
         private readonly GesDbContext _db;
+        private readonly Reports.ActReportPdfService _pdfService;
 
-        public ActeWorkflowService(GesDbContext db)
+        public ActeWorkflowService(GesDbContext db, Reports.ActReportPdfService pdfService)
         {
             _db = db;
+            _pdfService = pdfService;
         }
 
         // ============================================================
@@ -44,8 +46,10 @@ namespace GesCPSI_Project.Services
             return WorkflowResult.Ok(ActeStatut.EnAttenteValidation);
         }
 
-        // ============================================================
+        /// ============================================================
         // VALIDER : EnAttenteValidation → Valide
+        // ⚠️ La validation échoue si le PDF ne peut pas être généré
+        // (un acte validé sans PDF n'a aucun sens métier)
         // ============================================================
         public async Task<WorkflowResult> ValiderAsync(int acteId, int validateurId)
         {
@@ -63,6 +67,42 @@ namespace GesCPSI_Project.Services
 
             var statutAvant = acte.StatutWorkflow;
 
+            // ════════════════════════════════════════════════════════
+            // 🆕 ÉTAPE 1 : GÉNÉRATION DU PDF (BLOQUANT)
+            // Si le PDF ne se génère pas → on annule la validation
+            // ════════════════════════════════════════════════════════
+            string pdfPath;
+            try
+            {
+                var fullPath = await _pdfService.GeneratePdfAsync(acteId);
+
+                // Convertir le chemin absolu en chemin web-relatif
+                // Ex: C:\...\wwwroot\uploads\actes\pdf\acte_3_xxx.pdf → /uploads/actes/pdf/acte_3_xxx.pdf
+                var marker = $"{Path.DirectorySeparatorChar}wwwroot{Path.DirectorySeparatorChar}";
+                var idx = fullPath.IndexOf(marker);
+                if (idx >= 0)
+                {
+                    pdfPath = fullPath.Substring(idx + marker.Length - 1)
+                                      .Replace(Path.DirectorySeparatorChar, '/');
+                }
+                else
+                {
+                    pdfPath = fullPath; // fallback
+                }
+            }
+            catch (Exception ex)
+            {
+                // 🚫 ÉCHEC CRITIQUE : sans PDF, pas de validation
+                Console.WriteLine($"[VALIDATION] ❌ Génération PDF acte #{acteId} échouée : {ex.Message}");
+                return WorkflowResult.Fail(
+                    $"Impossible de valider cet acte : la génération du PDF officiel a échoué. " +
+                    $"Détail : {ex.Message}. " +
+                    $"Veuillez vérifier les données de l'acte ou contacter l'administrateur.");
+            }
+
+            // ════════════════════════════════════════════════════════
+            // ÉTAPE 2 : MISE À JOUR DE L'ACTE (PDF garanti)
+            // ════════════════════════════════════════════════════════
             acte.StatutWorkflow = ActeStatut.Valide;
             acte.Statut = "Valide";
             acte.DateValidation = DateTime.UtcNow;
@@ -70,8 +110,12 @@ namespace GesCPSI_Project.Services
             acte.ValidateurId = validateurId;
             acte.MotifRejet = null;
 
+            // Sauver le chemin du PDF généré
+            acte.PdfGenerePath = pdfPath;
+            acte.DateGenerationPdf = DateTime.UtcNow;
+
             LogAction(acteId, validateurId, "VALIDATION",
-                "Acte validé.",
+                $"Acte validé. PDF généré : {pdfPath}",
                 statutAvant, ActeStatut.Valide);
 
             await _db.SaveChangesAsync();

@@ -26,6 +26,8 @@
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
+
+    <script src="download.js"></script>
 </head>
 
 <body>
@@ -35,38 +37,7 @@
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_framework/blazor.web.js"></script>
 
-    @* <script>
-        window.printActePreview = () => {
-            const area = document.getElementById('acte-print-area');
-            if (!area) return;
-
-            const printWindow = window.open('', '_blank', 'width=900,height=700');
-            const styles = Array.from(document.styleSheets)
-                .map(s => {
-                    try {
-                        return Array.from(s.cssRules).map(r => r.cssText).join('\n');
-                    } catch { return ''; }
-                })
-                .join('\n');
-
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Aperçu de l'acte</title>
-                    <style>${styles}</style>
-                </head>
-                <body>${area.outerHTML}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 250);
-        };
-    </script> *@
+    
 
 
 </body>

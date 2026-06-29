@@ -1,378 +1,661 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
 @using GesCPSI_Project.ViewModels
 
-<div class="row g-3">
-    <div class="col-12">
-        <label class="form-label">Type de client*</label>
-        <InputSelect class="form-select"
-                     @bind-Value="Model.TypeClient"
-                     @bind-Value:after="OnTypeClientAfter">
-            <option value="">Sélectionner...</option>
-            <option value="Personne Physique">Personne Physique</option>
-            <option value="Personne Morale">Personne Morale</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => Model.TypeClient)" />
+<div class="client-form-sections">
+
+    <!-- ════════════ SECTION 1 : TYPE DE CLIENT (toujours visible) ════════════ -->
+    <div class="form-section form-section-type">
+        <div class="section-header">
+            <div class="section-icon section-icon-blue">
+                <i class="bi bi-diagram-3-fill"></i>
+            </div>
+            <div class="section-title-wrap">
+                <h3 class="section-title">Type de client</h3>
+                <p class="section-subtitle">Sélectionnez d'abord le type pour adapter le formulaire</p>
+            </div>
+        </div>
+
+        <div class="section-body">
+            <div class="type-client-radios">
+                <label class="type-radio @(Model.TypeClient == "Personne Physique" ? "active" : "")">
+                    <input type="radio" name="typeClient" value="Personne Physique"
+                           checked="@(Model.TypeClient == "Personne Physique")"
+                           @onchange="@(() => SelectTypeClient("Personne Physique"))" />
+                    <div class="type-radio-content">
+                        <i class="bi bi-person-fill"></i>
+                        <div>
+                            <div class="type-radio-title">Personne Physique</div>
+                            <div class="type-radio-desc">Particulier individuel</div>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="type-radio @(Model.TypeClient == "Personne Morale" ? "active" : "")">
+                    <input type="radio" name="typeClient" value="Personne Morale"
+                           checked="@(Model.TypeClient == "Personne Morale")"
+                           @onchange="@(() => SelectTypeClient("Personne Morale"))" />
+                    <div class="type-radio-content">
+                        <i class="bi bi-building-fill"></i>
+                        <div>
+                            <div class="type-radio-title">Personne Morale</div>
+                            <div class="type-radio-desc">Société / Entreprise</div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+            <ValidationMessage For="@(() => Model.TypeClient)" />
+        </div>
     </div>
 
     @if (Model.TypeClient == "Personne Morale")
     {
-        @* ===== IDENTIFICATION SOCIÉTÉ ===== *@
-        <div class="col-12">
-            <div class="border rounded p-3 mt-2 bg-light">
-                <h6 class="mb-3">
-                    <i class="bi bi-building me-1"></i> Identification de la société
-                </h6>
-                <div class="row g-3">
+        <!-- ════════════ SECTION : IDENTIFICATION SOCIÉTÉ ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-marine">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Identification de la société</h3>
+                    <p class="section-subtitle">Coordonnées juridiques et fiscales</p>
+                </div>
+            </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Raison sociale*</label>
-                        <InputText class="form-control" @bind-Value="Model.NomRaisonsociale"
-                                   placeholder="Nom complet de la société" />
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field form-col-2">
+                        <MudTextField @bind-Value="Model.NomRaisonsociale"
+                                      Label="Raison sociale *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Nom complet de la société"
+                                      FullWidth="true" />
                         <ValidationMessage For="@(() => Model.NomRaisonsociale)" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Forme juridique</label>
-                        <InputSelect class="form-select" @bind-Value="Model.FormeJuridique">
-                            <option value="">Sélectionner...</option>
-                            <option value="Société Anonyme (SA)">Société Anonyme (SA)</option>
-                            <option value="Société à Responsabilité Limitée (SARL)">SARL</option>
-                            <option value="Société par Actions Simplifiée (SAS)">SAS</option>
-                            <option value="Société en Nom Collectif (SNC)">SNC</option>
-                            <option value="Société en Commandite Simple (SCS)">SCS</option>
-                            <option value="Groupement d'Intérêt Économique (GIE)">GIE</option>
-                            <option value="Entreprise Individuelle (EI)">Entreprise Individuelle</option>
-                            <option value="Autre">Autre</option>
-                        </InputSelect>
+                    <div class="form-field">
+                        <MudSelect T="string" @bind-Value="Model.FormeJuridique"
+                                   Label="Forme juridique"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   FullWidth="true">
+                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                            <MudSelectItem Value="@("Société Anonyme (SA)")">Société Anonyme (SA)</MudSelectItem>
+                            <MudSelectItem Value="@("Société à Responsabilité Limitée (SARL)")">SARL</MudSelectItem>
+                            <MudSelectItem Value="@("Société par Actions Simplifiée (SAS)")">SAS</MudSelectItem>
+                            <MudSelectItem Value="@("Société en Nom Collectif (SNC)")">SNC</MudSelectItem>
+                            <MudSelectItem Value="@("Société en Commandite Simple (SCS)")">SCS</MudSelectItem>
+                            <MudSelectItem Value="@("Groupement d'Intérêt Économique (GIE)")">GIE</MudSelectItem>
+                            <MudSelectItem Value="@("Entreprise Individuelle (EI)")">Entreprise Individuelle</MudSelectItem>
+                            <MudSelectItem Value="@("Autre")">Autre</MudSelectItem>
+                        </MudSelect>
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Capital social (FCFA)</label>
-                        <InputText class="form-control" @bind-Value="Model.CapitalSocial"
-                                   placeholder="Ex: 10 000 000" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.CapitalSocial"
+                                      Label="Capital social (FCFA)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Ex: 10 000 000"
+                                      FullWidth="true" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Siège social</label>
-                        <InputText class="form-control" @bind-Value="Model.SiegeSocial"
-                                   placeholder="Adresse complète du siège" />
+                    <div class="form-field form-col-2">
+                        <MudTextField @bind-Value="Model.SiegeSocial"
+                                      Label="Siège social"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Adresse complète du siège"
+                                      FullWidth="true" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">RCCM (Registre Commerce)</label>
-                        <InputText class="form-control" @bind-Value="Model.RegistreCommerce"
-                                   placeholder="Ex: RCCM TG-LOM 2024 B 12345" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.RegistreCommerce"
+                                      Label="RCCM (Registre Commerce)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Ex: RCCM TG-LOM 2024 B 12345"
+                                      FullWidth="true" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">NIF (Numéro Identifiant Fiscal)</label>
-                        <InputText class="form-control" @bind-Value="Model.NumIdentifFiscal"
-                                   placeholder="Numéro NIF" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NumIdentifFiscal"
+                                      Label="NIF (Numéro Identifiant Fiscal)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Numéro NIF"
+                                      FullWidth="true" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Numéro RCCM (rapide)*</label>
-                        <InputText class="form-control" @bind-Value="Model.NumRCCM"
-                                   placeholder="Référence rapide" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NumRCCM"
+                                      Label="Numéro RCCM rapide *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Référence rapide"
+                                      FullWidth="true" />
                         <ValidationMessage For="@(() => Model.NumRCCM)" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Numéro de compte*</label>
-                        <InputText class="form-control" @bind-Value="Model.NumCompte"
-                                   placeholder="Numéro de compte bancaire" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NumCompte"
+                                      Label="Numéro de compte *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Numéro de compte bancaire"
+                                      FullWidth="true" />
                         <ValidationMessage For="@(() => Model.NumCompte)" />
                     </div>
-
                 </div>
             </div>
         </div>
 
-        @* ===== REPRÉSENTANT LÉGAL ===== *@
-        <div class="col-12">
-            <div class="border rounded p-3 mt-2">
-                <h6 class="mb-3">
-                    <i class="bi bi-person-badge me-1"></i> Représentant légal
-                </h6>
-                <div class="row g-3">
+        <!-- ════════════ SECTION : REPRÉSENTANT LÉGAL ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-gold">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Représentant légal</h3>
+                    <p class="section-subtitle">Personne habilitée à engager la société</p>
+                </div>
+            </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Nom du représentant légal*</label>
-                        <InputText class="form-control" @bind-Value="Model.NomRepresentant"
-                                   placeholder="M. / Mme [Nom complet]" />
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NomRepresentant"
+                                      Label="Nom du représentant légal *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="M. / Mme [Nom complet]"
+                                      FullWidth="true" />
                         <ValidationMessage For="@(() => Model.NomRepresentant)" />
                     </div>
 
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Fonction</label>
-                        <InputSelect class="form-select" @bind-Value="Model.FonctionRepresentant">
-                            <option value="">Sélectionner...</option>
-                            <option value="Directeur Général">Directeur Général (DG)</option>
-                            <option value="Président-Directeur Général">PDG</option>
-                            <option value="Président du Conseil d'Administration">PCA</option>
-                            <option value="Gérant">Gérant</option>
-                            <option value="Co-Gérant">Co-Gérant</option>
-                            <option value="Administrateur">Administrateur</option>
-                            <option value="Mandataire">Mandataire</option>
-                            <option value="Autre">Autre</option>
-                        </InputSelect>
+                    <div class="form-field">
+                        <MudSelect T="string" @bind-Value="Model.FonctionRepresentant"
+                                   Label="Fonction"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   FullWidth="true">
+                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                            <MudSelectItem Value="@("Directeur Général")">Directeur Général (DG)</MudSelectItem>
+                            <MudSelectItem Value="@("Président-Directeur Général")">PDG</MudSelectItem>
+                            <MudSelectItem Value="@("Président du Conseil d'Administration")">PCA</MudSelectItem>
+                            <MudSelectItem Value="@("Gérant")">Gérant</MudSelectItem>
+                            <MudSelectItem Value="@("Co-Gérant")">Co-Gérant</MudSelectItem>
+                            <MudSelectItem Value="@("Administrateur")">Administrateur</MudSelectItem>
+                            <MudSelectItem Value="@("Mandataire")">Mandataire</MudSelectItem>
+                            <MudSelectItem Value="@("Autre")">Autre</MudSelectItem>
+                        </MudSelect>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        @* ===== DÉLIBÉRATION AUTORISANT L'ENGAGEMENT ===== *@
-        <div class="col-12">
-            <div class="border rounded p-3 mt-2 bg-light">
-                <h6 class="mb-3">
-                    <i class="bi bi-file-earmark-text me-1"></i> Délibération autorisant l'engagement
-                </h6>
-                <p class="text-muted small mb-3">
-                    Référence du PV (Conseil d'Administration, Assemblée Générale, etc.)
-                    autorisant le représentant à engager la société.
-                </p>
-                <div class="row g-3">
+        <!-- ════════════ SECTION : DÉLIBÉRATION ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-purple">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Délibération autorisant l'engagement</h3>
+                    <p class="section-subtitle">Référence du PV autorisant le représentant à engager la société</p>
+                </div>
+            </div>
 
-                    <div class="col-12 col-md-8">
-                        <label class="form-label">Référence du PV</label>
-                        <InputText class="form-control" @bind-Value="Model.RefPVDelib"
-                                   placeholder="Ex: PV du Conseil d'Administration n° 12/2025" />
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field form-col-2">
+                        <MudTextField @bind-Value="Model.RefPVDelib"
+                                      Label="Référence du PV"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Ex: PV du Conseil d'Administration n° 12/2025"
+                                      FullWidth="true" />
                     </div>
 
-                    <div class="col-12 col-md-4">
-                        <label class="form-label">Date du PV</label>
-                        <InputDate class="form-control" @bind-Value="Model.DatePVDelib" />
+                    <div class="form-field">
+                        <MudDatePicker @bind-Date="_datePVDelib"
+                                       Label="Date du PV"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true" />
                     </div>
-
                 </div>
             </div>
         </div>
     }
     else if (Model.TypeClient == "Personne Physique")
     {
-        <div class="col-12 col-md-4">
-            <label class="form-label">Nom*</label>
-            <InputText class="form-control" @bind-Value="Model.Nom" />
-            <ValidationMessage For="@(() => Model.Nom)" />
-        </div>
+        <!-- ════════════ SECTION : IDENTITÉ ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-marine">
+                    <i class="bi bi-person-vcard"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Identité</h3>
+                    <p class="section-subtitle">Informations d'état civil</p>
+                </div>
+            </div>
 
-        <div class="col-12 col-md-4">
-            <label class="form-label">Prénoms*</label>
-            <InputText class="form-control" @bind-Value="Model.Prenoms" />
-            <ValidationMessage For="@(() => Model.Prenoms)" />
-        </div>
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.Nom"
+                                      Label="Nom *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.Nom)" />
+                    </div>
 
-        <div class="col-12 col-md-4">
-            <label class="form-label">Numéro de compte*</label>
-            <InputText class="form-control" @bind-Value="Model.NumCompte" placeholder="Numéro de compte" />
-            <ValidationMessage For="@(() => Model.NumCompte)" />
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.Prenoms"
+                                      Label="Prénoms *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.Prenoms)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NumCompte"
+                                      Label="Numéro de compte *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Placeholder="Numéro de compte"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.NumCompte)" />
+                    </div>
+                </div>
+            </div>
         </div>
     }
 
-    <div class="col-12 col-md-4">
-        <label class="form-label">Sexe</label>
-        <InputSelect class="form-select" @bind-Value="Model.Sexe">
-            <option value="">Sélectionner...</option>
-            <option value="Masculin">Masculin</option>
-            <option value="Féminin">Féminin</option>
-        </InputSelect>
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Date de naissance*</label>
-        <InputDate class="form-control" @bind-Value="Model.DateNaiss" />
-        <ValidationMessage For="@(() => Model.DateNaiss)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Pays de naissance</label>
-        <InputText class="form-control" @bind-Value="Model.PaysNaiss" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Pays de résidence*</label>
-        <InputText class="form-control" @bind-Value="Model.PaysResidn" />
-        <ValidationMessage For="@(() => Model.PaysResidn)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Lieu de naissance*</label>
-        <InputText class="form-control" @bind-Value="Model.LieuNaiss" />
-        <ValidationMessage For="@(() => Model.LieuNaiss)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Nationalité*</label>
-        <InputText class="form-control" @bind-Value="Model.Nationalite" />
-        <ValidationMessage For="@(() => Model.Nationalite)" />
-    </div>
-
-    <div class="col-12">
-        <label class="form-label">Adresse complète*</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="Model.Adressecomplet" />
-        <ValidationMessage For="@(() => Model.Adressecomplet)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Ville</label>
-        <InputText class="form-control" @bind-Value="Model.VilleCommune" />
-        <ValidationMessage For="@(() => Model.VilleCommune)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Boîte postale</label>
-        <InputText class="form-control" @bind-Value="Model.BPClt" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Tél. Bureau</label>
-        <InputText class="form-control" type="tel" @bind-Value="Model.TelBur" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Tél. Cellulaire*</label>
-        <InputText class="form-control" type="tel" @bind-Value="Model.TelCel" />
-        <ValidationMessage For="@(() => Model.TelCel)" />
-    </div>
-
-    <div class="col-12 col-md-4">
-        <label class="form-label">Tél. Domicile</label>
-        <InputText class="form-control" type="tel" @bind-Value="Model.TelDom" />
-    </div>
-
-    <div class="col-12 col-md-6">
-        <label class="form-label">Profession*</label>
-        <InputText class="form-control" @bind-Value="Model.ProfessionClt" />
-        <ValidationMessage For="@(() => Model.ProfessionClt)" />
-    </div>
-
-    <div class="col-12 col-md-6">
-        <label class="form-label">Situation matrimoniale*</label>
-        <InputSelect class="form-select"
-                     @bind-Value="Model.SituationMatrim"
-                     @bind-Value:after="OnSituationAfter">
-            <option value="">Sélectionner...</option>
-            <option value="Célibataire">Célibataire</option>
-            <option value="Marié(e)">Marié(e)</option>
-            <option value="Divorcé(e)">Divorcé(e)</option>
-            <option value="Veuf(ve)">Veuf(ve)</option>
-            <option value="Séparé(e)">Séparé(e)</option>
-            <option value="Concubinage">Concubinage</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => Model.SituationMatrim)" />
-    </div>
-
-    @if (Model.SituationMatrim == "Marié(e)")
+    @if (!string.IsNullOrEmpty(Model.TypeClient))
     {
-        <div class="col-12">
-            <div class="border rounded p-3 bg-light">
-                <h6 class="mb-3">Informations sur le mariage</h6>
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Nom du conjoint</label>
-                        <InputText class="form-control" @bind-Value="Model.NomConjoint" />
+        <!-- ════════════ SECTION : NAISSANCE & NATIONALITÉ ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-green">
+                    <i class="bi bi-globe-americas"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Naissance & Nationalité</h3>
+                    <p class="section-subtitle">Origines et identité géographique</p>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <MudSelect T="string" @bind-Value="Model.Sexe"
+                                   Label="Sexe"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   FullWidth="true">
+                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                            <MudSelectItem Value="@("Masculin")">Masculin</MudSelectItem>
+                            <MudSelectItem Value="@("Féminin")">Féminin</MudSelectItem>
+                        </MudSelect>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Date du mariage</label>
-                        <InputDate class="form-control" @bind-Value="Model.DateMariage" />
+
+                    <div class="form-field">
+                        <MudDatePicker @bind-Date="_dateNaiss"
+                                       Label="Date de naissance *"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true" />
+                        <ValidationMessage For="@(() => Model.DateNaiss)" />
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Lieu du mariage</label>
-                        <InputText class="form-control" @bind-Value="Model.LieuMariage" />
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.Nationalite"
+                                      Label="Nationalité *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.Nationalite)" />
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Régime matrimonial</label>
-                        <InputSelect class="form-select" @bind-Value="Model.RegimeMatrim">
-                            <option value="">Sélectionner...</option>
-                            <option value="Communauté réduite">Communauté réduite</option>
-                            <option value="Séparation de biens">Séparation de biens</option>
-                            <option value="Communauté universelle">Communauté universelle</option>
-                            <option value="Participation aux acquêts">Participation aux acquêts</option>
-                        </InputSelect>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.PaysNaiss"
+                                      Label="Pays de naissance"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.LieuNaiss"
+                                      Label="Lieu de naissance *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.LieuNaiss)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.PaysResidn"
+                                      Label="Pays de résidence *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.PaysResidn)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ SECTION : ADRESSE & CONTACT ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-orange">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Adresse & Contact</h3>
+                    <p class="section-subtitle">Coordonnées de résidence et numéros de téléphone</p>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field form-col-3">
+                        <MudTextField @bind-Value="Model.Adressecomplet"
+                                      Label="Adresse complète *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Lines="2"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.Adressecomplet)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.VilleCommune"
+                                      Label="Ville / Commune"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.VilleCommune)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.BPClt"
+                                      Label="Boîte postale"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.TelCel"
+                                      Label="Tél. Cellulaire *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      InputType="InputType.Telephone"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.PhoneAndroid"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.TelCel)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.TelBur"
+                                      Label="Tél. Bureau"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      InputType="InputType.Telephone"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Business"
+                                      FullWidth="true" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.TelDom"
+                                      Label="Tél. Domicile"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      InputType="InputType.Telephone"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Home"
+                                      FullWidth="true" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ SECTION : PROFESSION & FAMILLE ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-indigo">
+                    <i class="bi bi-briefcase-fill"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Profession & Situation familiale</h3>
+                    <p class="section-subtitle">Activité professionnelle et statut matrimonial</p>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.ProfessionClt"
+                                      Label="Profession *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.ProfessionClt)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudSelect T="string" @bind-Value="Model.SituationMatrim"
+                                   Label="Situation matrimoniale *"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   FullWidth="true">
+                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                            <MudSelectItem Value="@("Célibataire")">Célibataire</MudSelectItem>
+                            <MudSelectItem Value="@("Marié(e)")">Marié(e)</MudSelectItem>
+                            <MudSelectItem Value="@("Divorcé(e)")">Divorcé(e)</MudSelectItem>
+                            <MudSelectItem Value="@("Veuf(ve)")">Veuf(ve)</MudSelectItem>
+                            <MudSelectItem Value="@("Séparé(e)")">Séparé(e)</MudSelectItem>
+                            <MudSelectItem Value="@("Concubinage")">Concubinage</MudSelectItem>
+                        </MudSelect>
+                        <ValidationMessage For="@(() => Model.SituationMatrim)" />
+                    </div>
+
+                    @if (Model.SituationMatrim == "Marié(e)")
+                    {
+                        <div class="form-field form-col-3">
+                            <div class="sub-section">
+                                <div class="sub-section-title">
+                                    <i class="bi bi-heart-fill"></i>
+                                    Informations sur le mariage
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <MudTextField @bind-Value="Model.NomConjoint"
+                                                      Label="Nom du conjoint"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      FullWidth="true" />
+                                    </div>
+
+                                    <div class="form-field">
+                                        <MudDatePicker @bind-Date="_dateMariage"
+                                                       Label="Date du mariage"
+                                                       Variant="Variant.Outlined"
+                                                       Margin="Margin.Dense"
+                                                       Clearable="true" />
+                                    </div>
+
+                                    <div class="form-field">
+                                        <MudTextField @bind-Value="Model.LieuMariage"
+                                                      Label="Lieu du mariage"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      FullWidth="true" />
+                                    </div>
+
+                                    <div class="form-field">
+                                        <MudSelect T="string" @bind-Value="Model.RegimeMatrim"
+                                                   Label="Régime matrimonial"
+                                                   Variant="Variant.Outlined"
+                                                   Margin="Margin.Dense"
+                                                   FullWidth="true">
+                                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                                            <MudSelectItem Value="@("Communauté réduite")">Communauté réduite</MudSelectItem>
+                                            <MudSelectItem Value="@("Séparation de biens")">Séparation de biens</MudSelectItem>
+                                            <MudSelectItem Value="@("Communauté universelle")">Communauté universelle</MudSelectItem>
+                                            <MudSelectItem Value="@("Participation aux acquêts")">Participation aux acquêts</MudSelectItem>
+                                        </MudSelect>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════ SECTION : PIÈCE D'IDENTITÉ ════════════ -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="section-icon section-icon-red">
+                    <i class="bi bi-card-text"></i>
+                </div>
+                <div class="section-title-wrap">
+                    <h3 class="section-title">Pièce d'identité</h3>
+                    <p class="section-subtitle">Document officiel d'identification</p>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <MudSelect T="string" @bind-Value="Model.TypePieceID"
+                                   Label="Type de pièce *"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   FullWidth="true">
+                            <MudSelectItem Value="@("")">Sélectionner...</MudSelectItem>
+                            <MudSelectItem Value="@("CNI")">Carte Nationale d'Identité (CNI)</MudSelectItem>
+                            <MudSelectItem Value="@("Passeport")">Passeport</MudSelectItem>
+                            <MudSelectItem Value="@("Permis")">Permis de Conduire</MudSelectItem>
+                            <MudSelectItem Value="@("Carte Séjour")">Carte de Séjour</MudSelectItem>
+                            <MudSelectItem Value="@("CarteRefugie")">Carte de Réfugié</MudSelectItem>
+                            <MudSelectItem Value="@("TitreSecours")">Titre de Séjour</MudSelectItem>
+                            <MudSelectItem Value="@("Autre")">Autre</MudSelectItem>
+                        </MudSelect>
+                        <ValidationMessage For="@(() => Model.TypePieceID)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.NumPieceID"
+                                      Label="N° de pièce *"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                        <ValidationMessage For="@(() => Model.NumPieceID)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudDatePicker @bind-Date="_dateDelivPiece"
+                                       Label="Date de délivrance *"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true" />
+                        <ValidationMessage For="@(() => Model.DateDelivPiece)" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.LieuDelivPiece"
+                                      Label="Lieu de délivrance"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                    </div>
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="Model.PersonDelivPiece"
+                                      Label="Délivrée par"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      FullWidth="true" />
+                    </div>
+
+                    <div class="form-field form-col-3">
+                        <label class="checkbox-pretty">
+                            <InputCheckbox @bind-Value="Model.CopiePieceJointe" />
+                            <span class="checkbox-mark"></span>
+                            <span class="checkbox-text">
+                                <i class="bi bi-paperclip"></i>
+                                Copie de la pièce jointe fournie
+                            </span>
+                        </label>
                     </div>
                 </div>
             </div>
         </div>
     }
 
-    <div class="col-12">
-        <div class="border rounded p-3 mt-3">
-            <h6 class="mb-3">Pièce d'identité</h6>
-            <div class="row g-3">
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Type de pièce*</label>
-                    <InputSelect class="form-select" @bind-Value="Model.TypePieceID">
-                        <option value="">Sélectionner...</option>
-                        <option value="CNI">Carte Nationale d'Identité (CNI)</option>
-                        <option value="Passeport">Passeport</option>
-                        <option value="Permis">Permis de Conduire</option>
-                        <option value="Carte Séjour">Carte de Séjour</option>
-                        <option value="CarteRefugie">Carte de Réfugié</option>
-                        <option value="TitreSecours">Titre de Séjour</option>
-                        <option value="Autre">Autre</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => Model.TypePieceID)" />
-                </div>
-
-                <div class="col-12 col-md-4">
-                    <label class="form-label">N° de pièce*</label>
-                    <InputText class="form-control" @bind-Value="Model.NumPieceID" />
-                    <ValidationMessage For="@(() => Model.NumPieceID)" />
-                </div>
-
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Date de délivrance*</label>
-                    <InputDate class="form-control" @bind-Value="Model.DateDelivPiece" />
-                    <ValidationMessage For="@(() => Model.DateDelivPiece)" />
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label">Lieu de délivrance</label>
-                    <InputText class="form-control" @bind-Value="Model.LieuDelivPiece" />
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label">Délivrée par</label>
-                    <InputText class="form-control" @bind-Value="Model.PersonDelivPiece" />
-                </div>
-
-                <div class="col-12">
-                    <div class="form-check">
-                        <InputCheckbox class="form-check-input" @bind-Value="Model.CopiePieceJointe" />
-                        <label class="form-check-label">Copie de la pièce jointe</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @code {
     [Parameter, EditorRequired] public ClientModelViewModel Model { get; set; } = null!;
 
-    private Task OnTypeClientAfter()
-    {
-        var value = Model.TypeClient;
+    // === Variables DateTime? simples (PATTERN VALIDÉ pour MudDatePicker) ===
+    private DateTime? _dateNaiss;
+    private DateTime? _dateMariage;
+    private DateTime? _dateDelivPiece;
+    private DateTime? _datePVDelib;
 
-        if (value == "Personne Morale")
+    protected override void OnInitialized()
+    {
+        // Sync ViewModel → variables locales au démarrage
+        _dateNaiss = Model.DateNaiss;
+        _dateMariage = Model.DateMariage;
+        _dateDelivPiece = Model.DateDelivPiece;
+        _datePVDelib = Model.DatePVDelib;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Sync variables locales → ViewModel quand l'utilisateur modifie les dates
+        Model.DateNaiss = _dateNaiss;
+        Model.DateMariage = _dateMariage;
+        Model.DateDelivPiece = _dateDelivPiece;
+        Model.DatePVDelib = _datePVDelib;
+    }
+
+    private void SelectTypeClient(string typeClient)
+    {
+        Model.TypeClient = typeClient;
+
+        if (typeClient == "Personne Morale")
         {
             // Nettoyer les champs Personne Physique
             Model.Nom = "";
             Model.Prenoms = "";
             Model.Sexe = "";
             Model.DateNaiss = null;
+            _dateNaiss = null;
             Model.PaysNaiss = "";
             Model.LieuNaiss = "";
         }
-        else if (value == "Personne Physique")
+        else if (typeClient == "Personne Physique")
         {
             // Nettoyer les champs Personne Morale
             Model.NomRaisonsociale = "";
             Model.NomRepresentant = "";
             Model.NumRCCM = "";
-
-            // 🆕 Nettoyage des nouveaux champs Personne Morale
             Model.FormeJuridique = "";
             Model.CapitalSocial = "";
             Model.SiegeSocial = "";
@@ -381,21 +664,290 @@
             Model.FonctionRepresentant = "";
             Model.RefPVDelib = "";
             Model.DatePVDelib = null;
+            _datePVDelib = null;
         }
-
-        return Task.CompletedTask;
-    }
-
-    private Task OnSituationAfter()
-    {
-        if (Model.SituationMatrim != "Marié(e)")
-        {
-            Model.NomConjoint = "";
-            Model.DateMariage = null;
-            Model.LieuMariage = "";
-            Model.RegimeMatrim = "";
-        }
-
-        return Task.CompletedTask;
     }
 }
+
+<style>
+    /* ═══════════ SECTIONS DU FORMULAIRE ═══════════ */
+    .client-form-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-section {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 14px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+        .form-section:hover {
+            border-color: #D1D5DB;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .section-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-icon-blue {
+        background: linear-gradient(135deg, #1F3C88, #3F3A8A);
+    }
+
+    .section-icon-marine {
+        background: linear-gradient(135deg, #0A2540, #1F3C88);
+    }
+
+    .section-icon-gold {
+        background: linear-gradient(135deg, #C9A86A, #B58E50);
+    }
+
+    .section-icon-green {
+        background: linear-gradient(135deg, #0E7C5C, #047857);
+    }
+
+    .section-icon-orange {
+        background: linear-gradient(135deg, #D97706, #B45309);
+    }
+
+    .section-icon-indigo {
+        background: linear-gradient(135deg, #6366F1, #4F46E5);
+    }
+
+    .section-icon-purple {
+        background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    }
+
+    .section-icon-red {
+        background: linear-gradient(135deg, #DC2626, #991B1B);
+    }
+
+    .section-title-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .section-title {
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #0A2540;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .section-subtitle {
+        font-size: 0.8rem;
+        color: #6B7280;
+        margin: 3px 0 0 0;
+        line-height: 1.3;
+    }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    /* ═══════════ GRID DES CHAMPS ═══════════ */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .form-col-2 {
+        grid-column: span 2;
+    }
+
+    .form-col-3 {
+        grid-column: span 3;
+    }
+
+    /* ═══════════ TYPE DE CLIENT (radios custom) ═══════════ */
+    .type-client-radios {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .type-radio {
+        cursor: pointer;
+        margin: 0;
+    }
+
+        .type-radio input {
+            display: none;
+        }
+
+    .type-radio-content {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        background: #F9FAFB;
+        border: 2px solid #E5E7EB;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .type-radio:hover .type-radio-content {
+        border-color: #1F3C88;
+        background: white;
+        transform: translateY(-1px);
+    }
+
+    .type-radio.active .type-radio-content {
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        border-color: #1F3C88;
+        box-shadow: 0 4px 12px rgba(31, 60, 136, 0.15);
+    }
+
+    .type-radio-content i {
+        font-size: 2rem;
+        color: #1F3C88;
+        flex-shrink: 0;
+    }
+
+    .type-radio.active .type-radio-content i {
+        color: #0A2540;
+    }
+
+    .type-radio-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0A2540;
+    }
+
+    .type-radio-desc {
+        font-size: 0.82rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    /* ═══════════ SOUS-SECTION (mariage) ═══════════ */
+    .sub-section {
+        background: #FEF3F2;
+        border: 1px solid #FECDD3;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 8px;
+    }
+
+    .sub-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #BE185D;
+        margin-bottom: 14px;
+        font-size: 0.92rem;
+    }
+
+        .sub-section-title i {
+            color: #EC4899;
+        }
+
+    /* ═══════════ CHECKBOX PERSONNALISÉE ═══════════ */
+    .checkbox-pretty {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 10px 14px;
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1F2937;
+        transition: all 0.15s ease;
+        margin: 0;
+    }
+
+        .checkbox-pretty:hover {
+            background: #EFF6FF;
+            border-color: #1F3C88;
+        }
+
+        .checkbox-pretty input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0E7C5C;
+            margin: 0;
+        }
+
+    .checkbox-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .checkbox-text i {
+            color: #0E7C5C;
+        }
+
+    /* ═══════════ VALIDATION MESSAGES ═══════════ */
+    .form-field .validation-message {
+        color: #DC2626;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        padding-left: 12px;
+    }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 992px) {
+        .form-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .form-col-2 {
+            grid-column: span 2;
+        }
+
+        .form-col-3 {
+            grid-column: span 2;
+        }
+
+        .type-client-radios {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-col-2,
+        .form-col-3 {
+            grid-column: span 1;
+        }
+    }
+</style>

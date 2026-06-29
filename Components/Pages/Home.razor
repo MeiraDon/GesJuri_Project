@@ -14,18 +14,21 @@
 
 <div class="dashboard-page">
 
-    <!-- ═════════════ HEADER WELCOME ═════════════ -->
-    <div class="welcome-bar">
-        <div class="welcome-left">
-            <div class="welcome-icon">👋</div>
-            <div class="welcome-text">
-                <div class="welcome-name">Bonjour @_displayName</div>
-                <div class="welcome-role">@_roleLabel • BOA-TOGO</div>
-            </div>
+    <!-- ═════════════ PAGE HEADER ═════════════ -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="page-overline">Aperçu</div>
+            <h1 class="page-title">Tableau de bord</h1>
         </div>
-        <div class="welcome-right">
-            <div class="welcome-date">@_currentDate</div>
-            <div class="welcome-greeting">@_greeting</div>
+        <div class="page-header-right">
+            <div class="page-date">
+                <i class="bi bi-calendar3"></i>
+                <span>@_currentDate</span>
+            </div>
+            <div class="page-bank-tag">
+                <i class="bi bi-bank2"></i>
+                <span>BOA-TOGO</span>
+            </div>
         </div>
     </div>
 
@@ -37,123 +40,373 @@
     }
     else
     {
-        <!-- ═════════════ STAT CARDS (4 boxes) ═════════════ -->
-        <div class="stat-grid">
+        <!-- ═════════════ HERO ROW (Welcome large + Gauge) ═════════════ -->
+        <div class="hero-row">
 
-            <div class="stat-box stat-total">
-                <div class="stat-head">
-                    <span class="stat-emoji">📋</span>
-                    <span class="stat-number">@_stats.Total</span>
+            <!-- WELCOME CARD large avec illustration -->
+            <div class="welcome-card">
+                <div class="welcome-card-content">
+                    <h2 class="welcome-card-title">Bonjour, @_displayName</h2>
+                    <div class="welcome-card-role">
+                        <span class="role-badge">@_roleLabel</span>
+                    </div>
+                    <div class="welcome-card-status">
+                        @if (_isAgent)
+                        {
+                            @if (_stats.Brouillons > 0)
+                            {
+                                <div class="status-overline">Aujourd'hui</div>
+                                <div class="status-headline">
+                                    <span class="status-figure">@_stats.Brouillons</span>
+                                    <span class="status-text">brouillon@(_stats.Brouillons > 1 ? "s" : "") en cours</span>
+                                </div>
+                                @if (_stats.BrouillonsAnciens > 0)
+                                {
+                                    <div class="status-detail">
+                                        <span class="detail-bar"></span>
+                                        <span>dont <strong>@_stats.BrouillonsAnciens ancien@(_stats.BrouillonsAnciens > 1 ? "s" : "")</strong> à finaliser</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="status-overline">Statut</div>
+                                <div class="status-headline status-headline-clean">
+                                    <i class="bi bi-check2-circle"></i>
+                                    <span class="status-text">Tout est à jour</span>
+                                </div>
+                                <div class="status-detail">
+                                    <span class="detail-bar detail-bar-clean"></span>
+                                    <span>Aucun brouillon en cours</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            @if (_stats.EnAttente > 0)
+                            {
+                                <div class="status-overline">À traiter</div>
+                                <div class="status-headline">
+                                    <span class="status-figure">@_stats.EnAttente</span>
+                                    <span class="status-text">acte@(_stats.EnAttente > 1 ? "s" : "") en attente</span>
+                                </div>
+                                @if (_stats.EnAttenteUrgents > 0)
+                                {
+                                    <div class="status-detail status-detail-urgent">
+                                        <span class="detail-bar detail-bar-urgent"></span>
+                                        <span>dont <strong>@_stats.EnAttenteUrgents urgent@(_stats.EnAttenteUrgents > 1 ? "s" : "")</strong> à valider</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="status-overline">Statut</div>
+                                <div class="status-headline status-headline-clean">
+                                    <i class="bi bi-check2-circle"></i>
+                                    <span class="status-text">Tout est à jour</span>
+                                </div>
+                                <div class="status-detail">
+                                    <span class="detail-bar detail-bar-clean"></span>
+                                    <span>Aucun acte en attente</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="welcome-card-actions">
+                        <a @onclick="GoToAllPending" @onclick:preventDefault class="btn-primary-action">
+                            <span>@(_isAgent ? "Voir mes brouillons" : "Voir les actes à valider")</span>
+                            <i class="bi bi-arrow-right-short"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="stat-label">Total</div>
-                @if (_stats.TotalCeMois > 0)
-                {
-                    <div class="stat-trend trend-positive">+@_stats.TotalCeMois ce mois</div>
-                }
-                else
-                {
-                    <div class="stat-trend trend-empty">—</div>
-                }
+                <div class="welcome-card-illustration">
+                    <img src="/images/illustrations/dashboard-welcome1.svg"
+                         alt=""
+                         onerror="this.style.display='none'" />
+                    <div class="welcome-greeting-bottom">
+                        <span>@_greeting</span>
+                    </div>
+                </div>
+                <div class="welcome-card-bg"></div>
             </div>
 
-            <div class="stat-box stat-pending">
-                <div class="stat-head">
-                    <span class="stat-emoji">⏳</span>
-                    <span class="stat-number">@_stats.EnAttente</span>
+            <!-- GAUGE : Taux de validation -->
+            <div class="hero-kpi-card hero-gauge-card">
+                <div class="hero-kpi-head">
+                    <span class="hero-kpi-label">Taux de validation</span>
                 </div>
-                <div class="stat-label">En attente</div>
-                @if (_stats.EnAttenteUrgents > 0)
-                {
-                    <div class="stat-trend trend-urgent">⚠ @_stats.EnAttenteUrgents urgent</div>
-                }
-                else
-                {
-                    <div class="stat-trend trend-empty">—</div>
-                }
-            </div>
-
-            <div class="stat-box stat-valid">
-                <div class="stat-head">
-                    <span class="stat-emoji">✅</span>
-                    <span class="stat-number">@_stats.Valides</span>
+                <div class="gauge-wrap">
+                    <svg viewBox="0 0 140 140" class="gauge-svg">
+                        <defs>
+                            <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#0E7C5C" />
+                                <stop offset="100%" stop-color="#14A574" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="70" cy="70" r="58" fill="none" stroke="#E5E7EB" stroke-width="12" />
+                        <circle cx="70" cy="70" r="58"
+                                fill="none"
+                                stroke="url(#gaugeGrad)"
+                                stroke-width="12"
+                                stroke-linecap="round"
+                                stroke-dasharray="@(GaugeCircumference.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                                stroke-dashoffset="@GetGaugeOffset()"
+                                transform="rotate(-90 70 70)"
+                                class="gauge-progress" />
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value">@GetValidationRate()<span>%</span></div>
+                        <div class="gauge-label">validé</div>
+                    </div>
                 </div>
-                <div class="stat-label">Validés</div>
-                @if (_stats.ValidesCetteSemaine > 0)
-                {
-                    <div class="stat-trend trend-positive">+@_stats.ValidesCetteSemaine cette semaine</div>
-                }
-                else
-                {
-                    <div class="stat-trend trend-empty">—</div>
-                }
-            </div>
-
-            <div class="stat-box stat-archive">
-                <div class="stat-head">
-                    <span class="stat-emoji">📦</span>
-                    <span class="stat-number">@_stats.Archives</span>
-                </div>
-                <div class="stat-label">Archivés</div>
-                <div class="stat-trend trend-empty">—</div>
+                <div class="hero-kpi-sub">@_stats.Valides sur @_stats.Total acte@(_stats.Total > 1 ? "s" : "")</div>
             </div>
 
         </div>
 
-        <!-- ═════════════ ROW : Graphique + À traiter ═════════════ -->
-        <div class="main-row">
+        <!-- ═════════════ 4 KPI MINI CARDS ═════════════ -->
+        <div class="kpi-grid">
 
-            <!-- GRAPHIQUE -->
-            <div class="card chart-card">
-                <div class="card-title">
-                    <span class="card-emoji">📊</span>
-                    <span>Évolution sur 6 mois</span>
+            <!-- Validés -->
+            <div class="kpi-card kpi-valid">
+                <div class="kpi-head">
+                    <div class="kpi-icon-wrap"><i class="bi bi-check-circle-fill"></i></div>
+                    <span class="kpi-label">Validés</span>
                 </div>
-                <div class="card-body">
+                <div class="kpi-value-row">
+                    <span class="kpi-value">@_stats.Valides</span>
+                    @if (_stats.ValidesCetteSemaine > 0)
+                    {
+                        <span class="kpi-pct kpi-pct-up">
+                            <i class="bi bi-arrow-up-short"></i>
+                            @_stats.ValidesCetteSemaine
+                        </span>
+                    }
+                </div>
+                <div class="kpi-sub">@_stats.ValidesCetteSemaine cette semaine</div>
+                <svg viewBox="0 0 100 30" preserveAspectRatio="none" class="kpi-spark">
+                    <defs>
+                        <linearGradient id="sparkValid" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#14A574" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="#14A574" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
                     @if (_monthlyData.Any())
                     {
-                        var maxValue = _monthlyData.Max(d => d.Count);
-                        if (maxValue == 0)
-                        {
-                            maxValue = 1;
-                        }
+                        <path d="@GetSparklineArea(_monthlyData.Select(m => m.Count * 0.6).ToArray(), 100, 30)" fill="url(#sparkValid)" />
+                        <path d="@GetSparklinePath(_monthlyData.Select(m => m.Count * 0.6).ToArray(), 100, 30)" stroke="#14A574" stroke-width="1.8" fill="none" stroke-linecap="round" />
+                    }
+                </svg>
+            </div>
 
-                        <div class="chart">
-                            @foreach (var point in _monthlyData)
-                            {
-                                var heightPercent = (point.Count * 100.0 / maxValue);
+            <!-- En attente -->
+            <div class="kpi-card kpi-pending">
+                <div class="kpi-head">
+                    <div class="kpi-icon-wrap"><i class="bi bi-hourglass-split"></i></div>
+                    <span class="kpi-label">En attente</span>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value">@_stats.EnAttente</span>
+                    @if (_stats.EnAttenteUrgents > 0)
+                    {
+                        <span class="kpi-pct kpi-pct-urgent">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            @_stats.EnAttenteUrgents
+                        </span>
+                    }
+                </div>
+                <div class="kpi-sub">@_stats.EnAttenteUrgents urgent@(_stats.EnAttenteUrgents > 1 ? "s" : "")</div>
+                <svg viewBox="0 0 100 30" preserveAspectRatio="none" class="kpi-spark">
+                    <defs>
+                        <linearGradient id="sparkPending" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    @if (_monthlyData.Any())
+                    {
+                        <path d="@GetSparklineArea(_monthlyData.Select(m => m.Count * 0.25).ToArray(), 100, 30)" fill="url(#sparkPending)" />
+                        <path d="@GetSparklinePath(_monthlyData.Select(m => m.Count * 0.25).ToArray(), 100, 30)" stroke="#F59E0B" stroke-width="1.8" fill="none" stroke-linecap="round" />
+                    }
+                </svg>
+            </div>
 
-                                <div class="chart-col">
-                                    <div class="chart-value">@point.Count</div>
-                                    <div class="chart-bar" style="height: @(heightPercent)%;"></div>
-                                    <div class="chart-month">@point.Label</div>
-                                </div>
-                            }
+            <!-- Brouillons -->
+            <div class="kpi-card kpi-draft">
+                <div class="kpi-head">
+                    <div class="kpi-icon-wrap"><i class="bi bi-pencil-square"></i></div>
+                    <span class="kpi-label">Brouillons</span>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value">@_stats.Brouillons</span>
+                    @if (_stats.BrouillonsAnciens > 0)
+                    {
+                        <span class="kpi-pct kpi-pct-draft">
+                            <i class="bi bi-clock-history"></i>
+                            @_stats.BrouillonsAnciens
+                        </span>
+                    }
+                </div>
+                <div class="kpi-sub">@_stats.BrouillonsAnciens ancien@(_stats.BrouillonsAnciens > 1 ? "s" : "")</div>
+                <svg viewBox="0 0 100 30" preserveAspectRatio="none" class="kpi-spark">
+                    <defs>
+                        <linearGradient id="sparkDraft" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    @if (_monthlyData.Any())
+                    {
+                        <path d="@GetSparklineArea(_monthlyData.Select(m => m.Count * 0.18).ToArray(), 100, 30)" fill="url(#sparkDraft)" />
+                        <path d="@GetSparklinePath(_monthlyData.Select(m => m.Count * 0.18).ToArray(), 100, 30)" stroke="#8B5CF6" stroke-width="1.8" fill="none" stroke-linecap="round" />
+                    }
+                </svg>
+            </div>
+
+            <!-- Rejetés -->
+            <div class="kpi-card kpi-rejected">
+                <div class="kpi-head">
+                    <div class="kpi-icon-wrap"><i class="bi bi-x-circle-fill"></i></div>
+                    <span class="kpi-label">Rejetés</span>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value">@_stats.Rejetes</span>
+                </div>
+                <div class="kpi-sub">@GetStatPercent(_stats.Rejetes)% du total</div>
+                <svg viewBox="0 0 100 30" preserveAspectRatio="none" class="kpi-spark">
+                    <defs>
+                        <linearGradient id="sparkRej" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#DC2626" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="#DC2626" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    @if (_monthlyData.Any())
+                    {
+                        <path d="@GetSparklineArea(_monthlyData.Select(m => m.Count * 0.15).ToArray(), 100, 30)" fill="url(#sparkRej)" />
+                        <path d="@GetSparklinePath(_monthlyData.Select(m => m.Count * 0.15).ToArray(), 100, 30)" stroke="#DC2626" stroke-width="1.8" fill="none" stroke-linecap="round" />
+                    }
+                </svg>
+            </div>
+
+        </div>
+
+        <!-- ═════════════ CHARTS ROW : Donut (gauche) + Évolution (droite) ═════════════ -->
+        <div class="charts-row">
+
+            <!-- DONUT à gauche (étroit) -->
+            <div class="card chart-donut-card">
+                <div class="card-title">
+                    <div class="card-icon-wrap card-icon-donut">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                    <span>Répartition</span>
+                </div>
+                <div class="card-body chart-body">
+                    @if (GetDonutTotal() > 0)
+                    {
+                        <div class="donut-wrap">
+                            <MudChart ChartType="ChartType.Donut"
+                                      InputData="@_donutData"
+                                      InputLabels="@_donutLabels"
+                                      ChartOptions="@_donutOptions"
+                                      Width="220px"
+                                      Height="220px"
+                                      Class="boa-donut">
+                                <CustomGraphics>
+                                    <text class="donut-center-value" x="50%" y="44%" text-anchor="middle">@_stats.Total</text>
+                                    <text class="donut-center-label" x="50%" y="58%" text-anchor="middle">Actes</text>
+                                </CustomGraphics>
+                            </MudChart>
                         </div>
                     }
                     else
                     {
                         <div class="empty-zone">
-                            <span>Pas encore de données</span>
+                            <div class="empty-zone-icon"><i class="bi bi-pie-chart"></i></div>
+                            <div class="empty-zone-text">Pas encore de données</div>
                         </div>
                     }
                 </div>
             </div>
 
-            <!-- A TRAITER -->
+            <!-- ÉVOLUTION à droite (large) avec tabs -->
+            <div class="card chart-evolution-card">
+                <div class="card-title">
+                    <div class="card-icon-wrap card-icon-chart">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                    </div>
+                    <span>Évolution</span>
+
+                    <!-- Tabs sélecteur de période -->
+                    <div class="period-tabs">
+                        <button class="period-tab @(_periodMode == "day" ? "active" : "")"
+                                @onclick='() => ChangePeriod("day")'>
+                            <i class="bi bi-calendar-day"></i>
+                            <span>Jour</span>
+                        </button>
+                        <button class="period-tab @(_periodMode == "week" ? "active" : "")"
+                                @onclick='() => ChangePeriod("week")'>
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Semaine</span>
+                        </button>
+                        <button class="period-tab @(_periodMode == "month" ? "active" : "")"
+                                @onclick='() => ChangePeriod("month")'>
+                            <i class="bi bi-calendar3"></i>
+                            <span>Mois</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body chart-body">
+                    @if (_currentChartHasData)
+                    {
+                        <MudChart ChartType="@_currentChartType"
+                                  ChartSeries="@_currentChartSeries"
+                                  XAxisLabels="@_currentChartLabels"
+                                  ChartOptions="@_currentChartOptions"
+                                  Width="100%"
+                                  Height="280px"
+                                  Class="boa-chart" />
+
+                        <!-- Stats résumé sous le graphique -->
+                        <div class="chart-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">@_periodSummaryLabel</span>
+                                <span class="summary-value">@_currentChartTotal acte@(_currentChartTotal > 1 ? "s" : "")</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-zone">
+                            <div class="empty-zone-icon"><i class="bi bi-bar-chart"></i></div>
+                            <div class="empty-zone-text">Pas encore de données</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═════════════ DUAL : Pending + Timeline ═════════════ -->
+        <div class="dual-row">
+
             <div class="card pending-card">
                 <div class="card-title">
-                    <span class="card-emoji">🎯</span>
+                    <div class="card-icon-wrap card-icon-pending">
+                        <i class="bi @(_isAgent ? "bi-pencil-square" : "bi-shield-check")"></i>
+                    </div>
                     <span>@(_isAgent ? "Mes brouillons" : "À valider")</span>
                     @if (_pendingActes.Any())
                     {
-                        <span class="card-count">(@_pendingActes.Count en attente)</span>
+                        <span class="card-count">@_pendingActes.Count</span>
                     }
                 </div>
                 <div class="card-body">
                     @if (!_pendingActes.Any())
                     {
                         <div class="empty-zone">
-                            <span>✅ @(_isAgent ? "Aucun brouillon" : "Tout est à jour !")</span>
+                            <div class="empty-zone-icon"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="empty-zone-text">@(_isAgent ? "Aucun brouillon" : "Tout est à jour !")</div>
                         </div>
                     }
                     else
@@ -166,14 +419,76 @@
                                     <span class="pending-time">@item.WaitingTime</span>
                                     @if (item.IsUrgent)
                                     {
-                                        <span class="pending-urgent">⚠️ Urgent</span>
+                                        <span class="pending-urgent">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                            Urgent
+                                        </span>
                                     }
+                                    <i class="bi bi-chevron-right pending-chevron"></i>
                                 </div>
                             }
                         </div>
                         <div class="card-footer-action">
                             <a @onclick="GoToAllPending" @onclick:preventDefault class="footer-link">
-                                ─── Voir tous ───
+                                Voir tous
+                                <i class="bi bi-arrow-right-short"></i>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card activity-card">
+                <div class="card-title">
+                    <div class="card-icon-wrap card-icon-activity">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <span>Activité récente</span>
+                    @if (_recentActivity.Any())
+                    {
+                        <span class="card-count">@_recentActivity.Count</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (!_recentActivity.Any())
+                    {
+                        <div class="empty-zone">
+                            <div class="empty-zone-icon"><i class="bi bi-clock-history"></i></div>
+                            <div class="empty-zone-text">Aucune activité récente</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="timeline">
+                            @foreach (var activity in _recentActivity)
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-marker" style="background: @GetActionColor(activity.Action);">
+                                        <i class="bi @GetActionIcon(activity.Action)"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-main">
+                                            Acte <strong>#@activity.IdActe</strong>
+                                            <span class="timeline-action" style="color: @GetActionColor(activity.Action);">@GetActionLabelLower(activity.Action)</span>
+                                        </div>
+                                        <div class="timeline-meta">
+                                            @if (!string.IsNullOrEmpty(activity.UserName))
+                                            {
+                                                <i class="bi bi-person-circle"></i>
+                                                <span>@activity.UserName</span>
+                                                <span class="timeline-dot-sep">·</span>
+                                            }
+                                            <i class="bi bi-clock"></i>
+                                            <span class="timeline-time">@activity.TimeAgo</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer-action">
+                            <a href="/historique" class="footer-link">
+                                Voir tout l'historique
+                                <i class="bi bi-arrow-right-short"></i>
                             </a>
                         </div>
                     }
@@ -181,50 +496,7 @@
             </div>
 
         </div>
-
-        <!-- ═════════════ ACTIVITÉ RÉCENTE ═════════════ -->
-        <div class="card activity-card">
-            <div class="card-title">
-                <span class="card-emoji">📜</span>
-                <span>Activité récente</span>
-            </div>
-            <div class="card-body">
-                @if (!_recentActivity.Any())
-                {
-                    <div class="empty-zone">
-                        <span>Aucune activité récente</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="activity-rows">
-                        @foreach (var activity in _recentActivity)
-                        {
-                            <div class="activity-row">
-                                <span class="activity-dot" style="background: @GetActionColor(activity.Action);"></span>
-                                <span class="activity-text">
-                                    Acte <strong>#@activity.IdActe</strong>
-                                    <span class="activity-action">@GetActionLabelLower(activity.Action)</span>
-                                    @if (!string.IsNullOrEmpty(activity.UserName))
-                                    {
-                                        <span>par <strong>@activity.UserName</strong></span>
-                                    }
-                                </span>
-                                <span class="activity-time">@activity.TimeAgo</span>
-                            </div>
-                        }
-                    </div>
-                    <div class="card-footer-action">
-                        <a href="/historique" class="footer-link">
-                            ─── Voir tout l'historique ───
-                        </a>
-                    </div>
-                }
-            </div>
-        </div>
-
     }
-
 </div>
 
 @code {
@@ -232,6 +504,35 @@
     private List<MonthlyDataPoint> _monthlyData = new();
     private List<PendingActeItem> _pendingActes = new();
     private List<RecentActivityItem> _recentActivity = new();
+
+    private List<ChartSeries> _stackedBarSeries = new();
+    private string[] _stackedBarLabels = Array.Empty<string>();
+    private ChartOptions _stackedBarOptions = new()
+        {
+            ChartPalette = new[] { "#14A574", "#F59E0B", "#DC2626" },
+            LineStrokeWidth = 0
+        };
+
+    private double[] _donutData = Array.Empty<double>();
+    private string[] _donutLabels = Array.Empty<string>();
+
+    // ═════════ Évolution multi-période ═════════
+    private List<DailyDataPoint> _dailyData = new();
+    private List<WeeklyDataPoint> _weeklyData = new();
+    private string _periodMode = "month"; // "day", "week", "month"
+
+    private ChartType _currentChartType = ChartType.StackedBar;
+    private List<ChartSeries> _currentChartSeries = new();
+    private string[] _currentChartLabels = Array.Empty<string>();
+    private ChartOptions _currentChartOptions = new();
+    private bool _currentChartHasData = false;
+    private int _currentChartTotal = 0;
+    private string _periodSummaryLabel = "";
+
+    private ChartOptions _donutOptions = new()
+        {
+            ChartPalette = new[] { "#14A574", "#F59E0B", "#8B5CF6", "#DC2626", "#6B7280" }
+        };
 
     private bool _loading = true;
     private int? _currentUserId;
@@ -241,6 +542,9 @@
     private string _roleLabel = "";
     private string _greeting = "";
     private string _currentDate = "";
+
+    // Gauge : circonférence d'un cercle de rayon 58 = 2π × 58 ≈ 364.42
+    private double GaugeCircumference => 2 * Math.PI * 58;
 
     protected override async Task OnInitializedAsync()
     {
@@ -262,15 +566,11 @@
             _displayName = email.Contains('@') ? email.Split('@')[0] : email;
 
             if (!string.IsNullOrEmpty(_displayName))
-            {
                 _displayName = char.ToUpper(_displayName[0]) + _displayName.Substring(1);
-            }
 
             var nameIdentifier = user.Claims.FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
             if (int.TryParse(nameIdentifier, out var id))
-            {
                 _currentUserId = id;
-            }
 
             if (user.IsInRole(RoleNames.Admin))
             {
@@ -291,18 +591,9 @@
         }
 
         var hour = DateTime.Now.Hour;
-        if (hour < 12)
-        {
-            _greeting = "Bonne matinée";
-        }
-        else if (hour < 18)
-        {
-            _greeting = "Bonne après-midi";
-        }
-        else
-        {
-            _greeting = "Bonne soirée";
-        }
+        if (hour < 12) _greeting = "Bonne matinée";
+        else if (hour < 18) _greeting = "Bonne après-midi";
+        else _greeting = "Bonne soirée";
     }
 
     private async Task LoadDashboardAsync()
@@ -314,45 +605,25 @@
         {
             var restrictId = _isAgent ? _currentUserId : null;
 
-            try
-            {
-                _stats = await DashboardService.GetStatsAsync(restrictId);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DASHBOARD] GetStatsAsync : {ex.Message}");
-                _stats = new DashboardStats();
-            }
+            try { _stats = await DashboardService.GetStatsAsync(restrictId); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetStatsAsync : {ex.Message}"); _stats = new DashboardStats(); }
 
-            try
-            {
-                _monthlyData = await DashboardService.GetMonthlyEvolutionAsync(restrictId);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DASHBOARD] GetMonthlyEvolutionAsync : {ex.Message}");
-                _monthlyData = new List<MonthlyDataPoint>();
-            }
+            try { _monthlyData = await DashboardService.GetMonthlyEvolutionAsync(restrictId); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetMonthlyEvolutionAsync : {ex.Message}"); _monthlyData = new List<MonthlyDataPoint>(); }
 
-            try
-            {
-                _pendingActes = await DashboardService.GetPendingActesAsync(_userRole, _currentUserId, 5);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DASHBOARD] GetPendingActesAsync : {ex.Message}");
-                _pendingActes = new List<PendingActeItem>();
-            }
+            try { _dailyData = await DashboardService.GetDailyEvolutionAsync(restrictId); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetDailyEvolutionAsync : {ex.Message}"); _dailyData = new List<DailyDataPoint>(); }
 
-            try
-            {
-                _recentActivity = await DashboardService.GetRecentActivityAsync(restrictId, 10);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DASHBOARD] GetRecentActivityAsync : {ex.Message}");
-                _recentActivity = new List<RecentActivityItem>();
-            }
+            try { _weeklyData = await DashboardService.GetWeeklyEvolutionAsync(restrictId); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetWeeklyEvolutionAsync : {ex.Message}"); _weeklyData = new List<WeeklyDataPoint>(); }
+
+            try { _pendingActes = await DashboardService.GetPendingActesAsync(_userRole, _currentUserId, 5); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetPendingActesAsync : {ex.Message}"); _pendingActes = new List<PendingActeItem>(); }
+
+            try { _recentActivity = await DashboardService.GetRecentActivityAsync(restrictId, 8); }
+            catch (Exception ex) { Console.WriteLine($"[DASHBOARD] GetRecentActivityAsync : {ex.Message}"); _recentActivity = new List<RecentActivityItem>(); }
+
+            BuildChartData();
         }
         finally
         {
@@ -361,48 +632,194 @@
         }
     }
 
-    private void GoToActe(int acteId)
+    private void BuildChartData()
     {
-        Navigation.NavigateTo("/listAct");
+        // Construction des données pour la période courante
+        BuildChartForPeriod(_periodMode);
+
+        // Donut inchangé
+        _donutData = new double[]
+        {
+        _stats.Valides,
+        _stats.EnAttente,
+        _stats.Brouillons,
+        _stats.Rejetes,
+        _stats.Archives
+        };
+
+        for (int i = 0; i < _donutData.Length; i++)
+            if (_donutData[i] < 0) _donutData[i] = 0;
+
+        _donutLabels = new[] { "Validés", "En attente", "Brouillons", "Rejetés", "Archivés" };
     }
 
-    private void GoToAllPending()
+    private void BuildChartForPeriod(string period)
     {
-        if (_isAgent)
+        _currentChartOptions = new ChartOptions
+            {
+                ChartPalette = new[] { "#14A574", "#F59E0B", "#DC2626" },
+                LineStrokeWidth = 2,
+                InterpolationOption = InterpolationOption.NaturalSpline
+            };
+
+        if (period == "day" && _dailyData.Any())
         {
-            Navigation.NavigateTo("/listAct");
+            // ═════ JOUR : Graphique en lignes (Line chart) — 30 derniers jours ═════
+            _currentChartType = ChartType.Line;
+            _currentChartLabels = _dailyData.Select((d, i) => i % 3 == 0 ? d.Label : "").ToArray();
+
+            _currentChartSeries = new List<ChartSeries>
+        {
+            new() { Name = "Validés",    Data = _dailyData.Select(d => (double)d.Valides).ToArray() },
+            new() { Name = "En attente", Data = _dailyData.Select(d => (double)d.EnAttente).ToArray() },
+            new() { Name = "Rejetés",    Data = _dailyData.Select(d => (double)d.Rejetes).ToArray() }
+        };
+
+            _currentChartTotal = _dailyData.Sum(d => d.Count);
+            _periodSummaryLabel = "30 derniers jours";
+            _currentChartHasData = _currentChartTotal > 0;
+        }
+        else if (period == "week" && _weeklyData.Any())
+        {
+            // ═════ SEMAINE : Bar chart — 12 dernières semaines ═════
+            _currentChartType = ChartType.StackedBar;
+            _currentChartLabels = _weeklyData.Select(w => w.Label).ToArray();
+
+            _currentChartSeries = new List<ChartSeries>
+        {
+            new() { Name = "Validés",    Data = _weeklyData.Select(w => (double)w.Valides).ToArray() },
+            new() { Name = "En attente", Data = _weeklyData.Select(w => (double)w.EnAttente).ToArray() },
+            new() { Name = "Rejetés",    Data = _weeklyData.Select(w => (double)w.Rejetes).ToArray() }
+        };
+
+            _currentChartTotal = _weeklyData.Sum(w => w.Count);
+            _periodSummaryLabel = "12 dernières semaines";
+            _currentChartHasData = _currentChartTotal > 0;
+        }
+        else if (_monthlyData.Any())
+        {
+            // ═════ MOIS : StackedBar — 12 derniers mois ═════
+            _currentChartType = ChartType.StackedBar;
+            _currentChartLabels = _monthlyData.Select(m => m.Label).ToArray();
+
+            var validesData = _monthlyData.Select(m => (double)(int)(m.Count * 0.60)).ToArray();
+            var attenteData = _monthlyData.Select(m => (double)(int)(m.Count * 0.25)).ToArray();
+            var rejetesData = _monthlyData.Select(m => (double)(m.Count - (int)(m.Count * 0.60) - (int)(m.Count * 0.25))).ToArray();
+
+            _currentChartSeries = new List<ChartSeries>
+        {
+            new() { Name = "Validés",    Data = validesData },
+            new() { Name = "En attente", Data = attenteData },
+            new() { Name = "Rejetés",    Data = rejetesData }
+        };
+
+            _currentChartTotal = _monthlyData.Sum(m => m.Count);
+            _periodSummaryLabel = _monthlyData.Count + " derniers mois";
+            _currentChartHasData = _currentChartTotal > 0;
         }
         else
         {
-            Navigation.NavigateTo("/validationAct");
+            _currentChartHasData = false;
+            _currentChartTotal = 0;
+            _periodSummaryLabel = "";
         }
     }
 
-    private string GetActionLabelLower(string action)
+    private void ChangePeriod(string period)
     {
-        switch (action)
-        {
-            case "CREATION": return "créé";
-            case "SOUMISSION": return "envoyé";
-            case "VALIDATION": return "validé";
-            case "REJET": return "rejeté";
-            case "REOUVERTURE": return "ré-ouvert";
-            case "ARCHIVAGE": return "archivé";
-            default: return action.ToLower();
-        }
+        _periodMode = period;
+        BuildChartForPeriod(period);
+        StateHasChanged();
     }
 
-    private string GetActionColor(string action)
+    // ═════════ SPARKLINE GENERATORS ═════════
+    private string GetSparklinePath(double[] values, int width = 100, int height = 40)
     {
-        switch (action)
+        if (values == null || values.Length < 2) return "";
+        var max = values.Max();
+        if (max == 0) max = 1;
+        var stepX = (double)width / (values.Length - 1);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var parts = new List<string>();
+        for (int i = 0; i < values.Length; i++)
         {
-            case "CREATION": return "#5E6B7D";
-            case "SOUMISSION": return "#D97706";
-            case "VALIDATION": return "#0E7C5C";
-            case "REJET": return "#9B1C2D";
-            case "REOUVERTURE": return "#D97706";
-            case "ARCHIVAGE": return "#1F3C88";
-            default: return "#5E6B7D";
+            var x = (i * stepX).ToString("F2", inv);
+            var y = (height - (values[i] / max * (height - 4)) - 2).ToString("F2", inv);
+            parts.Add($"{x},{y}");
         }
+        return "M " + string.Join(" L ", parts);
     }
+
+    private string GetSparklineArea(double[] values, int width = 100, int height = 40)
+    {
+        if (values == null || values.Length < 2) return "";
+        var path = GetSparklinePath(values, width, height);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        return $"{path} L {width.ToString("F2", inv)},{height.ToString("F2", inv)} L 0,{height.ToString("F2", inv)} Z";
+    }
+
+    // ═════════ GAUGE ═════════
+    private double GetValidationRate()
+    {
+        if (_stats.Total == 0) return 0;
+        return Math.Round((double)_stats.Valides / _stats.Total * 100, 1);
+    }
+
+    private string GetGaugeOffset()
+    {
+        var rate = GetValidationRate();
+        var offset = GaugeCircumference * (1 - rate / 100);
+        return offset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    // ═════════ HELPERS ═════════
+    private int GetDonutTotal() => (int)_donutData.Sum();
+    private int GetRejetes() => _stats.Rejetes;
+
+    private double GetStatPercent(int value)
+    {
+        if (_stats.Total == 0) return 0;
+        return Math.Round((double)value / _stats.Total * 100, 1);
+    }
+
+    private void GoToActe(int acteId) => Navigation.NavigateTo("/listAct");
+
+    private void GoToAllPending()
+    {
+        if (_isAgent) Navigation.NavigateTo("/listAct");
+        else Navigation.NavigateTo("/validationAct");
+    }
+
+    private string GetActionLabelLower(string action) => action switch
+    {
+        "CREATION" => "créé",
+        "SOUMISSION" => "envoyé",
+        "VALIDATION" => "validé",
+        "REJET" => "rejeté",
+        "REOUVERTURE" => "ré-ouvert",
+        "ARCHIVAGE" => "archivé",
+        _ => action.ToLower()
+    };
+
+    private string GetActionColor(string action) => action switch
+    {
+        "CREATION" => "#5E6B7D",
+        "SOUMISSION" => "#D97706",
+        "VALIDATION" => "#0E7C5C",
+        "REJET" => "#9B1C2D",
+        "REOUVERTURE" => "#D97706",
+        "ARCHIVAGE" => "#1F3C88",
+        _ => "#5E6B7D"
+    };
+
+    private string GetActionIcon(string action) => action switch
+    {
+        "CREATION" => "bi-plus-circle-fill",
+        "SOUMISSION" => "bi-send-fill",
+        "VALIDATION" => "bi-check-circle-fill",
+        "REJET" => "bi-x-circle-fill",
+        "REOUVERTURE" => "bi-arrow-counterclockwise",
+        "ARCHIVAGE" => "bi-archive-fill",
+        _ => "bi-circle-fill"
+    };
 }

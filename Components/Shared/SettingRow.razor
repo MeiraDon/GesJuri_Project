@@ -1,0 +1,182 @@
+﻿@using MudBlazor
+
+<div class="setting-row">
+    <div class="setting-icon-wrap" style="--icon-color: @IconColor;">
+        <i class="bi @Icon"></i>
+    </div>
+
+    <div class="setting-info">
+        <div class="setting-title">@Title</div>
+        <div class="setting-description">@Description</div>
+    </div>
+
+    <div class="setting-control">
+        @if (Type == "toggle")
+        {
+            <button class="setting-toggle @(Value ? "is-on" : "")" @onclick="ToggleValue">
+                <span class="toggle-circle"></span>
+            </button>
+        }
+        else if (Type == "select")
+        {
+            <select class="setting-select" value="@SelectedOption" @onchange="HandleSelectChange">
+                @if (Options is not null)
+                {
+                    @foreach (var opt in Options)
+                    {
+                        <option value="@opt" selected="@(opt == SelectedOption)">@opt</option>
+                    }
+                }
+            </select>
+        }
+    </div>
+</div>
+
+<style>
+    .setting-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        transition: all 0.25s ease;
+    }
+
+        .setting-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+    .setting-icon-wrap {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--icon-color) 25%, transparent), color-mix(in srgb, var(--icon-color) 10%, transparent));
+        border: 1px solid color-mix(in srgb, var(--icon-color) 40%, transparent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--icon-color);
+        font-size: 1.15rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--icon-color) 20%, transparent);
+    }
+
+    .setting-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .setting-title {
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 3px;
+        letter-spacing: -0.1px;
+    }
+
+    .setting-description {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.78rem;
+        line-height: 1.4;
+        font-weight: 500;
+    }
+
+    .setting-control {
+        flex-shrink: 0;
+    }
+
+    /* Toggle premium */
+    .setting-toggle {
+        width: 48px;
+        height: 26px;
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        padding: 0;
+    }
+
+        .setting-toggle.is-on {
+            background: linear-gradient(135deg, #A855F7, #EC4899);
+            border-color: transparent;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+        }
+
+    .toggle-circle {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .setting-toggle.is-on .toggle-circle {
+        transform: translateX(22px);
+    }
+
+    /* Select premium */
+    .setting-select {
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        min-width: 160px;
+        outline: none;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+        .setting-select:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(168, 85, 247, 0.4);
+        }
+
+        .setting-select:focus {
+            border-color: #A855F7;
+            box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+        }
+
+        .setting-select option {
+            background: #1A0B2E;
+            color: white;
+        }
+</style>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "bi-gear";
+    [Parameter] public string IconColor { get; set; } = "#A855F7";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter] public string Type { get; set; } = "toggle"; // toggle | select
+    [Parameter] public bool Value { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public string[]? Options { get; set; }
+    [Parameter] public string? SelectedOption { get; set; }
+    [Parameter] public EventCallback<string> OnSelectChange { get; set; }
+
+    private async Task ToggleValue()
+    {
+        Value = !Value;
+        await OnChange.InvokeAsync(Value);
+    }
+
+    private async Task HandleSelectChange(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString() ?? "";
+        SelectedOption = newValue;
+        await OnSelectChange.InvokeAsync(newValue);
+    }
+}

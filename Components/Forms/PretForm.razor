@@ -2,108 +2,646 @@
 @using GesCPSI_Project.Models
 @using GesCPSI_Project.ViewModels
 
+<div class="form-modern">
 
-<div class="row g-3">
+    @* ═══════════════ SECTION 1 — IDENTIFICATION ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-blue">
+                <i class="bi bi-card-list"></i>
+            </div>
+            <div>
+                <div class="section-title">Identification</div>
+                <div class="section-subtitle">Référence, objet et statut du prêt</div>
+            </div>
+        </div>
 
-    <div class="col-md-6">
-        <label class="form-label">Référence convention*</label>
-        <InputText class="form-control" @bind-Value="Pret.ReferenceConvention" />
-        <ValidationMessage For="@(() => Pret.ReferenceConvention)" />
+        <div class="form-grid">
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-hash"></i>
+                    Référence convention
+                    <span class="required-mark">*</span>
+                </label>
+                <InputText class="form-input" @bind-Value="Pret.ReferenceConvention" placeholder="Ex: CONV-2026-0042" />
+                <ValidationMessage For="@(() => Pret.ReferenceConvention)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-circle-fill"></i>
+                    État du prêt
+                    <span class="required-mark">*</span>
+                </label>
+                <InputSelect class="form-input form-select-custom" @bind-Value="Pret.EtatPret">
+                    <option value="">Sélectionner un état...</option>
+                    <option value="En cours">🟢 En cours</option>
+                    <option value="Clôturé">🔵 Clôturé</option>
+                    <option value="En retard">🟡 En retard</option>
+                    <option value="Contentieux">🔴 Contentieux</option>
+                    <option value="Soldé">✅ Soldé</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => Pret.EtatPret)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-full">
+                <label class="form-label">
+                    <i class="bi bi-bullseye"></i>
+                    Objet du prêt
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Pret.ObjetPret"
+                               placeholder="Ex: Financement d'un véhicule, travaux immobiliers, fonds de commerce..." />
+                <ValidationMessage For="@(() => Pret.ObjetPret)" class="form-error" />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-6">
-        <label class="form-label">Montant du concours*</label>
-        <InputNumber class="form-control" @bind-Value="Pret.MontantConcours" />
-        <ValidationMessage For="@(() => Pret.MontantConcours)" />
+    @* ═══════════════ SECTION 2 — MONTANTS ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-green">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div>
+                <div class="section-title">Montants & Conditions financières</div>
+                <div class="section-subtitle">Capital, taux d'intérêt et frais annexes</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-cash-coin"></i>
+                    Montant du concours
+                    <span class="required-mark">*</span>
+                </label>
+                <div class="input-with-suffix">
+                    <InputNumber class="form-input" @bind-Value="Pret.MontantConcours" placeholder="0" />
+                    <span class="input-suffix">FCFA</span>
+                </div>
+                <ValidationMessage For="@(() => Pret.MontantConcours)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-percent"></i>
+                    Taux d'intérêt
+                    <span class="required-mark">*</span>
+                </label>
+                <div class="input-with-suffix">
+                    <InputNumber class="form-input" @bind-Value="Pret.Taux" placeholder="0" />
+                    <span class="input-suffix">%</span>
+                </div>
+                <ValidationMessage For="@(() => Pret.Taux)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-full">
+                <label class="form-label">
+                    <i class="bi bi-pencil-square"></i>
+                    Montant en lettres
+                    <span class="required-mark">*</span>
+                </label>
+                <InputText class="form-input" @bind-Value="Pret.MontantLettrePret"
+                           placeholder="Ex: Cinq millions de francs CFA" />
+                <div class="form-helper">
+                    <i class="bi bi-info-circle"></i>
+                    Écrivez le montant du concours en toutes lettres
+                </div>
+                <ValidationMessage For="@(() => Pret.MontantLettrePret)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-full">
+                <label class="form-label">
+                    <i class="bi bi-puzzle"></i>
+                    Accessoires
+                    <span class="optional-mark">(optionnel)</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Pret.Accessoires"
+                               placeholder="Ex: Frais de dossier, assurance, garanties annexes..." />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Taux (%) *</label>
-        <InputNumber class="form-control" @bind-Value="Pret.Taux" />
-        <ValidationMessage For="@(() => Pret.Taux)" />
+    @* ═══════════════ SECTION 3 — PÉRIODE & SIGNATURE ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-amber">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+                <div class="section-title">Période du prêt</div>
+                <div class="section-subtitle">Signature, durée et démarrage du remboursement</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-pen"></i>
+                    Date de signature
+                    <span class="required-mark">*</span>
+                </label>
+                <MudDatePicker @bind-Date="_dateSignaturePret"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="form-datepicker"
+                               PickerVariant="PickerVariant.Dialog" />
+                <ValidationMessage For="@(() => Pret.DateSignaturePret)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-hourglass-split"></i>
+                    Durée
+                    <span class="required-mark">*</span>
+                </label>
+                <div class="input-with-suffix">
+                    <InputNumber class="form-input" @bind-Value="Pret.DureMoisPret" placeholder="0" />
+                    <span class="input-suffix">mois</span>
+                </div>
+                <ValidationMessage For="@(() => Pret.DureMoisPret)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-play-circle"></i>
+                    Début remboursement
+                    <span class="required-mark">*</span>
+                </label>
+                <MudDatePicker @bind-Date="_dateDebutRemboursement" 
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="form-datepicker"
+                               PickerVariant="PickerVariant.Dialog" />
+                <ValidationMessage For="@(() => Pret.DateDebutRemboursemnt)" class="form-error" />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Montant en lettres*</label>
-        <InputText class="form-control" @bind-Value="Pret.MontantLettrePret" />
-        <ValidationMessage For="@(() => Pret.MontantLettrePret)" />
-    </div>
+    @* ═══════════════ SECTION 4 — ÉCHÉANCES ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-purple">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div>
+                <div class="section-title">Échéances de remboursement</div>
+                <div class="section-subtitle">Première et dernière échéance</div>
+            </div>
+        </div>
 
-    <div class="col-md-4">
-        <label class="form-label">État du prêt*</label>
-        <InputSelect class="form-select" @bind-Value="Pret.EtatPret">
-            <option value="">Sélectionner...</option>
-            <option value="En cours">En cours</option>
-            <option value="Clôturé">Clôturé</option>
-            <option value="En retard">En retard</option>
-            <option value="Contentieux">Contentieux</option>
-            <option value="Soldé">Soldé</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => Pret.EtatPret)" />
-    </div>
+        @* Première échéance *@
+        <div class="echeance-block">
+            <div class="echeance-label">
+                <span class="echeance-badge echeance-badge-first">1ère</span>
+                <span>Première échéance</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-field form-field-half">
+                    <label class="form-label">
+                        <i class="bi bi-calendar-check"></i>
+                        Date
+                        <span class="required-mark">*</span>
+                    </label>
+                    <MudDatePicker @bind-Date="_datePremiereEcheance" 
+                                   DateFormat="dd/MM/yyyy"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="form-datepicker"
+                                   PickerVariant="PickerVariant.Dialog" />
+                    <ValidationMessage For="@(() => Pret.DatePremiereEcheance)" class="form-error" />
+                </div>
 
-    <div class="col-12">
-        <label class="form-label">Accessoires</label>
-        <InputTextArea class="form-control"
-                       rows="2"
-                       @bind-Value="Pret.Accessoires"
-                       placeholder="Ex: Frais de dossier, assurance, garanties annexes..." />
-    </div>
+                <div class="form-field form-field-half">
+                    <label class="form-label">
+                        <i class="bi bi-cash"></i>
+                        Montant
+                        <span class="required-mark">*</span>
+                    </label>
+                    <div class="input-with-suffix">
+                        <InputNumber class="form-input" @bind-Value="Pret.MontantPremiereEcheance" placeholder="0" />
+                        <span class="input-suffix">FCFA</span>
+                    </div>
+                    <ValidationMessage For="@(() => Pret.MontantPremiereEcheance)" class="form-error" />
+                </div>
+            </div>
+        </div>
 
-    <div class="col-12">
-        <label class="form-label">Objet du prêt*</label>
-        <InputTextArea class="form-control"
-                       rows="2"
-                       @bind-Value="Pret.ObjetPret"
-                       placeholder="Ex: Financement d'un véhicule, travaux immobiliers, fonds de commerce..." />
-        <ValidationMessage For="@(() => Pret.ObjetPret)" />
-    </div>
+        @* Dernière échéance *@
+        <div class="echeance-block">
+            <div class="echeance-label">
+                <span class="echeance-badge echeance-badge-last">Dern.</span>
+                <span>Dernière échéance</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-field form-field-half">
+                    <label class="form-label">
+                        <i class="bi bi-calendar-x"></i>
+                        Date
+                        <span class="required-mark">*</span>
+                    </label>
+                    <MudDatePicker @bind-Date="_dateDerniereEcheance" 
+                                   DateFormat="dd/MM/yyyy"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Class="form-datepicker"
+                                   PickerVariant="PickerVariant.Dialog" />
+                    <ValidationMessage For="@(() => Pret.DateDerniereEcheance)" class="form-error" />
+                </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Date de signature*</label>
-        <InputDate class="form-control" @bind-Value="Pret.DateSignaturePret" />
-        <ValidationMessage For="@(() => Pret.DateSignaturePret)" />
-    </div>
+                <div class="form-field form-field-half">
+                    <label class="form-label">
+                        <i class="bi bi-cash"></i>
+                        Montant
+                        <span class="required-mark">*</span>
+                    </label>
+                    <div class="input-with-suffix">
+                        <InputNumber class="form-input" @bind-Value="Pret.MontantDerniereEcheance" placeholder="0" />
+                        <span class="input-suffix">FCFA</span>
+                    </div>
+                    <ValidationMessage For="@(() => Pret.MontantDerniereEcheance)" class="form-error" />
+                </div>
+            </div>
+        </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Durée (mois)*</label>
-        <InputNumber class="form-control" @bind-Value="Pret.DureMoisPret" />
-        <ValidationMessage For="@(() => Pret.DureMoisPret)" />
-    </div>
-
-    <div class="col-md-4">
-        <label class="form-label">Date début remboursement*</label>
-        <InputDate class="form-control" @bind-Value="Pret.DateDebutRemboursemnt" />
-        <ValidationMessage For="@(() => Pret.DateDebutRemboursemnt)" />
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">Date première échéance*</label>
-        <InputDate class="form-control" @bind-Value="Pret.DatePremiereEcheance" />
-        <ValidationMessage For="@(() => Pret.DatePremiereEcheance)" />
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">Montant première échéance*</label>
-        <InputNumber class="form-control" @bind-Value="Pret.MontantPremiereEcheance" />
-        <ValidationMessage For="@(() => Pret.MontantPremiereEcheance)" />
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">Date dernière échéance*</label>
-        <InputDate class="form-control" @bind-Value="Pret.DateDerniereEcheance" />
-        <ValidationMessage For="@(() => Pret.DateDerniereEcheance)" />
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">Montant dernière échéance*</label>
-        <InputNumber class="form-control" @bind-Value="Pret.MontantDerniereEcheance" />
-        <ValidationMessage For="@(() => Pret.MontantDerniereEcheance)" />
     </div>
 
 </div>
+
 @code {
     [Parameter, EditorRequired]
     public PretViewModel Pret { get; set; } = null!;
 
+    private DateTime? _dateSignaturePret
+    {
+        get => Pret.DateSignaturePret == default ? null : Pret.DateSignaturePret;
+        set => Pret.DateSignaturePret = value ?? DateTime.UtcNow;
+    }
+
+    private DateTime? _dateDebutRemboursement
+    {
+        get => Pret.DateDebutRemboursemnt == default ? null : Pret.DateDebutRemboursemnt;
+        set => Pret.DateDebutRemboursemnt = value ?? DateTime.UtcNow;
+    }
+
+    private DateTime? _datePremiereEcheance
+    {
+        get => Pret.DatePremiereEcheance == default ? null : Pret.DatePremiereEcheance;
+        set => Pret.DatePremiereEcheance = value ?? DateTime.UtcNow;
+    }
+
+    private DateTime? _dateDerniereEcheance
+    {
+        get => Pret.DateDerniereEcheance == default ? null : Pret.DateDerniereEcheance;
+        set => Pret.DateDerniereEcheance = value ?? DateTime.UtcNow;
+    }
 }
+
+        <style>
+
+    /* ════════════════════════════════════════════════
+               FORMULAIRE MODERNE — DESIGN SECTIONNÉ
+               ════════════════════════════════════════════════ */
+    .form-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* ═══════════ SECTION ═══════════ */
+    .form-section {
+        background: #F9FAFB;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
+    }
+
+        .form-section:hover {
+            border-color: #D1D5DB;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+    .form-section-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .section-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-icon-blue {
+        background: linear-gradient(135deg, #1F3C88 0%, #3F3A8A 100%);
+    }
+
+    .section-icon-green {
+        background: linear-gradient(135deg, #0E7C5C 0%, #2F5D50 100%);
+    }
+
+    .section-icon-amber {
+        background: linear-gradient(135deg, #92400E 0%, #C9A86A 100%);
+    }
+
+    .section-icon-purple {
+        background: linear-gradient(135deg, #3F3A8A 0%, #1A1F3A 100%);
+    }
+
+    .section-title {
+        color: #1A1F3A;
+        font-weight: 800;
+        font-size: 1.05rem;
+        line-height: 1.2;
+    }
+
+    .section-subtitle {
+        color: #6B7280;
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+
+    /* ═══════════ GRID DE CHAMPS ═══════════ */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 14px 16px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .form-field-half {
+        grid-column: span 3;
+    }
+
+    .form-field-third {
+        grid-column: span 2;
+    }
+
+    .form-field-full {
+        grid-column: span 6;
+    }
+
+    /* ═══════════ LABEL ═══════════ */
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        color: #374151;
+        font-size: 0.82rem;
+        margin: 0;
+    }
+
+        .form-label i {
+            color: #C9A86A;
+            font-size: 0.9rem;
+        }
+
+    .required-mark {
+        color: #DC2626;
+        font-weight: 900;
+        margin-left: 2px;
+    }
+
+    .optional-mark {
+        color: #9CA3AF;
+        font-weight: 500;
+        font-style: italic;
+        font-size: 0.75rem;
+        margin-left: 4px;
+    }
+
+    /* ═══════════ INPUT MODERNE ═══════════ */
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: white;
+        border: 1px solid #D1D5DB;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        color: #1A1F3A;
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: inherit;
+    }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        .form-input:hover {
+            border-color: #9CA3AF;
+        }
+
+        .form-input:focus {
+            border-color: #C9A86A;
+            box-shadow: 0 0 0 4px rgba(201, 168, 106, 0.12);
+            background: white;
+        }
+
+    /* ═══════════ TEXTAREA ═══════════ */
+    .form-textarea {
+        resize: vertical;
+        min-height: 70px;
+        line-height: 1.5;
+        font-family: inherit;
+    }
+
+    /* ═══════════ SELECT ═══════════ */
+    .form-select-custom {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+
+    /* ═══════════ INPUT AVEC SUFFIX ═══════════ */
+    .input-with-suffix {
+        position: relative;
+    }
+
+        .input-with-suffix .form-input {
+            padding-right: 60px;
+        }
+
+    .input-suffix {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6B7280;
+        font-weight: 700;
+        font-size: 0.82rem;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent 0%, white 30%);
+        padding-left: 12px;
+    }
+
+    /* ═══════════ HELPER & ERREUR ═══════════ */
+    .form-helper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #6B7280;
+        font-size: 0.76rem;
+        font-style: italic;
+        margin-top: 2px;
+    }
+
+        .form-helper i {
+            color: #C9A86A;
+            font-size: 0.85rem;
+        }
+
+    .form-error {
+        color: #DC2626;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .form-error:not(:empty)::before {
+            content: '⚠️';
+            font-size: 0.85rem;
+        }
+
+    /* ═══════════ ÉCHÉANCE BLOCKS ═══════════ */
+    .echeance-block {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+
+        .echeance-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .echeance-block:hover {
+            border-color: #C9A86A;
+            box-shadow: 0 4px 12px rgba(201, 168, 106, 0.08);
+        }
+
+    .echeance-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        color: #1A1F3A;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .echeance-badge {
+        padding: 3px 12px;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: white;
+        letter-spacing: 0.3px;
+    }
+
+    .echeance-badge-first {
+        background: linear-gradient(135deg, #0E7C5C 0%, #2F5D50 100%);
+        box-shadow: 0 2px 6px rgba(14, 124, 92, 0.3);
+    }
+
+    .echeance-badge-last {
+        background: linear-gradient(135deg, #9B1C2D 0%, #BE3144 100%);
+        box-shadow: 0 2px 6px rgba(155, 28, 45, 0.3);
+    }
+
+    /* ═══════════ DATE INPUT FIX ═══════════ */
+    input[type="date"].form-input {
+        font-family: inherit;
+        color-scheme: light;
+    }
+
+        input[type="date"].form-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+        }
+
+            input[type="date"].form-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+            }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 768px) {
+        .form-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .form-field-half,
+    .form-field-third,
+    .form-field-full {
+        grid-column: span 1;
+    }
+
+    .form-section {
+        padding: 16px;
+    }
+
+    .form-section-header {
+        gap: 10px;
+    }
+
+    .section-icon-wrap {
+        width: 36px;
+        height: 36px;
+        font-size: 1.05rem;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+    }
+
+    .section-subtitle {
+        font-size: 0.78rem;
+    }
+
+    }
+
+    
+</style>

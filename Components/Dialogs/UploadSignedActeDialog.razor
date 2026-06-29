@@ -37,13 +37,21 @@
         </MudPaper>
 
         @* Zone de drop *@
-        <MudPaper Class="@($"upload-zone {(_selectedFile != null ? "has-file" : "")}")" Elevation="0">
-            <MudFileUpload T="IBrowserFile"
-                           Accept=".pdf"
-                           FilesChanged="OnFileSelected"
-                           MaximumFileCount="1"
-                           Class="upload-input">
-                <ActivatorContent>
+        <MudFileUpload T="IBrowserFile"
+                       @ref="_fileUpload"
+                       Accept=".pdf"
+                       FilesChanged="OnFileSelected"
+                       MaximumFileCount="1"
+                       Hidden="false"
+                       InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                       InputStyle="opacity:0"
+                       tabindex="-1"
+                       @ondrop="@ClearDragClass"
+                       @ondragenter="@SetDragClass"
+                       @ondragleave="@ClearDragClass"
+                       @ondragend="@ClearDragClass">
+            <ActivatorContent>
+                <MudPaper Class="@($"upload-zone {_dragClass} {(_selectedFile != null ? "has-file" : "")}")" Elevation="0">
                     @if (_selectedFile is null)
                     {
                         <div class="upload-empty">
@@ -79,9 +87,9 @@
                                            OnClick="ClearFile" />
                         </div>
                     }
-                </ActivatorContent>
-            </MudFileUpload>
-        </MudPaper>
+                </MudPaper>
+            </ActivatorContent>
+        </MudFileUpload>
 
         @* Avertissement *@
         <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mt-3" Dense="true">
@@ -136,6 +144,14 @@
     private bool _confirmed;
     private bool _isUploading;
     private string? _errorMessage;
+
+    // 🆕 Drag & drop
+    private MudFileUpload<IBrowserFile>? _fileUpload;
+    private string _dragClass = "";
+    private const string DragOverClass = "dragging-over";
+
+    private void SetDragClass() => _dragClass = DragOverClass;
+    private void ClearDragClass() => _dragClass = "";
 
     private void OnFileSelected(IBrowserFile file)
     {
@@ -253,6 +269,15 @@
             border-style: solid !important;
             border-color: #0E7C5C !important;
             background: #F0FDF4 !important;
+        }
+
+        /* 🆕 État pendant le drag-over (fichier survolé sur la zone) */
+        .upload-zone.dragging-over {
+            border-color: #0E7C5C !important;
+            border-style: solid !important;
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%) !important;
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(14, 124, 92, 0.2) !important;
         }
 
     .upload-input {

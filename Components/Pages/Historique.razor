@@ -16,98 +16,52 @@
 
 <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
 
-    <!-- ============ HEADER ============ -->
-    <MudPaper Class="history-header" Elevation="0">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="header-icon">
-                    <MudIcon Icon="@Icons.Material.Filled.History"
-                             Style="font-size: 2.5rem; color: white;" />
+    <!-- ============ HEADER COMPACT (harmonisé + innovation historique) ============ -->
+    <MudPaper Class="history-hero" Elevation="0">
+        <div class="hero-bg-deco"></div>
+        <div class="hero-content">
+
+            <div class="hero-main">
+                <div class="hero-icon-wrap">
+                    <i class="bi bi-clock-history"></i>
                 </div>
-                <div>
-                    <MudText Typo="Typo.h4" Style="color:white; font-weight:700;">
-                        Journal d'audit
-                    </MudText>
-                    <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">
+                <div class="hero-text">
+                    <h1 class="hero-title">Journal d'audit</h1>
+                    <p class="hero-meta">
                         @if (_isAgent)
                         {
-                            <span>Historique des actions sur <strong>vos</strong> actes</span>
+                            <span><i class="bi bi-person-fill-check me-1"></i>Vos actions</span>
                         }
                         else
                         {
-                            <span>Historique complet des actions sur l'application</span>
+                            <span><i class="bi bi-eye-fill me-1"></i>Observation complète</span>
                         }
-                    </MudText>
+                        <span class="meta-sep">·</span>
+                        <span class="meta-strong">@_stats.Total événement@(_stats.Total > 1 ? "s" : "")</span>
+                        <span class="meta-sep">·</span>
+                        <span>tracé@(_stats.Total > 1 ? "s" : "") en continu</span>
+                    </p>
                 </div>
             </div>
 
-            <MudTooltip Text="Actualiser">
-                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                               Style="color:white;"
-                               Disabled="@_loading"
-                               OnClick="LoadDataAsync" />
-            </MudTooltip>
+            <div class="hero-actions">
+                @if (_stats.Today > 0)
+                {
+                    <div class="hero-today-pill">
+                        <span class="today-dot"></span>
+                        <i class="bi bi-calendar-day-fill"></i>
+                        <span><strong>@_stats.Today</strong> aujourd'hui</span>
+                    </div>
+                }
+                <MudTooltip Text="Actualiser">
+                    <button class="hero-btn-icon" @onclick="LoadDataAsync" disabled="@_loading">
+                        <i class="bi bi-arrow-clockwise @(_loading ? "spinning" : "")"></i>
+                    </button>
+                </MudTooltip>
+            </div>
+
         </div>
     </MudPaper>
-
-    <!-- ============ STATS ============ -->
-    <div class="row g-3 my-3">
-        <div class="col-md-3 col-sm-6">
-            <MudPaper Class="stat-card" Elevation="0">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon stat-icon-primary">
-                        <MudIcon Icon="@Icons.Material.Filled.Inventory" />
-                    </div>
-                    <div>
-                        <div class="stat-label">Total des actions</div>
-                        <div class="stat-value">@_stats.Total</div>
-                    </div>
-                </div>
-            </MudPaper>
-        </div>
-
-        <div class="col-md-3 col-sm-6">
-            <MudPaper Class="stat-card" Elevation="0">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon stat-icon-info">
-                        <MudIcon Icon="@Icons.Material.Filled.Today" />
-                    </div>
-                    <div>
-                        <div class="stat-label">Aujourd'hui</div>
-                        <div class="stat-value">@_stats.Today</div>
-                    </div>
-                </div>
-            </MudPaper>
-        </div>
-
-        <div class="col-md-3 col-sm-6">
-            <MudPaper Class="stat-card" Elevation="0">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon stat-icon-warning">
-                        <MudIcon Icon="@Icons.Material.Filled.DateRange" />
-                    </div>
-                    <div>
-                        <div class="stat-label">Cette semaine</div>
-                        <div class="stat-value">@_stats.ThisWeek</div>
-                    </div>
-                </div>
-            </MudPaper>
-        </div>
-
-        <div class="col-md-3 col-sm-6">
-            <MudPaper Class="stat-card" Elevation="0">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon stat-icon-success">
-                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" />
-                    </div>
-                    <div>
-                        <div class="stat-label">Ce mois</div>
-                        <div class="stat-value">@_stats.ThisMonth</div>
-                    </div>
-                </div>
-            </MudPaper>
-        </div>
-    </div>
 
     <!-- ============ FILTRES ============ -->
     <MudPaper Class="filters-card mb-3" Elevation="0">
@@ -174,9 +128,10 @@
     else if (!FilteredLogs.Any())
     {
         <MudPaper Class="empty-state" Elevation="0">
-            <MudIcon Icon="@Icons.Material.Filled.HistoryToggleOff"
-                     Style="font-size: 5rem; color: #A0A8B5;" />
-            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#5E6B7D;">
+            <div class="empty-state-icon">
+                <i class="bi bi-journal-bookmark"></i>
+            </div>
+            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#0F172A; font-weight:700;">
                 Aucun événement trouvé
             </MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
@@ -186,65 +141,109 @@
     }
     else
     {
-        <div class="logs-list">
-            @foreach (var log in FilteredLogs)
+        <div class="timeline-container">
+            @foreach (var dayGroup in GroupedLogs)
             {
-                <MudPaper Class="log-entry" Elevation="0" @onclick="@(() => ShowActeHistory(log.IdActe))">
-                    <div class="log-marker" style="background: @GetActionColor(log.Action);">
-                        <MudIcon Icon="@GetActionIcon(log.Action)"
-                                 Style="color: white; font-size: 18px;" />
-                    </div>
-
-                    <div class="log-content">
-                        <div class="log-header">
-                            <div class="log-action-info">
-                                <span class="log-action-label" style="color: @GetActionColor(log.Action);">
-                                    @GetActionLabel(log.Action)
-                                </span>
-                                <span class="log-acte-link">
-                                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" />
-                                    Acte #@log.IdActe
-                                </span>
-                            </div>
-                            <span class="log-date">
-                                @log.DateAction.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                            </span>
+                <!-- ═══ SÉPARATEUR DE JOUR ═══ -->
+                <div class="day-divider @(IsToday(dayGroup.Key) ? "is-today" : "") @(IsYesterday(dayGroup.Key) ? "is-yesterday" : "")">
+                    <div class="day-divider-line"></div>
+                    <div class="day-badge">
+                        <div class="day-badge-icon">
+                            @if (IsToday(dayGroup.Key))
+                            {
+                                <i class="bi bi-broadcast"></i>
+                            }
+                            else if (IsYesterday(dayGroup.Key))
+                            {
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-calendar3"></i>
+                            }
                         </div>
+                        <div class="day-badge-text">
+                            <span class="day-badge-label">@GetDayLabel(dayGroup.Key)</span>
+                            @if (!IsToday(dayGroup.Key) && !IsYesterday(dayGroup.Key))
+                            {
+                                <span class="day-badge-date">@GetDayDateShort(dayGroup.Key)</span>
+                            }
+                            else
+                            {
+                                <span class="day-badge-date">@GetDayDateShort(dayGroup.Key)</span>
+                            }
+                        </div>
+                        <div class="day-badge-count">
+                            @dayGroup.Count() action@(dayGroup.Count() > 1 ? "s" : "")
+                        </div>
+                    </div>
+                    <div class="day-divider-line"></div>
+                </div>
 
-                        @if (!string.IsNullOrEmpty(log.UserNomComplet))
-                        {
-                            <div class="log-user">
-                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
-                                <strong>@log.UserNomComplet</strong>
-                                @if (!string.IsNullOrEmpty(log.UserRole))
+                <!-- ═══ ACTIONS DU JOUR (avec ligne verticale connectée) ═══ -->
+                <div class="day-events">
+                    @foreach (var log in dayGroup.OrderByDescending(l => l.DateAction))
+                    {
+                        <div class="log-entry" @onclick="@(() => ShowActeHistory(log.IdActe))">
+                            <div class="log-marker-wrap">
+                                <div class="log-marker" style="background: @GetActionColor(log.Action);">
+                                    <MudIcon Icon="@GetActionIcon(log.Action)"
+                                             Style="color: white; font-size: 18px;" />
+                                </div>
+                            </div>
+
+                            <div class="log-content">
+                                <div class="log-header">
+                                    <div class="log-action-info">
+                                        <span class="log-action-label" style="color: @GetActionColor(log.Action);">
+                                            @GetActionLabel(log.Action)
+                                        </span>
+                                        <span class="log-acte-link">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                            Acte #@log.IdActe
+                                        </span>
+                                    </div>
+                                    <span class="log-time">
+                                        <i class="bi bi-clock"></i>
+                                        @log.DateAction.ToLocalTime().ToString("HH:mm")
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(log.UserNomComplet))
                                 {
-                                    <MudChip T="string"
-                                             Size="Size.Small"
-                                             Color="@GetRoleColor(log.UserRole)"
-                                             Variant="Variant.Outlined"
-                                             Class="ms-2">
-                                        @GetRoleLabel(log.UserRole)
-                                    </MudChip>
+                                    <div class="log-user">
+                                        <i class="bi bi-person-circle"></i>
+                                        <strong>@log.UserNomComplet</strong>
+                                        @if (!string.IsNullOrEmpty(log.UserRole))
+                                        {
+                                            <span class="log-role-chip role-@(log.UserRole?.ToLower())">
+                                                @GetRoleLabel(log.UserRole)
+                                            </span>
+                                        }
+                                    </div>
+                                }
+
+                                @if (log.StatutAvant.HasValue && log.StatutApres.HasValue
+                               && log.StatutAvant != log.StatutApres)
+                                {
+                                    <div class="log-transition">
+                                        <ActeStatutBadge Statut="log.StatutAvant.Value" Size="Size.Small" />
+                                        <i class="bi bi-arrow-right log-transition-arrow"></i>
+                                        <ActeStatutBadge Statut="log.StatutApres.Value" Size="Size.Small" />
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(log.Details))
+                                {
+                                    <div class="log-details">
+                                        <i class="bi bi-chat-square-quote"></i>
+                                        <span>@log.Details</span>
+                                    </div>
                                 }
                             </div>
-                        }
-
-                        @if (log.StatutAvant.HasValue && log.StatutApres.HasValue
-                       && log.StatutAvant != log.StatutApres)
-                        {
-                            <div class="log-transition">
-                                <ActeStatutBadge Statut="log.StatutAvant.Value" Size="Size.Small" />
-                                <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="color: #5E6B7D;" />
-                                <ActeStatutBadge Statut="log.StatutApres.Value" Size="Size.Small" />
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(log.Details))
-                        {
-                            <div class="log-details">@log.Details</div>
-                        }
-                    </div>
-                </MudPaper>
+                        </div>
+                    }
+                </div>
             }
         </div>
     }
@@ -415,89 +414,266 @@
         RoleNames.Responsable => Color.Success,
         _ => Color.Default
     };
+
+    // ════════════════════════════════════════════════
+    // HELPERS pour la timeline groupée par jour
+    // ════════════════════════════════════════════════
+
+    private List<IGrouping<DateTime, AuditLogEntry>> GroupedLogs =>
+        FilteredLogs
+            .GroupBy(l => l.DateAction.ToLocalTime().Date)
+            .OrderByDescending(g => g.Key)
+            .ToList();
+
+    private string GetDayLabel(DateTime date)
+    {
+        var today = DateTime.Now.Date;
+        var diff = (today - date).Days;
+
+        if (diff == 0) return "Aujourd'hui";
+        if (diff == 1) return "Hier";
+        if (diff < 7) return $"Il y a {diff} jours";
+
+        // Jour de la semaine en français
+        var culture = new System.Globalization.CultureInfo("fr-FR");
+        return culture.TextInfo.ToTitleCase(date.ToString("dddd d MMMM yyyy", culture));
+    }
+
+    private string GetDayDateShort(DateTime date)
+    {
+        var culture = new System.Globalization.CultureInfo("fr-FR");
+        return date.ToString("d MMM yyyy", culture);
+    }
+
+    private bool IsToday(DateTime date) => date.Date == DateTime.Now.Date;
+    private bool IsYesterday(DateTime date) => date.Date == DateTime.Now.Date.AddDays(-1);
+
+    private string GetRelativeHour(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+        if (diff.TotalMinutes < 1) return "À l'instant";
+        if (diff.TotalMinutes < 60) return $"Il y a {(int)diff.TotalMinutes} min";
+        if (diff.TotalHours < 24) return $"Il y a {(int)diff.TotalHours}h";
+        return date.ToLocalTime().ToString("HH:mm");
+    }
 }
 
 <style>
-    /* ============ HEADER ============ */
-    .history-header {
-        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%) !important;
-        padding: 28px 32px !important;
+    /* ============ HEADER COMPACT (harmonisé avec listAct/validationAct/archives) ============ */
+    .history-hero {
+        background: radial-gradient(700px 350px at 85% 30%, rgba(201, 168, 106, 0.12), transparent 60%), radial-gradient(500px 300px at 15% 80%, rgba(20, 165, 116, 0.15), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 22px 28px !important;
         border-radius: 16px !important;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.2);
     }
 
-        .history-header::before {
+        .history-hero::after {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(201, 168, 106, 0.15) 0%, transparent 70%);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 106, 0.4) 25%, rgba(201, 168, 106, 0.7) 50%, rgba(201, 168, 106, 0.4) 75%, transparent 100%);
             pointer-events: none;
+            z-index: 2;
         }
 
-    .header-icon {
-        background: rgba(255, 255, 255, 0.12);
-        padding: 12px;
-        border-radius: 12px;
+    .hero-bg-deco {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
     }
 
-    /* ============ STATS ============ */
-    .stat-card {
-        background: white !important;
-        border: 1px solid #E1E4E8 !important;
-        border-radius: 12px !important;
-        padding: 18px !important;
-        transition: all 0.2s ease;
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
     }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
-        }
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
 
-    .stat-icon {
-        width: 48px;
-        height: 48px;
+    .hero-icon-wrap {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        width: 52px;
+        height: 52px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
+        font-size: 1.5rem;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    .stat-icon-primary {
-        background: linear-gradient(135deg, #0A2540, #06182E);
+    .hero-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
     }
 
-    .stat-icon-info {
-        background: linear-gradient(135deg, #1F3C88, #3F3A8A);
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
-    .stat-icon-warning {
-        background: linear-gradient(135deg, #D97706, #B45309);
-    }
+        .hero-meta i {
+            color: #FCD34D;
+            font-size: 0.9rem;
+        }
 
-    .stat-icon-success {
-        background: linear-gradient(135deg, #0E7C5C, #2F5D50);
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        color: #5E6B7D;
-        font-weight: 500;
-    }
-
-    .stat-value {
-        font-size: 1.8rem;
+    .meta-strong {
+        color: white;
         font-weight: 800;
-        color: #0A2540;
-        line-height: 1;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
     }
 
+    .meta-sep {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    /* === Pill "X aujourd'hui" — VIOLET (sémantique journal/observation) === */
+    .hero-today-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 60%, #A78BFA 100%);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+        white-space: nowrap;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        line-height: 1;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s ease;
+    }
+
+        .hero-today-pill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .hero-today-pill:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.6);
+        }
+
+            .hero-today-pill:hover::before {
+                left: 100%;
+            }
+
+        .hero-today-pill i {
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .hero-today-pill strong {
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+    .today-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        display: inline-block;
+        animation: today-pulse 1.8s ease-in-out infinite;
+    }
+
+    @@keyframes today-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+        }
+
+        50% {
+            opacity: 0.7;
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+        }
+    }
+
+    .hero-btn-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.15s ease;
+    }
+
+        .hero-btn-icon:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #C9A86A;
+        }
+
+        .hero-btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    
     /* ============ FILTRES ============ */
     .filters-card {
         background: white !important;
@@ -507,11 +683,341 @@
     }
 
     /* ============ LOG ENTRIES ============ */
-    .logs-list {
+    /* ═══════════ TIMELINE GROUPÉE PAR JOUR ═══════════ */
+    .timeline-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* === SÉPARATEUR DE JOUR (date divider premium) === */
+    .day-divider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 12px 0 4px 0;
+        position: relative;
+    }
+
+    .day-divider-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #E2E8F0 30%, #CBD5E1 50%, #E2E8F0 70%, transparent 100%);
+    }
+
+    .day-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        border: 1.5px solid #E2E8F0;
+        padding: 8px 16px 8px 8px;
+        border-radius: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+    }
+
+        .day-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #C9A86A;
+        }
+
+    .day-badge-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(14, 124, 92, 0.25);
+    }
+
+    .day-badge-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .day-badge-label {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.2px;
+    }
+
+    .day-badge-date {
+        font-size: 0.7rem;
+        color: #64748B;
+        font-weight: 600;
+        text-transform: capitalize;
+        margin-top: 1px;
+    }
+
+    .day-badge-count {
+        background: #F1F5F9;
+        color: #475569;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid #E2E8F0;
+    }
+
+    /* === AUJOURD'HUI : effet "live" === */
+    .day-divider.is-today .day-badge {
+        border-color: #14A574;
+        background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+        box-shadow: 0 4px 14px rgba(20, 165, 116, 0.15);
+    }
+
+    .day-divider.is-today .day-badge-icon {
+        background: linear-gradient(135deg, #14A574 0%, #34D399 100%);
+        animation: today-broadcast 2s ease-in-out infinite;
+    }
+
+    .day-divider.is-today .day-badge-label {
+        color: #047857;
+    }
+
+    .day-divider.is-today .day-badge-count {
+        background: #D1FAE5;
+        color: #047857;
+        border-color: #BBF7D0;
+    }
+
+    @@keyframes today-broadcast {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(20, 165, 116, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 8px rgba(20, 165, 116, 0);
+        }
+    }
+
+    /* === HIER : effet rétro doux === */
+    .day-divider.is-yesterday .day-badge {
+        border-color: #C9A86A;
+        background: linear-gradient(135deg, #FEFCE8 0%, #FFFFFF 100%);
+    }
+
+    .day-divider.is-yesterday .day-badge-icon {
+        background: linear-gradient(135deg, #C9A86A 0%, #FCD34D 100%);
+    }
+
+    .day-divider.is-yesterday .day-badge-label {
+        color: #92400E;
+    }
+
+    /* === GROUPE D'ÉVÉNEMENTS DU JOUR (avec ligne timeline verticale) === */
+    .day-events {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        position: relative;
+        padding-left: 4px;
     }
+
+        /* Ligne verticale dorée qui relie tous les events du jour */
+        .day-events::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            bottom: 20px;
+            left: 24px;
+            width: 2px;
+            background: linear-gradient(180deg, rgba(201, 168, 106, 0.3) 0%, rgba(201, 168, 106, 0.6) 50%, rgba(201, 168, 106, 0.3) 100%);
+            z-index: 0;
+        }
+
+    /* === LOG ENTRY (rénovée) === */
+    .log-entry {
+        display: flex;
+        gap: 16px;
+        background: white;
+        border: 1px solid #E1E4E8;
+        border-radius: 12px;
+        padding: 16px 18px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+        .log-entry:hover {
+            border-color: #C9A86A;
+            box-shadow: 0 6px 18px rgba(201, 168, 106, 0.15);
+            transform: translateX(4px);
+        }
+
+    .log-marker-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .log-marker {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 0 4px white, 0 0 0 5px rgba(201, 168, 106, 0.2);
+        position: relative;
+        z-index: 2;
+    }
+
+    .log-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .log-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+    .log-action-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .log-action-label {
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: -0.1px;
+    }
+
+    .log-acte-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: linear-gradient(135deg, #0A2540 0%, #1E40AF 100%);
+        color: #FCD34D;
+        padding: 3px 11px;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        font-family: 'Monaco', 'Menlo', monospace;
+        letter-spacing: 0.3px;
+        border: 1px solid rgba(252, 211, 77, 0.2);
+    }
+
+        .log-acte-link i {
+            font-size: 0.85rem;
+        }
+
+    .log-time {
+        font-size: 0.8rem;
+        color: #64748B;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #F8FAFC;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+        font-feature-settings: "tnum" 1;
+    }
+
+        .log-time i {
+            color: #94A3B8;
+            font-size: 0.85rem;
+        }
+
+    .log-user {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #4B5563;
+        margin-bottom: 6px;
+    }
+
+        .log-user i {
+            color: #94A3B8;
+            font-size: 1rem;
+        }
+
+        .log-user strong {
+            color: #0F172A;
+            font-weight: 700;
+        }
+
+    /* Role chips colorées */
+    .log-role-chip {
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid;
+        margin-left: 4px;
+    }
+
+    .role-admin {
+        background: #FEE2E2;
+        color: #991B1B;
+        border-color: #FCA5A5;
+    }
+
+    .role-agent {
+        background: #DBEAFE;
+        color: #1E40AF;
+        border-color: #93C5FD;
+    }
+
+    .role-responsable {
+        background: #D1FAE5;
+        color: #047857;
+        border-color: #6EE7B7;
+    }
+
+    .log-transition {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        flex-wrap: wrap;
+    }
+
+    .log-transition-arrow {
+        color: #94A3B8;
+        font-size: 1rem;
+    }
+
+    .log-details {
+        font-size: 0.85rem;
+        color: #334155;
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        border-left: 3px solid #C9A86A;
+        margin-top: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        line-height: 1.5;
+    }
+
+        .log-details i {
+            color: #C9A86A;
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
 
     .log-entry {
         display: flex;
@@ -619,4 +1125,50 @@
         padding: 60px 40px !important;
         text-align: center;
     }
+
+    .empty-state-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+        color: #7C3AED;
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+        box-shadow: inset 0 0 0 4px white, inset 0 0 0 5px rgba(124, 58, 237, 0.2);
+        position: relative;
+    }
+
+        .empty-state-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px dashed rgba(124, 58, 237, 0.25);
+            animation: empty-rotate 25s linear infinite;
+        }
+
+    @@keyframes empty-rotate {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @@media (max-width: 768px) {
+        .history-hero {
+            padding: 18px 20px !important;
+        }
+
+        .hero-title {
+            font-size: 1.2rem !important;
+        }
+
+        .hero-meta {
+            font-size: 0.78rem !important;
+        }
+    }
+
 </style>

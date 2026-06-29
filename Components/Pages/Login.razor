@@ -12,125 +12,181 @@
 <PageTitle>Connexion — GesCPSI BOA-TOGO</PageTitle>
 
 <div class="login-page">
-    <!-- Côté gauche : visuel / branding -->
+    <!-- ═════════════ CÔTÉ GAUCHE : PHOTO + BRANDING ═════════════ -->
     <div class="login-brand-panel">
-        <div class="login-brand-content">
-            <div class="brand-logo-wrapper">
-                <img src="/images/Logo_boatg.jpg" alt="BOA-TOGO" class="brand-logo" />
-            </div>
-            <h1 class="brand-title">GesCPSI</h1>
-            <p class="brand-tagline">Gestion des Actes de Cautionnement<br />Personnel, Solidaire et Indivisible</p>
 
+        <!-- Photo de fond avec overlay vert BOA -->
+        <div class="brand-photo-bg"></div>
+
+        <!-- Couche d'overlay dégradé vert BOA -->
+        <div class="brand-overlay"></div>
+
+        <!-- Particules dorées flottantes -->
+        <div class="floating-particle particle-1"></div>
+        <div class="floating-particle particle-2"></div>
+        <div class="floating-particle particle-3"></div>
+        <div class="floating-particle particle-4"></div>
+
+        <!-- Filigrane doré en bas (signature BOA) -->
+        <div class="brand-gold-line"></div>
+
+        <div class="login-brand-content">
+
+            <!-- Logo BOA centré -->
+            <div class="brand-logo-wrapper">
+                <img src="/Logo_boatg.jpg" alt="BOA-TOGO" class="brand-logo" />
+            </div>
+
+            <!-- Titre + Badge sur la même ligne -->
+            <div class="brand-title-row">
+                <h1 class="brand-title">GesCPSI</h1>
+                <div class="brand-badge">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Inherit" Size="Size.Small" />
+                    <span>Direction Juridique</span>
+                </div>
+            </div>
+            <p class="brand-tagline">
+                Gestion des Actes de Cautionnement<br />
+                <span class="tagline-accent">Personnel, Solidaire et Indivisible</span>
+            </p>
+
+            <!-- Séparateur or -->
+            <div class="brand-divider"></div>
+
+            <!-- Features -->
             <div class="brand-features">
                 <div class="feature-item">
-                    <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Inherit" Size="Size.Small" />
-                    <span>Sécurisé & conforme OHADA</span>
+                    <div class="feature-icon-wrap">
+                        <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small" />
+                    </div>
+                    <div class="feature-text">
+                        <div class="feature-title">Sécurisé & conforme</div>
+                        <div class="feature-desc">Standards OHADA respectés</div>
+                    </div>
                 </div>
+
                 <div class="feature-item">
-                    <MudIcon Icon="@Icons.Material.Filled.Speed" Color="Color.Inherit" Size="Size.Small" />
-                    <span>Validation rapide des dossiers</span>
+                    <div class="feature-icon-wrap">
+                        <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small" />
+                    </div>
+                    <div class="feature-text">
+                        <div class="feature-title">Workflow optimisé</div>
+                        <div class="feature-desc">Validation en quelques clics</div>
+                    </div>
                 </div>
+
                 <div class="feature-item">
-                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Inherit" Size="Size.Small" />
-                    <span>Génération PDF automatisée</span>
+                    <div class="feature-icon-wrap">
+                        <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" />
+                    </div>
+                    <div class="feature-text">
+                        <div class="feature-title">PDF automatisés</div>
+                        <div class="feature-desc">Génération instantanée</div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Footer -->
             <div class="brand-footer">
-                <span>© 2026 BOA-TOGO — Direction Juridique</span>
+                <div class="footer-divider"></div>
+                <span>© 2026 BOA-TOGO — Tous droits réservés</span>
             </div>
         </div>
     </div>
 
-    <!-- Côté droit : formulaire -->
+    <!-- ═════════════ CÔTÉ DROIT : FORMULAIRE ═════════════ -->
     <div class="login-form-panel">
-        <MudPaper Class="login-card" Elevation="0">
-            <div class="login-header">
-                <MudText Typo="Typo.h4" Class="login-title">Bienvenue</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Connectez-vous à votre espace de travail
-                </MudText>
+
+        <div class="login-card-wrapper">
+
+            <!-- Logo mobile -->
+            <div class="mobile-brand">
+                <img src="/Logo_boatg.jpg" alt="BOA-TOGO" />
+                <span>GesCPSI</span>
             </div>
 
-            <EditForm Model="model" OnValidSubmit="HandleLoginAsync" FormName="login-form">
-                <DataAnnotationsValidator />
-
-                <div class="form-field">
-                    <MudTextField @bind-Value="model.Email"
-                                  Label="Adresse email"
-                                  Variant="Variant.Outlined"
-                                  FullWidth="true"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Email"
-                                  AdornmentColor="Color.Primary"
-                                  InputType="InputType.Email"
-                                  Required="true"
-                                  Immediate="true"
-                                  Class="mb-3" />
+            <MudPaper Class="login-card login-card-watermarked" Elevation="0">
+                <div class="login-header">
+                    <MudText Typo="Typo.h4" Class="login-title">Bienvenue</MudText>
+                    <MudText Typo="Typo.body2" Class="login-subtitle">
+                        Connectez-vous à votre espace de travail
+                    </MudText>
                 </div>
 
-                <div class="form-field">
-                    <MudTextField @bind-Value="model.Password"
-                                  Label="Mot de passe"
-                                  Variant="Variant.Outlined"
-                                  FullWidth="true"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Lock"
-                                  AdornmentColor="Color.Primary"
-                                  InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
-                                  Required="true"
-                                  Class="mb-3">
-                    </MudTextField>
-                    <div class="password-toggle">
-                        <MudIconButton Icon="@(_passwordVisible ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
-                                       Size="Size.Small"
-                                       OnClick="@(() => _passwordVisible = !_passwordVisible)"
-                                       Title="@(_passwordVisible ? "Masquer" : "Afficher")" />
+                <EditForm Model="model" OnValidSubmit="HandleLoginAsync" FormName="login-form">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-field">
+                        <MudTextField @bind-Value="model.Email"
+                                      Label="Adresse email"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      InputType="InputType.Email"
+                                      Required="true"
+                                      Immediate="true"
+                                      Class="boa-input mb-3" />
                     </div>
-                </div>
 
-                <div class="form-options">
-                    <MudCheckBox @bind-Value="model.RememberMe" Color="Color.Primary" Dense="true">
-                        <MudText Typo="Typo.body2">Se souvenir de moi</MudText>
-                    </MudCheckBox>
-                </div>
+                    <div class="form-field">
+                        <MudTextField @bind-Value="model.Password"
+                                      Label="Mot de passe"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
+                                      Required="true"
+                                      Class="boa-input mb-3">
+                        </MudTextField>
+                        <div class="password-toggle">
+                            <MudIconButton Icon="@(_passwordVisible ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                           Size="Size.Small"
+                                           OnClick="@(() => _passwordVisible = !_passwordVisible)"
+                                           Title="@(_passwordVisible ? "Masquer" : "Afficher")" />
+                        </div>
+                    </div>
 
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error"
-                              Icon="@Icons.Material.Filled.ErrorOutline"
-                              Class="mb-3"
-                              Dense="true">
-                        @_errorMessage
-                    </MudAlert>
-                }
+                    <div class="form-options">
+                        <MudCheckBox @bind-Value="model.RememberMe" Color="Color.Success" Dense="true">
+                            <MudText Typo="Typo.body2">Se souvenir de moi</MudText>
+                        </MudCheckBox>
+                    </div>
 
-                <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           FullWidth="true"
-                           Size="Size.Large"
-                           Disabled="@_isLoading"
-                           Class="login-submit-btn">
-                    @if (_isLoading)
+                    @if (!string.IsNullOrEmpty(_errorMessage))
                     {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
-                        <span>Connexion en cours...</span>
+                        <div class="boa-error-alert">
+                            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Small" />
+                            <span>@_errorMessage</span>
+                        </div>
                     }
-                    else
-                    {
-                        <MudIcon Icon="@Icons.Material.Filled.Login" Class="me-2" />
-                        <span>Se connecter</span>
-                    }
-                </MudButton>
-            </EditForm>
 
-            <div class="login-footer">
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-                    Besoin d'accès ? Contactez votre administrateur.
-                </MudText>
-            </div>
-        </MudPaper>
+                    <button type="submit"
+                            disabled="@_isLoading"
+                            class="boa-submit-btn">
+                        @if (_isLoading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                            <span>Connexion en cours...</span>
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Login" />
+                            <span>Se connecter</span>
+                        }
+                    </button>
+                </EditForm>
+
+                <div class="login-footer">
+                    <MudText Typo="Typo.caption" Align="Align.Center" Class="footer-help">
+                        <MudIcon Icon="@Icons.Material.Filled.HelpOutline" Size="Size.Small" Class="me-1" />
+                        Besoin d'accès ? Contactez votre administrateur.
+                    </MudText>
+                </div>
+            </MudPaper>
+
+        </div>
     </div>
 </div>
 
@@ -146,7 +202,6 @@
 
     protected override void OnInitialized()
     {
-        // Affichage de l'erreur si l'endpoint Account/Login a renvoyé une erreur
         _errorMessage = Error switch
         {
             "invalid" => "Adresse email ou mot de passe incorrect.",
@@ -181,7 +236,6 @@
             return;
         }
 
-        // 🎯 On délègue le SignIn à un endpoint Razor (qui peut écrire les cookies)
         var qs = $"?Email={Uri.EscapeDataString(model.Email)}" +
                  $"&Password={Uri.EscapeDataString(model.Password)}" +
                  $"&RememberMe={model.RememberMe}";
@@ -195,145 +249,448 @@
 }
 
 <style>
-    /* ============================================
-           PAGE LOGIN — LAYOUT DOUBLE COLONNE
-           ============================================ */
-    .login-page {
-        min-height: 100vh;
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
-        background: #FAFAF7;
+    /* ═══════════ LOGIN PAGE — palette BOA-TOGO + photo immersive ═══════════ */
+    /* Empêcher tout scroll sur cette page */
+    html, body {
+        overflow: hidden !important;
+        height: 100vh !important;
     }
 
-    /* ===== Panneau gauche : branding ===== */
+    .login-page {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        background: #F7F8FA;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* ═══════════ PANNEAU GAUCHE : PHOTO + OVERLAY VERT BOA ═══════════ */
     .login-brand-panel {
-        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #0E2C4A 100%);
         color: white;
         position: relative;
         overflow: hidden;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        padding: 48px;
+        padding: 20px 48px 44px;
+        height: 100vh;
     }
 
-        /* Effet visuel subtil : motif géométrique en fond */
-        .login-brand-panel::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(201, 168, 106, 0.08) 0%, transparent 70%);
-            pointer-events: none;
+    /* === COUCHE 1 : Photo de fond === */
+    .brand-photo-bg {
+        position: absolute;
+        inset: 0;
+        background-image: url('/images/auth/login-bg.webp');
+        background-size: cover;
+        background-position: center;
+        z-index: 0;
+        /* Léger zoom doux pour effet vivant */
+        animation: bg-slow-zoom 30s ease-in-out infinite alternate;
+    }
+
+    @@keyframes bg-slow-zoom {
+        from {
+            transform: scale(1);
         }
 
-        .login-brand-panel::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(14, 124, 92, 0.08) 0%, transparent 70%);
-            pointer-events: none;
+        to {
+            transform: scale(1.05);
         }
+    }
+
+    /* === COUCHE 2 : Overlay vert BOA dégradé === */
+    .brand-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(700px 400px at 90% 20%, rgba(252, 211, 77, 0.22), transparent 60%), radial-gradient(500px 300px at 10% 90%, rgba(20, 165, 116, 0.35), transparent 65%), linear-gradient(135deg, rgba(10, 41, 34, 0.88) 0%, rgba(14, 124, 92, 0.78) 60%, rgba(20, 165, 116, 0.72) 100%);
+        z-index: 1;
+    }
+
+    /* === Particules dorées flottantes (effet premium) === */
+    .floating-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(252, 211, 77, 0.7) 0%, rgba(252, 211, 77, 0) 70%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .particle-1 {
+        width: 6px;
+        height: 6px;
+        top: 20%;
+        left: 15%;
+        animation: float-particle 8s ease-in-out infinite;
+    }
+
+    .particle-2 {
+        width: 10px;
+        height: 10px;
+        top: 60%;
+        right: 25%;
+        animation: float-particle 10s ease-in-out infinite 2s;
+    }
+
+    .particle-3 {
+        width: 4px;
+        height: 4px;
+        bottom: 30%;
+        left: 70%;
+        animation: float-particle 7s ease-in-out infinite 1s;
+    }
+
+    .particle-4 {
+        width: 8px;
+        height: 8px;
+        top: 35%;
+        right: 10%;
+        animation: float-particle 12s ease-in-out infinite 3s;
+    }
+
+    @@keyframes float-particle {
+        0%, 100% {
+            transform: translateY(0) translateX(0);
+            opacity: 0.6;
+        }
+
+        25% {
+            transform: translateY(-15px) translateX(8px);
+            opacity: 1;
+        }
+
+        50% {
+            transform: translateY(-25px) translateX(-5px);
+            opacity: 0.4;
+        }
+
+        75% {
+            transform: translateY(-10px) translateX(12px);
+            opacity: 0.8;
+        }
+    }
+
+    /* Filigrane doré en bas (signature BOA) */
+    .brand-gold-line {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 25%, rgba(252, 211, 77, 0.8) 50%, rgba(252, 211, 77, 0.4) 75%, transparent 100%);
+        z-index: 3;
+    }
 
     .login-brand-content {
         position: relative;
-        z-index: 1;
-        max-width: 480px;
+        z-index: 5;
+        max-width: 460px;
         width: 100%;
+        animation: fade-in-up 0.8s ease-out;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+        max-height: 100vh;
     }
 
+    @@keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* === Logo === */
     .brand-logo-wrapper {
         background: white;
         display: inline-flex;
-        padding: 16px 24px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 22px;
         border-radius: 12px;
-        margin-bottom: 32px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        margin: 60px auto 32px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(252, 211, 77, 0.3);
+        align-self: center;
+        backdrop-filter: blur(10px);
     }
 
     .brand-logo {
-        max-height: 60px;
+        max-height: 44px;
         width: auto;
+        display: block;
+    }
+
+    /* === Badge institutionnel === */
+    .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        color: #FCD34D;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+    }
+
+        .brand-badge .mud-icon-root {
+            font-size: 0.9rem !important;
+        }
+
+    /* === Titre avec gradient doré === */
+    /* Ligne contenant Titre + Badge côte à côte */
+    .brand-title-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
     }
 
     .brand-title {
-        font-size: 3.5rem;
+        font-size: 3.2rem;
         font-weight: 800;
-        letter-spacing: -1px;
-        margin-bottom: 12px;
-        background: linear-gradient(135deg, #FFFFFF 0%, #C9A86A 100%);
+        letter-spacing: -1.5px;
+        margin: 0;
+        background: linear-gradient(135deg, #FFFFFF 0%, #FCD34D 100%);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
+        line-height: 1;
+        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
     }
 
     .brand-tagline {
-        font-size: 1.1rem;
-        line-height: 1.6;
-        color: rgba(255, 255, 255, 0.85);
-        margin-bottom: 48px;
-        font-weight: 300;
+        font-size: 1rem;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.95);
+        margin: 0 0 22px 0;
+        font-weight: 400;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
+    .tagline-accent {
+        color: #FCD34D;
+        font-weight: 600;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* === Séparateur doré === */
+    .brand-divider {
+        width: 56px;
+        height: 3px;
+        background: linear-gradient(90deg, #FCD34D 0%, transparent 100%);
+        border-radius: 2px;
+        margin-bottom: 26px;
+        box-shadow: 0 0 16px rgba(252, 211, 77, 0.6);
+    }
+
+    /* === Features avec effet glassmorphism === */
     .brand-features {
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        margin-bottom: 64px;
+        gap: 14px;
+        margin-bottom: 28px;
     }
 
     .feature-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        color: rgba(255, 255, 255, 0.92);
-        font-size: 0.95rem;
+        gap: 14px;
+        transition: transform 0.3s ease;
+        padding: 4px 8px;
+        border-radius: 10px;
     }
 
-        .feature-item .mud-icon-root {
-            background: rgba(201, 168, 106, 0.15);
-            padding: 6px;
-            border-radius: 8px;
-            color: #C9A86A !important;
+        .feature-item:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-    .brand-footer {
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.5);
-        letter-spacing: 0.5px;
+    .feature-icon-wrap {
+        background: rgba(252, 211, 77, 0.15);
+        border: 1px solid rgba(252, 211, 77, 0.4);
+        padding: 10px;
+        border-radius: 10px;
+        color: #FCD34D;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
-    /* ===== Panneau droit : formulaire ===== */
+        .feature-icon-wrap .mud-icon-root {
+            font-size: 1.05rem !important;
+        }
+
+    .feature-text {
+        flex: 1;
+    }
+
+    .feature-title {
+        color: white;
+        font-size: 0.92rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+        line-height: 1.2;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-desc {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.78rem;
+        line-height: 1.3;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* === Footer === */
+    .brand-footer {
+        margin-top: auto;
+    }
+
+    .footer-divider {
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 50%, transparent 100%);
+        margin-bottom: 12px;
+    }
+
+    .brand-footer span {
+        font-size: 0.74rem;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ═══════════ PANNEAU DROIT : FORMULAIRE ═══════════ */
     .login-form-panel {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 48px;
+        padding: 32px;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        background: #F7F8FA;
+        position: relative;
     }
 
-    .login-card {
-        max-width: 440px;
+        /* Petite ligne dorée verticale qui marque la séparation */
+        .login-form-panel::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            bottom: 20%;
+            left: 0;
+            width: 2px;
+            background: linear-gradient(180deg, transparent 0%, rgba(252, 211, 77, 0.3) 50%, transparent 100%);
+            z-index: 1;
+        }
+
+
+    .login-card-wrapper {
         width: 100%;
-        padding: 48px 40px;
+        max-width: 440px;
+        position: relative;
+        z-index: 3;
+    }
+
+    /* Logo mobile (caché sur desktop) */
+    .mobile-brand {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+        .mobile-brand img {
+            height: 36px;
+        }
+
+        .mobile-brand span {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #0E7C5C;
+            letter-spacing: -0.5px;
+        }
+
+    .login-card {
+        padding: 38px 34px !important;
         background: white !important;
-        border-radius: 16px !important;
-        border: 1px solid #E1E4E8;
-        box-shadow: 0 4px 24px rgba(10, 37, 64, 0.06) !important;
+        border-radius: 18px !important;
+        border: 1px solid #E5E7EB;
+        box-shadow: 0 4px 28px rgba(10, 37, 64, 0.06) !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* === Watermark intégré DANS la carte (en background) === */
+    .login-card-watermarked::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 80%;
+        background-image: url('/images/illustrations/dashboard-welcome2.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.20;
+        pointer-events: none;
+        z-index: 0;
+        filter: brightness(0) saturate(100%) invert(58%) sepia(72%) saturate(343%) hue-rotate(116deg) brightness(94%) contrast(85%);
+        animation: card-watermark-float 14s ease-in-out infinite;
+    }
+
+    /* Assurer que le contenu de la carte reste AU-DESSUS du watermark */
+    .login-card-watermarked > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    @@keyframes card-watermark-float {
+        0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        50% {
+            transform: translate(-50%, -52%) scale(1.03);
+        }
     }
 
     .login-header {
-        margin-bottom: 36px;
+        margin-bottom: 28px;
     }
 
     .login-title {
         color: #0A2540 !important;
-        font-weight: 700 !important;
-        margin-bottom: 8px;
+        font-weight: 800 !important;
+        margin-bottom: 6px !important;
+        letter-spacing: -0.5px;
+        font-size: 2rem !important;
+    }
+
+    .login-subtitle {
+        color: #5E6B7D !important;
+        font-size: 0.92rem !important;
     }
 
     .form-field {
@@ -348,45 +705,170 @@
         z-index: 2;
     }
 
+    /* === Inputs MudBlazor en VERT BOA === */
+    ::deep .boa-input .mud-input-outlined-border {
+        border-color: #E5E7EB !important;
+        border-width: 1.5px !important;
+        border-radius: 10px !important;
+    }
+
+    ::deep .boa-input .mud-input-control:hover .mud-input-outlined-border {
+        border-color: #14A574 !important;
+    }
+
+    ::deep .boa-input .mud-input-control.mud-input-control-focused .mud-input-outlined-border {
+        border-color: #0E7C5C !important;
+        border-width: 2px !important;
+    }
+
+    ::deep .boa-input .mud-input-label.mud-input-label-outlined.mud-input-label-focused {
+        color: #0E7C5C !important;
+    }
+
+    ::deep .boa-input .mud-input-adornment .mud-icon-root {
+        color: #14A574 !important;
+    }
+
+    ::deep .mud-checkbox .mud-checkbox-true .mud-icon-root {
+        color: #0E7C5C !important;
+    }
+
     .form-options {
-        margin: 8px 0 20px;
+        margin: 10px 0 22px;
     }
 
-    .login-submit-btn {
-        padding: 14px !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
+    /* === Alerte erreur === */
+    .boa-error-alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+        color: #9B1C2D;
+        padding: 11px 14px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        animation: shake 0.4s ease;
+    }
+
+    @@keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-4px);
+        }
+
+        75% {
+            transform: translateX(4px);
+        }
+    }
+
+    /* === Bouton connexion BOA === */
+    .boa-submit-btn {
+        width: 100%;
+        height: 54px;
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
         letter-spacing: 0.3px;
-        height: 52px !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.25s ease;
+        box-shadow: 0 6px 18px rgba(14, 124, 92, 0.3);
         margin-top: 8px;
-        text-transform: none !important;
-        box-shadow: 0 4px 12px rgba(10, 37, 64, 0.15) !important;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
     }
 
-        .login-submit-btn:hover {
-            box-shadow: 0 6px 16px rgba(10, 37, 64, 0.25) !important;
+        .boa-submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #14A574 0%, #FCD34D 100%);
+            color: #0A2540;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(252, 211, 77, 0.35);
+        }
+
+        .boa-submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .boa-submit-btn .mud-icon-root {
+            font-size: 1.15rem !important;
         }
 
     .login-footer {
-        margin-top: 32px;
-        padding-top: 24px;
-        border-top: 1px solid #E1E4E8;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid #F1F3F5;
     }
 
-    /* ===== Responsive ===== */
+    .footer-help {
+        color: #5E6B7D !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ═══════════ Responsive ═══════════ */
     @@media (max-width: 968px) {
         .login-page {
             grid-template-columns: 1fr;
+            height: auto;
+            min-height: 100vh;
+            overflow: visible;
         }
 
         .login-brand-panel {
             display: none;
         }
 
+        .mobile-brand {
+            display: flex;
+        }
+
+        .login-form-panel {
+            padding: 24px 18px;
+        }
+
+            .login-form-panel::before {
+                display: none;
+            }
+
         .login-card {
-            box-shadow: none !important;
-            border: none;
-            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(10, 37, 64, 0.06) !important;
+            padding: 28px 24px !important;
+        }
+
+        .login-title {
+            font-size: 1.7rem !important;
+        }
+
+        .brand-title-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .brand-logo-wrapper {
+            margin: 30px auto 24px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .login-card {
+            padding: 24px 20px !important;
         }
     }
 </style>

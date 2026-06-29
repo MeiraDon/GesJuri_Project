@@ -11,520 +11,426 @@
 @inject IBanque BanqueService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject NavigationManager NavigationManager 
+@inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<MudContainer MaxWidth="MaxWidth.False" Class="py-4" Style="min-height: 100vh;">
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+    <div class="banque-page">
 
-    <div class="header-section">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 header-row">
-            <div class="d-flex align-items-center gap-3 header-left">
-                <div class="icon-container">
-                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="header-icon" />
+        <!-- ═════════════ HEADER VERT BOA PROFOND ═════════════ -->
+        <MudPaper Class="banque-hero" Elevation="0">
+            <div class="hero-bg-deco"></div>
+            <div class="hero-content">
+                <div class="hero-main">
+                    <div class="hero-icon-wrap">
+                        <i class="bi bi-bank2"></i>
+                    </div>
+                    <div class="hero-text">
+                        <h1 class="hero-title">Gestion des Banques</h1>
+                        <p class="hero-meta">
+                            <span class="meta-strong">@banques.Count banque@(banques.Count > 1 ? "s" : "")</span>
+                            <span class="meta-sep">·</span>
+                            <span>institutions partenaires</span>
+                            <span class="meta-sep">·</span>
+                            <span class="meta-boa">
+                                <i class="bi bi-shield-fill-check"></i>
+                                BOA-TOGO active
+                            </span>
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
-                        Gestion des Banques
-                    </MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Gérez les institutions bancaires partenaires
-                    </MudText>
+
+                <div class="hero-actions">
+                    <MudTooltip Text="Actualiser la liste">
+                        <button class="hero-btn-icon" @onclick="RefreshList">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </MudTooltip>
+                    <button class="hero-btn-primary" @onclick="OpenQuickAdd">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Nouvelle banque</span>
+                    </button>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- ═════════════ STATS CARDS PREMIUM (4 cartes bancaires) ═════════════ -->
+        <div class="stats-grid">
+
+            <div class="stat-card stat-total">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon-wrap">
+                    <i class="bi bi-buildings-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total banques</div>
+                    <div class="stat-value">@banques.Count</div>
+                    <div class="stat-sub">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                        <span>Référentiel actif</span>
+                    </div>
                 </div>
             </div>
 
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenQuickAdd"
-                       Class="px-4 rounded-pill shadow-sm header-cta"
-                       Size="Size.Small">
-                Nouvelle banque
-            </MudButton>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-5 stats-row">
-        <div class="col-12 col-sm-6 col-lg-3">
-            <MudPaper Class="stats-card p-4" Elevation="2">
-                <div class="d-flex align-items-center w-100">
-                    <div class="stats-icon bg-primary-light">
-                        <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Primary" Size="Size.Small" />
-                    </div>
-                    <div class="ms-3">
-                        <div class="stats-label">Total banques</div>
-                        <div class="stats-value">@banques.Count</div>
+            <div class="stat-card stat-cities">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon-wrap">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Villes couvertes</div>
+                    <div class="stat-value">@GetDistinctCities()</div>
+                    <div class="stat-sub">
+                        <i class="bi bi-pin-map-fill"></i>
+                        <span>Sièges sociaux</span>
                     </div>
                 </div>
-            </MudPaper>
-        </div>
+            </div>
 
-        <div class="col-12 col-sm-6 col-lg-3">
-            <MudPaper Class="stats-card p-4" Elevation="2">
-                <div class="d-flex align-items-center w-100">
-                    <div class="stats-icon bg-success-light">
-                        <MudIcon Icon="@Icons.Material.Filled.LocationCity" Color="Color.Success" Size="Size.Small" />
-                    </div>
-                    <div class="ms-3">
-                        <div class="stats-label">Villes</div>
-                        <div class="stats-value">@GetDistinctCities()</div>
+            <div class="stat-card stat-capital">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon-wrap">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Capital moyen</div>
+                    <div class="stat-value-small">@GetAverageCapital()</div>
+                    <div class="stat-sub">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>FCFA moyen</span>
                     </div>
                 </div>
-            </MudPaper>
-        </div>
+            </div>
 
-        <div class="col-12 col-sm-6 col-lg-3">
-            <MudPaper Class="stats-card p-4" Elevation="2">
-                <div class="d-flex align-items-center w-100">
-                    <div class="stats-icon bg-warning-light">
-                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Warning" Size="Size.Small" />
-                    </div>
-                    <div class="ms-3">
-                        <div class="stats-label">Capital moyen</div>
-                        <div class="stats-value">@GetAverageCapital()</div>
+            <div class="stat-card stat-recent">
+                <div class="stat-card-bg"></div>
+                <div class="stat-icon-wrap">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Dernier ajout</div>
+                    <div class="stat-value-small">@GetLastAddedDate()</div>
+                    <div class="stat-sub">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Activité récente</span>
                     </div>
                 </div>
-            </MudPaper>
+            </div>
+
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-3">
-            <MudPaper Class="stats-card p-4" Elevation="2">
-                <div class="d-flex align-items-center w-100">
-                    <div class="stats-icon bg-info-light">
-                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" Size="Size.Small" />
+        <!-- ═════════════ FORMULAIRE PREMIUM SECTIONNÉ ═════════════ -->
+        <div class="form-card" id="form">
+            <div class="form-header">
+                <div class="form-header-left">
+                    <div class="form-header-icon @(isEditing ? "editing" : "creating")">
+                        <i class="bi @(isEditing ? "bi-pencil-square" : "bi-plus-square")"></i>
                     </div>
-                    <div class="ms-3">
-                        <div class="stats-label">Dernier ajout</div>
-                        <div class="stats-value">@GetLastAddedDate()</div>
+                    <div>
+                        <h3 class="form-title">
+                            @(isEditing ? "Modifier une banque" : "Enregistrer une banque")
+                        </h3>
+                        <p class="form-subtitle">
+                            @(isEditing ? "Mise à jour des informations bancaires" : "Référencement d'une nouvelle institution")
+                        </p>
                     </div>
                 </div>
-            </MudPaper>
-        </div>
-    </div>
+                <div class="form-header-badge @(isEditing ? "badge-edit" : "badge-new")">
+                    <i class="bi @(isEditing ? "bi-pencil-fill" : "bi-asterisk")"></i>
+                    <span>@(isEditing ? "ÉDITION" : "NOUVEAU")</span>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-12">
-            <MudCard Class="form-card-compact" Elevation="6" id="form">
-                <MudCardHeader Class="pa-3 compact-header">
-                    <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="compact-header-icon">
-                                <MudIcon Icon="@HeaderIcon" Color="Color.Primary" Size="Size.Small" />
+            <div class="form-body">
+                <EditForm EditContext="@editContext" OnValidSubmit="Save">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-warning alert-sm mb-3" />
+
+                    <!-- Section 1 : Informations principales (MARINE) -->
+                    <div class="form-section section-primary">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-building-fill"></i>
                             </div>
-                            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-0 text-primary">
-                                @(isEditing ? "Modifier la banque" : "Ajouter une banque")
-                            </MudText>
+                            <div class="section-title">Informations principales</div>
+                            <span class="section-required">Obligatoire</span>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <MudChip T="string"
-                                     Color="@(isEditing ? Color.Warning : Color.Primary)"
-                                     Variant="Variant.Filled"
-                                     Size="Size.Small"
-                                     Class="px-3 py-1">
-                                @(isEditing ? "Édition" : "Nouveau")
-                            </MudChip>
+                        <div class="section-body">
+                            <MudTextField @bind-Value="banque.NomRaisonSocialBnq"
+                                          Label="Nom / Raison sociale"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          RequiredError="Champ requis"
+                                          Margin="Margin.Dense"
+                                          Class="mb-2" />
+
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.SigleBnq"
+                                                  Label="Sigle"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.FormeJuridique"
+                                                  Label="Forme juridique"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
                         </div>
                     </div>
-                </MudCardHeader>
 
-                <MudCardContent Class="pa-3 compact-content">
-                    <EditForm EditContext="@editContext" OnValidSubmit="Save">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="alert alert-warning alert-sm mb-3" />
-
-                        <MudGrid Spacing="2" Class="compact-grid">
-
-                            <MudItem xs="12">
-                                <div class="compact-section">
-                                    <div class="compact-section-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
-                                        <span>Informations principales</span>
-                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Outlined" Class="ms-2">
-                                            Obligatoire
-                                        </MudChip>
-                                    </div>
-
-                                    <MudTextField @bind-Value="banque.NomRaisonSocialBnq"
-                                                  Label="Nom / Raison sociale"
+                    <!-- Section 2 : Capital et siège (OR) -->
+                    <div class="form-section section-gold">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-cash-coin"></i>
+                            </div>
+                            <div class="section-title">Capital et siège</div>
+                        </div>
+                        <div class="section-body">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.CapitalSocial"
+                                                  Label="Capital social"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentText="FCFA" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.SiegeSocial"
+                                                  Label="Siège social"
                                                   Variant="Variant.Outlined"
                                                   Required="true"
                                                   RequiredError="Champ requis"
-                                                  FullWidth="true"
-                                                  Size="Size.Small"
-                                                  Margin="Margin.Dense"
-                                                  Class="compact-input mb-2" />
-
-                                    <MudGrid Spacing="2">
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.SigleBnq"
-                                                          Label="Sigle"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.FormeJuridique"
-                                                          Label="Forme juridique"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-                                    </MudGrid>
-                                </div>
-                            </MudItem>
-
-                            <MudItem xs="12">
-                                <div class="compact-section">
-                                    <div class="compact-section-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
-                                        <span>Capital et siège</span>
-                                    </div>
-
-                                    <MudGrid Spacing="2">
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.CapitalSocial"
-                                                          Label="Capital social"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input"
-                                                          Adornment="Adornment.End"
-                                                          AdornmentText="FCFA" />
-                                        </MudItem>
-
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.SiegeSocial"
-                                                          Label="Siège social"
-                                                          Variant="Variant.Outlined"
-                                                          Required="true"
-                                                          RequiredError="Champ requis"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-                                    </MudGrid>
-                                </div>
-                            </MudItem>
-
-                            <MudItem xs="12">
-                                <div class="compact-section">
-                                    <div class="compact-section-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" />
-                                        <span>Identifiants légaux</span>
-                                    </div>
-
-                                    <MudGrid Spacing="2">
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.RegistreCommerce"
-                                                          Label="RCCM/NIF"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.Swift"
-                                                          Label="Code SWIFT/BIC"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-                                    </MudGrid>
-                                </div>
-                            </MudItem>
-
-                            <MudItem xs="12">
-                                <div class="compact-section">
-                                    <div class="compact-section-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
-                                        <span>Représentation</span>
-                                    </div>
-
-                                    <MudGrid Spacing="2">
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.RepresentantBnq"
-                                                          Label="Représentant"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.FonctionRepresentant"
-                                                          Label="Fonction"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-                                    </MudGrid>
-                                </div>
-                            </MudItem>
-
-                            <MudItem xs="12">
-                                <div class="compact-section">
-                                    <div class="compact-section-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" />
-                                        <span>Contacts</span>
-                                    </div>
-
-                                    <MudGrid Spacing="2">
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.TelBnq"
-                                                          Label="Téléphone"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-
-                                        <MudItem xs="12" sm="6">
-                                            <MudTextField @bind-Value="banque.EmailBnq"
-                                                          Label="Email"
-                                                          Variant="Variant.Outlined"
-                                                          FullWidth="true"
-                                                          Size="Size.Small"
-                                                          Margin="Margin.Dense"
-                                                          Class="compact-input" />
-                                        </MudItem>
-                                    </MudGrid>
-                                </div>
-                            </MudItem>
-
-                            <MudItem xs="12">
-                                <div class="compact-actions">
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">
-                                        <div class="d-flex gap-2 flex-wrap">
-                                            <MudButton Variant="Variant.Text"
-                                                       Color="Color.Secondary"
-                                                       OnClick="ResetForm"
-                                                       Size="Size.Small"
-                                                       StartIcon="@Icons.Material.Filled.Clear"
-                                                       Class="rounded-pill px-3"
-                                                       Style="min-width: 100px;">
-                                                Annuler
-                                            </MudButton>
-
-                                            <MudButton Variant="Variant.Outlined"
-                                                       Color="Color.Info"
-                                                       Size="Size.Small"
-                                                       StartIcon="@Icons.Material.Filled.Preview"
-                                                       OnClick="@(() => ShowPreview(banque))"
-                                                       Class="rounded-pill px-3"
-                                                       Style="min-width: 100px;"
-                                                       Disabled="@(banque.IdBnq == 0)">
-                                                Aperçu
-                                            </MudButton>
-                                        </div>
-
-                                        <MudButton Variant="Variant.Filled"
-                                                   Color="@(isEditing ? Color.Warning : Color.Primary)"
-                                                   ButtonType="ButtonType.Submit"
-                                                   Size="Size.Small"
-                                                   StartIcon="@(isEditing ? Icons.Material.Filled.Edit : Icons.Material.Filled.Save)"
-                                                   Class="rounded-pill px-4 shadow-sm action-button"
-                                                   Style="min-width: 120px;">
-                                            @(isEditing ? "Mettre à jour" : "Enregistrer")
-                                        </MudButton>
-                                    </div>
-                                </div>
-                            </MudItem>
-
-                        </MudGrid>
-                    </EditForm>
-                </MudCardContent>
-            </MudCard>
-        </div>
-    </div>
-
-    <div class="row list-gap">
-        <div class="col-12">
-            <MudCard Class="list-card" Elevation="6">
-                <MudCardHeader Class="pa-4" Style="background-color: #f8fafc;">
-                    <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Color="Color.Primary" />
-                            <MudText Typo="Typo.h6" Class="text-dark mb-0">
-                                📋 Liste des banques
-                            </MudText>
-                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                                @banques.Count
-                            </MudChip>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <MudTextField @bind-Value="searchTerm"
-                                          Placeholder="Rechercher une banque..."
-                                          Variant="Variant.Outlined"
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Filled.Search"
-                                          Immediate="true"
-                                          Size="Size.Small"
-                                          Class="search-input"
-                                          Style="min-width: 240px;" />
-
-                            <MudTooltip Text="Rafraîchir">
-                                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                               Color="Color.Secondary"
-                                               Variant="Variant.Outlined"
-                                               Size="Size.Small"
-                                               OnClick="RefreshList" />
-                            </MudTooltip>
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
                         </div>
                     </div>
-                </MudCardHeader>
 
-                <MudCardContent Class="pa-0">
-                    @if (!filteredBanques.Any())
-                    {
-                        <div class="text-center py-8">
-                            <div class="empty-state">
-                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
-                                         Size="Size.Large"
-                                         Color="Color.Secondary"
-                                         Class="mb-3" />
-                                <MudText Typo="Typo.h6" Class="mb-2">Aucune banque trouvée</MudText>
-                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                                    Commencez par ajouter votre première banque
-                                </MudText>
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           OnClick="ResetForm">
-                                    Ajouter une banque
-                                </MudButton>
+                    <!-- Section 3 : Identifiants légaux (VERT) -->
+                    <div class="form-section section-green">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-shield-lock-fill"></i>
                             </div>
+                            <div class="section-title">Identifiants légaux</div>
                         </div>
-                    }
-                    else
-                    {
-                        <div class="banque-list">
-                            @foreach (var banqueItem in filteredBanques)
-                            {
-                                <div class="banque-item @(banqueItem.IdBnq == banque.IdBnq ? "active" : "")">
-                                    <div class="banque-item-content">
-                                        <div class="d-flex align-items-start flex-wrap">
-                                            <div class="banque-avatar">
-                                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
-                                                         Color="Color.Primary"
-                                                         Size="Size.Small" />
-                                            </div>
+                        <div class="section-body">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.RegistreCommerce"
+                                                  Label="RCCM/NIF"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.Swift"
+                                                  Label="Code SWIFT/BIC"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                    </div>
 
-                                            <div class="flex-grow-1 ms-3">
-                                                <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
-                                                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-0">
-                                                        @banqueItem.NomRaisonSocialBnq
+                    <!-- Section 4 : Représentation (INDIGO) -->
+                    <div class="form-section section-indigo">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
+                            <div class="section-title">Représentation</div>
+                        </div>
+                        <div class="section-body">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.RepresentantBnq"
+                                                  Label="Représentant"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.FonctionRepresentant"
+                                                  Label="Fonction"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                    </div>
 
-                                                        @if (!string.IsNullOrWhiteSpace(banqueItem.SigleBnq))
-                                                        {
-                                                            <MudChip T="string"
-                                                                     Color="Color.Info"
-                                                                     Variant="Variant.Outlined"
-                                                                     Size="Size.Small"
-                                                                     Class="ms-2">
-                                                                @banqueItem.SigleBnq
-                                                            </MudChip>
-                                                        }
-                                                    </MudText>
+                    <!-- Section 5 : Contacts (ORANGE) -->
+                    <div class="form-section section-orange">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-telephone-fill"></i>
+                            </div>
+                            <div class="section-title">Contacts</div>
+                        </div>
+                        <div class="section-body">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.TelBnq"
+                                                  Label="Téléphone"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="banque.EmailBnq"
+                                                  Label="Email"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                    </div>
 
-                                                    @if (IsBoa(banqueItem))
-                                                    {
-                                                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
-                                                            Banque applicative (BOA)
-                                                        </MudChip>
-                                                    }
-                                                    else
-                                                    {
-                                                        <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
-                                                            Référentiel
-                                                        </MudChip>
-                                                    }
-                                                </div>
+                    <!-- Actions du formulaire -->
+                    <div class="form-actions">
+                        <div class="form-actions-left">
+                            <button type="button" class="btn-form btn-cancel" @onclick="ResetForm">
+                                <i class="bi bi-x-lg"></i>
+                                <span>Annuler</span>
+                            </button>
+                            <button type="button" class="btn-form btn-preview" @onclick="@(() => ShowPreview(banque))" disabled="@(banque.IdBnq == 0)">
+                                <i class="bi bi-eye-fill"></i>
+                                <span>Aperçu</span>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn-form btn-save @(isEditing ? "saving-edit" : "saving-new")">
+                            <i class="bi @(isEditing ? "bi-pencil-fill" : "bi-check-circle-fill")"></i>
+                            <span>@(isEditing ? "Mettre à jour" : "Enregistrer")</span>
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
 
-                                                <div class="row g-2 mt-2">
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="detail-item">
-                                                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Color="Color.Secondary" />
-                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.RepresentantBnq) ? "Non renseigné" : banqueItem.RepresentantBnq)</span>
-                                                        </div>
-                                                    </div>
+        <!-- ═════════════ LISTE BANQUES PREMIUM (cartes bancaires) ═════════════ -->
+        <div class="list-card">
+            <div class="list-header">
+                <div class="list-header-left">
+                    <div class="list-header-icon">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="list-title">Liste des banques</h3>
+                        <p class="list-subtitle">@banques.Count institution@(banques.Count > 1 ? "s" : "") référencée@(banques.Count > 1 ? "s" : "")</p>
+                    </div>
+                </div>
+                <div class="list-header-right">
+                    <div class="list-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="list-search-input" placeholder="Rechercher..." @bind="searchTerm" @bind:event="oninput" />
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <button class="list-search-clear" @onclick='() => searchTerm = ""'>
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
 
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="detail-item">
-                                                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Color="Color.Secondary" />
-                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.SiegeSocial) ? "Non renseigné" : banqueItem.SiegeSocial)</span>
-                                                        </div>
-                                                    </div>
+            <div class="list-body">
+                @if (!filteredBanques.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-bank"></i>
+                        </div>
+                        <div class="empty-title">Aucune banque trouvée</div>
+                        <div class="empty-subtitle">Commencez par ajouter votre première banque partenaire</div>
+                        <button class="empty-action" @onclick="ResetForm">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Ajouter une banque</span>
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="banques-grid">
+                        @foreach (var banqueItem in filteredBanques)
+                        {
+                            var isBoaBanque = IsBoa(banqueItem);
+                            <div class="banque-card @(isBoaBanque ? "is-boa" : "") @(banqueItem.IdBnq == banque.IdBnq ? "is-active" : "")">
 
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="detail-item">
-                                                            <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Color="Color.Secondary" />
-                                                            <span>@(string.IsNullOrWhiteSpace(banqueItem.TelBnq) ? "Non renseigné" : banqueItem.TelBnq)</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="detail-item">
-                                                            <MudIcon Icon="@Icons.Material.Filled.VpnKey" Size="Size.Small" Color="Color.Secondary" />
-                                                            <span>SWIFT: @(string.IsNullOrWhiteSpace(banqueItem.Swift) ? "Non renseigné" : banqueItem.Swift)</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                <!-- Top : avatar + badge -->
+                                <div class="banque-card-top">
+                                    <div class="banque-avatar @(isBoaBanque ? "avatar-boa" : "avatar-default")">
+                                        <i class="bi @(isBoaBanque ? "bi-shield-fill-check" : "bi-bank")"></i>
+                                    </div>
+                                    @if (isBoaBanque)
+                                    {
+                                        <div class="banque-badge badge-boa">
+                                            <i class="bi bi-patch-check-fill"></i>
+                                            <span>BANQUE APPLICATIVE</span>
                                         </div>
-
-                                        <div class="banque-actions mt-3 flex-wrap gap-2">
-                                            <MudButton Variant="Variant.Outlined"
-                                                       Color="Color.Primary"
-                                                       Size="Size.Small"
-                                                       StartIcon="@Icons.Material.Filled.Edit"
-                                                       OnClick="@(() => Edit(banqueItem))"
-                                                       Class="px-3">
-                                                Modifier
-                                            </MudButton>
-
-                                            <MudButton Variant="Variant.Outlined"
-                                                       Color="Color.Error"
-                                                       Size="Size.Small"
-                                                       StartIcon="@Icons.Material.Filled.Delete"
-                                                       OnClick="@(() => ConfirmDelete(banqueItem))"
-                                                       Class="px-3">
-                                                Supprimer
-                                            </MudButton>
-
-                                            <MudButton Variant="Variant.Text"
-                                                       Color="Color.Info"
-                                                       Size="Size.Small"
-                                                       StartIcon="@Icons.Material.Filled.Visibility"
-                                                       OnClick="@(() => ShowPreview(banqueItem))"
-                                                       Class="ms-auto px-3">
-                                                Détails
-                                            </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <div class="banque-badge badge-ref">
+                                            <i class="bi bi-bookmark-fill"></i>
+                                            <span>RÉFÉRENTIEL</span>
                                         </div>
+                                    }
+                                </div>
+
+                                <!-- Nom -->
+                                <div class="banque-name-block">
+                                    <div class="banque-name">@banqueItem.NomRaisonSocialBnq</div>
+                                    @if (!string.IsNullOrWhiteSpace(banqueItem.SigleBnq))
+                                    {
+                                        <div class="banque-sigle">@banqueItem.SigleBnq</div>
+                                    }
+                                </div>
+
+                                <!-- Détails -->
+                                <div class="banque-details">
+                                    <div class="detail-row">
+                                        <i class="bi bi-person-fill"></i>
+                                        <span class="detail-text">@(string.IsNullOrWhiteSpace(banqueItem.RepresentantBnq) ? "—" : banqueItem.RepresentantBnq)</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span class="detail-text">@(string.IsNullOrWhiteSpace(banqueItem.SiegeSocial) ? "—" : banqueItem.SiegeSocial)</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <i class="bi bi-telephone-fill"></i>
+                                        <span class="detail-text">@(string.IsNullOrWhiteSpace(banqueItem.TelBnq) ? "—" : banqueItem.TelBnq)</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <i class="bi bi-key-fill"></i>
+                                        <span class="detail-text detail-mono">
+                                            SWIFT: @(string.IsNullOrWhiteSpace(banqueItem.Swift) ? "—" : banqueItem.Swift)
+                                        </span>
                                     </div>
                                 </div>
-                            }
-                        </div>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </div>
-    </div>
 
+                                <!-- Actions -->
+                                <div class="banque-card-actions">
+                                    <button class="card-btn card-btn-view" @onclick="@(() => ShowPreview(banqueItem))" title="Détails">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+                                    <button class="card-btn card-btn-edit" @onclick="@(() => Edit(banqueItem))" title="Modifier">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    <button class="card-btn card-btn-delete" @onclick="@(() => ConfirmDelete(banqueItem))" title="Supprimer" disabled="@isBoaBanque">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
 </MudContainer>
 
 @code {
@@ -533,10 +439,6 @@
     private List<BanqueModel> banques = new();
     private bool isEditing = false;
     private string searchTerm = string.Empty;
-
-    private string HeaderIcon => isEditing
-        ? Icons.Material.Filled.Edit
-        : Icons.Material.Filled.AddBusiness;
 
     private List<BanqueModel> filteredBanques =>
         string.IsNullOrWhiteSpace(searchTerm)
@@ -595,7 +497,7 @@
             }
             else
             {
-                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l’enregistrement.", Severity.Error);
+                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l'enregistrement.", Severity.Error);
             }
         }
         catch (Exception ex)
@@ -607,22 +509,22 @@
     private void Edit(BanqueModel model)
     {
         banque = new BanqueModel
-        {
-            IdBnq = model.IdBnq,
-            NomRaisonSocialBnq = model.NomRaisonSocialBnq,
-            SigleBnq = model.SigleBnq,
-            FormeJuridique = model.FormeJuridique,
-            CapitalSocial = model.CapitalSocial,
-            SiegeSocial = model.SiegeSocial,
-            RegistreCommerce = model.RegistreCommerce,
-            Swift = model.Swift,
-            TelBnq = model.TelBnq,
-            EmailBnq = model.EmailBnq,
-            RepresentantBnq = model.RepresentantBnq,
-            FonctionRepresentant = model.FonctionRepresentant,
-            NomCollaborateur = model.NomCollaborateur,
-            VisaCollaborateur = model.VisaCollaborateur
-        };
+            {
+                IdBnq = model.IdBnq,
+                NomRaisonSocialBnq = model.NomRaisonSocialBnq,
+                SigleBnq = model.SigleBnq,
+                FormeJuridique = model.FormeJuridique,
+                CapitalSocial = model.CapitalSocial,
+                SiegeSocial = model.SiegeSocial,
+                RegistreCommerce = model.RegistreCommerce,
+                Swift = model.Swift,
+                TelBnq = model.TelBnq,
+                EmailBnq = model.EmailBnq,
+                RepresentantBnq = model.RepresentantBnq,
+                FonctionRepresentant = model.FonctionRepresentant,
+                NomCollaborateur = model.NomCollaborateur,
+                VisaCollaborateur = model.VisaCollaborateur
+            };
 
         isEditing = true;
         editContext = new EditContext(banque);
@@ -633,23 +535,23 @@
     {
         if (IsBoa(model))
         {
-            Snackbar.Add("La banque BOA ne peut pas être supprimée car elle est utilisée par l’application.", Severity.Warning);
+            Snackbar.Add("La banque BOA ne peut pas être supprimée car elle est utilisée par l'application.", Severity.Warning);
             return;
         }
 
         var parameters = new DialogParameters
-        {
-            ["ContentText"] = $"Êtes-vous sûr de vouloir supprimer la banque « {model.NomRaisonSocialBnq} » ? Cette action est irréversible.",
-            ["ButtonText"] = "Supprimer",
-            ["Color"] = Color.Error
-        };
+            {
+                ["ContentText"] = $"Êtes-vous sûr de vouloir supprimer la banque « {model.NomRaisonSocialBnq} » ? Cette action est irréversible.",
+                ["ButtonText"] = "Supprimer",
+                ["Color"] = Color.Error
+            };
 
         var options = new DialogOptions
-        {
-            CloseButton = true,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
 
         var dialog = await DialogService.ShowAsync<DialogConfirmation>("Confirmation de suppression", parameters, options);
         var result = await dialog.Result;
@@ -703,17 +605,17 @@
     private async Task ShowPreview(BanqueModel model)
     {
         var parameters = new DialogParameters
-        {
-            ["Banque"] = model
-        };
+            {
+                ["Banque"] = model
+            };
 
         var options = new DialogOptions
-        {
-            CloseButton = true,
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            Position = DialogPosition.Center
-        };
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                Position = DialogPosition.Center
+            };
 
         var dialogRef = await DialogService.ShowAsync<BanquePreviewDialog>("Détails de la banque", parameters, options);
         await dialogRef.Result;
@@ -742,7 +644,7 @@
             .Where(c => c > 0)
             .ToList();
 
-        return capitals.Any() ? $"{capitals.Average():N0} FCFA" : "N/A";
+        return capitals.Any() ? $"{capitals.Average():N0}" : "N/A";
     }
 
     private string GetLastAddedDate()
@@ -752,367 +654,1238 @@
 }
 
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #003366 0%, #004d99 100%);
-        --primary-light: rgba(0, 51, 102, 0.1);
-        --success-light: rgba(25, 135, 84, 0.1);
-        --warning-light: rgba(255, 193, 7, 0.1);
-        --info-light: rgba(13, 202, 240, 0.1);
-        --card-shadow: 0 4px 20px rgba(0, 51, 102, 0.08);
-        --hover-shadow: 0 8px 30px rgba(0, 51, 102, 0.12);
-        --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        --border-radius: 12px;
+    /* ════════════════════════════════════════════════
+           BANQUE PAGE — DESIGN BANCAIRE PREMIUM BOA
+           ════════════════════════════════════════════════ */
+
+    .banque-page {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: radial-gradient(800px 500px at 80% 20%, rgba(14, 124, 92, 0.03), transparent 60%), radial-gradient(600px 400px at 20% 80%, rgba(30, 64, 175, 0.04), transparent 60%), #F5F7FB;
+        min-height: 100vh;
+        padding: 8px;
     }
 
-    .header-section {
-        margin-bottom: 2rem;
+    /* ═══════════ HEADER VERT BOA ÉPURÉ (sans bordeaux) ═══════════ */
+    .banque-hero {
+        background: radial-gradient(900px 500px at 88% 15%, rgba(252, 211, 77, 0.15), transparent 60%), radial-gradient(700px 400px at 10% 90%, rgba(20, 165, 116, 0.18), transparent 65%), radial-gradient(500px 300px at 50% 50%, rgba(20, 165, 116, 0.12), transparent 70%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 28px 32px !important;
+        border-radius: 20px !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(10, 41, 34, 0.25), inset 0 1px 0 rgba(252, 211, 77, 0.18), inset 0 0 0 1px rgba(252, 211, 77, 0.08);
     }
 
-    .icon-container {
-        width: 50px;
-        height: 50px;
-        background: var(--primary-gradient);
+        /* Filigrane doré épais en bas (signature BOA) */
+        .banque-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.5) 15%, rgba(252, 211, 77, 0.9) 50%, rgba(252, 211, 77, 0.5) 85%, transparent 100%);
+            box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Filigrane doré en haut */
+        .banque-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 10%, rgba(252, 211, 77, 0.7) 50%, rgba(252, 211, 77, 0.4) 90%, transparent 100%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+    /* Veine décorative diagonale */
+    .hero-bg-deco {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.18) 30%, rgba(252, 211, 77, 0.3) 50%, rgba(252, 211, 77, 0.18) 70%, transparent 100%);
+        transform: rotate(-2deg);
+        pointer-events: none;
+    }
+
+    /* Ornements aux coins */
+    .hero-content::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        width: 60px;
+        height: 60px;
+        background: radial-gradient(circle at 0% 0%, rgba(252, 211, 77, 0.3) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        right: -8px;
+        width: 60px;
+        height: 60px;
+        background: radial-gradient(circle at 100% 100%, rgba(20, 165, 116, 0.45) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ═══ ICÔNE : Vert BOA avec accent doré ═══ */
+    .hero-icon-wrap {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        border: 1.5px solid rgba(252, 211, 77, 0.5);
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.7rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.5), inset 0 2px 4px rgba(252, 211, 77, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(252, 211, 77, 0.3);
+        position: relative;
+    }
+
+        .hero-icon-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 16px;
+            border: 1.5px dashed rgba(252, 211, 77, 0.5);
+            pointer-events: none;
+        }
+
+        .hero-icon-wrap::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 15%;
+            width: 30%;
+            height: 25%;
+            background: rgba(252, 211, 77, 0.25);
+            border-radius: 50%;
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+    /* Titre : dégradé blanc → or BOA */
+    .hero-title {
+        color: white;
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 30px rgba(252, 211, 77, 0.25);
+        background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 60%, #FCD34D 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: 'Georgia', 'Playfair Display', serif;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+        margin: 6px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-family: 'Georgia', serif;
+        font-style: italic;
+    }
+
+    .meta-strong {
+        color: #FCD34D;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(252, 211, 77, 0.25), rgba(252, 211, 77, 0.15));
+        padding: 3px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(252, 211, 77, 0.45);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.25);
+    }
+
+    .meta-sep {
+        color: rgba(252, 211, 77, 0.5);
+        font-weight: 700;
+    }
+
+    /* Badge "BOA-TOGO active" en DORÉ (cohérence vert BOA épuré) */
+    .meta-boa {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, rgba(252, 211, 77, 0.25), rgba(252, 211, 77, 0.15));
+        color: #FCD34D;
+        padding: 3px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.25);
+    }
+
+        .meta-boa i {
+            color: #FCD34D;
+            text-shadow: 0 0 6px rgba(252, 211, 77, 0.6);
+        }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Bouton icône (rafraîchir) */
+    .hero-btn-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: rgba(252, 211, 77, 0.12);
+        border: 1px solid rgba(252, 211, 77, 0.35);
+        color: #FCD34D;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        transition: all 0.25s ease;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.15);
+    }
+
+        .hero-btn-icon:hover {
+            background: linear-gradient(135deg, rgba(252, 211, 77, 0.28), rgba(252, 211, 77, 0.18));
+            border-color: rgba(252, 211, 77, 0.6);
+            transform: rotate(60deg);
+            box-shadow: 0 4px 12px rgba(252, 211, 77, 0.3), inset 0 1px 0 rgba(252, 211, 77, 0.25);
+        }
+
+    /* ═══ Bouton "Nouvelle banque" : Vert BOA avec accent doré ═══ */
+    .hero-btn-primary {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        color: white;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        padding: 11px 22px;
+        border-radius: 11px;
+        font-weight: 800;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(14, 124, 92, 0.5), inset 0 1px 0 rgba(252, 211, 77, 0.25), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+        letter-spacing: 0.2px;
+    }
+
+        /* Reflet doré qui glisse au hover */
+        .hero-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.4), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .hero-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(14, 124, 92, 0.6), inset 0 1px 0 rgba(252, 211, 77, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #14A574 0%, #FCD34D 50%, #14A574 100%);
+            color: #0A2540;
+            border-color: rgba(252, 211, 77, 0.8);
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+            .hero-btn-primary:hover::before {
+                left: 100%;
+            }
+
+            .hero-btn-primary:hover i {
+                transform: rotate(180deg) scale(1.1);
+                color: #0A2540;
+            }
+
+        .hero-btn-primary i {
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+            color: #FCD34D;
+        }
+
+    /* ═══════════ STATS CARDS PREMIUM ═══════════ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: default;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+        }
+
+    .stat-card-bg {
+        position: absolute;
+        top: -30%;
+        right: -20%;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        opacity: 0.08;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover .stat-card-bg {
+        transform: scale(1.2);
+        opacity: 0.12;
+    }
+
+    .stat-icon-wrap {
+        width: 44px;
+        height: 44px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 6px 15px rgba(0, 51, 102, 0.15);
-    }
-
-    .header-icon {
-        font-size: 24px;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
         color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.25s ease;
     }
 
-    .text-gradient-primary {
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .stat-card:hover .stat-icon-wrap {
+        transform: rotate(-5deg) scale(1.05);
     }
 
-    /* ====== STATS ====== */
-    .stats-card {
-        border-radius: var(--border-radius);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        transition: var(--transition-smooth);
-        background: white;
-        height: 90px;
-        display: flex;
+    .stat-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-label {
+        font-size: 0.78rem;
+        color: #6B7280;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0F172A;
+        line-height: 1;
+        font-feature-settings: "tnum" 1;
+    }
+
+    .stat-value-small {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0F172A;
+        line-height: 1.2;
+        font-feature-settings: "tnum" 1;
+    }
+
+    .stat-sub {
+        display: inline-flex;
         align-items: center;
+        gap: 5px;
+        font-size: 0.75rem;
+        color: #94A3B8;
+        font-weight: 600;
+        margin-top: 8px;
     }
 
-        .stats-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--hover-shadow);
+        .stat-sub i {
+            font-size: 0.85rem;
         }
 
-    .stats-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+    /* Couleurs sémantiques */
+    .stat-total .stat-icon-wrap {
+        background: linear-gradient(135deg, #0A2540, #1F3C88);
+    }
+
+    .stat-total .stat-card-bg {
+        background: linear-gradient(135deg, #0A2540, #1F3C88);
+    }
+
+    .stat-total .stat-sub i {
+        color: #1F3C88;
+    }
+
+    .stat-cities .stat-icon-wrap {
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+    }
+
+    .stat-cities .stat-card-bg {
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+    }
+
+    .stat-cities .stat-sub i {
+        color: #0E7C5C;
+    }
+
+    .stat-capital .stat-icon-wrap {
+        background: linear-gradient(135deg, #C9A86A, #FCD34D);
+    }
+
+    .stat-capital .stat-card-bg {
+        background: linear-gradient(135deg, #C9A86A, #FCD34D);
+    }
+
+    .stat-capital .stat-sub i {
+        color: #92400E;
+    }
+
+    .stat-recent .stat-icon-wrap {
+        background: linear-gradient(135deg, #7C3AED, #A78BFA);
+    }
+
+    .stat-recent .stat-card-bg {
+        background: linear-gradient(135deg, #7C3AED, #A78BFA);
+    }
+
+    .stat-recent .stat-sub i {
+        color: #7C3AED;
+    }
+
+    /* ═══════════ FORMULAIRE PREMIUM ═══════════ */
+    .form-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #EEF2FF 0%, #DBEAFE 100%);
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #C7D2FE;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .form-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .form-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .bg-primary-light {
-        background-color: var(--primary-light);
+        .form-header-icon.creating {
+            background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        }
+
+        .form-header-icon.editing {
+            background: linear-gradient(135deg, #EA580C, #F97316);
+        }
+
+    .form-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+        letter-spacing: -0.2px;
     }
 
-    .bg-success-light {
-        background-color: var(--success-light);
-    }
-
-    .bg-warning-light {
-        background-color: var(--warning-light);
-    }
-
-    .bg-info-light {
-        background-color: var(--info-light);
-    }
-
-    .stats-label {
-        font-size: 0.8rem;
-        color: #6c757d;
+    .form-subtitle {
+        font-size: 0.82rem;
+        color: #64748B;
+        margin: 2px 0 0 0;
         font-weight: 500;
-        margin-bottom: 3px;
+    }
+
+    .form-header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 24px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+    }
+
+    .badge-new {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        color: white;
+        box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+    }
+
+    .badge-edit {
+        background: linear-gradient(135deg, #EA580C, #F97316);
+        color: white;
+        box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+    }
+
+    .form-body {
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* === SECTIONS COLORÉES === */
+    .form-section {
+        border-radius: 12px;
+        padding: 14px 16px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .section-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .section-title {
+        font-size: 0.92rem;
+        font-weight: 800;
+        flex: 1;
+        letter-spacing: -0.1px;
+    }
+
+    .section-required {
+        background: rgba(220, 38, 38, 0.1);
+        color: #DC2626;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    /* Section MARINE (informations principales) */
+    .section-primary {
+        background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+        border-color: #BFDBFE;
+    }
+
+        .section-primary .section-icon {
+            background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        }
+
+        .section-primary .section-title {
+            color: #1E3A8A;
+        }
+
+    /* Section OR (capital et siège) */
+    .section-gold {
+        background: linear-gradient(135deg, #FEFCE8 0%, #FFFFFF 100%);
+        border-color: #FCD34D;
+    }
+
+        .section-gold .section-icon {
+            background: linear-gradient(135deg, #C9A86A, #FCD34D);
+        }
+
+        .section-gold .section-title {
+            color: #92400E;
+        }
+
+    /* Section VERT (identifiants légaux) */
+    .section-green {
+        background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+        border-color: #BBF7D0;
+    }
+
+        .section-green .section-icon {
+            background: linear-gradient(135deg, #0E7C5C, #14A574);
+        }
+
+        .section-green .section-title {
+            color: #047857;
+        }
+
+    /* Section INDIGO (représentation) */
+    .section-indigo {
+        background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%);
+        border-color: #C7D2FE;
+    }
+
+        .section-indigo .section-icon {
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+        }
+
+        .section-indigo .section-title {
+            color: #4338CA;
+        }
+
+    /* Section ORANGE (contacts) */
+    .section-orange {
+        background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%);
+        border-color: #FED7AA;
+    }
+
+        .section-orange .section-icon {
+            background: linear-gradient(135deg, #EA580C, #F97316);
+        }
+
+        .section-orange .section-title {
+            color: #9A3412;
+        }
+
+    /* === Actions formulaire === */
+    .form-actions {
+        margin-top: 16px;
+        padding-top: 18px;
+        border-top: 2px dashed #E5E7EB;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .form-actions-left {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-form {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.25s ease;
         white-space: nowrap;
     }
 
-    .stats-value {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #003366;
-        line-height: 1.1;
-    }
-
-    /* ====== FORMULAIRE COMPACT ====== */
-    .form-card-compact {
-        border-radius: var(--border-radius);
-        overflow: hidden;
+    .btn-cancel {
         background: white;
-        box-shadow: var(--card-shadow);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        transition: var(--transition-smooth);
+        color: #64748B;
+        border-color: #E5E7EB;
     }
 
-        .form-card-compact:hover {
-            box-shadow: var(--hover-shadow);
+        .btn-cancel:hover {
+            background: #F8FAFC;
+            color: #0F172A;
         }
 
-    .compact-header {
-        background: linear-gradient(90deg, rgba(0, 51, 102, 0.05), rgba(0, 51, 102, 0.02));
-        border-bottom: 2px solid rgba(0, 51, 102, 0.1);
-        padding: 0.75rem 1rem !important;
-    }
-
-    .compact-header-icon {
-        width: 32px;
-        height: 32px;
-        background: rgba(0, 51, 102, 0.1);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .compact-content {
-        padding: 1rem !important;
-    }
-
-    .compact-section {
-        border: 1px solid rgba(0, 51, 102, 0.08);
-        border-radius: 10px;
-        padding: 0.75rem;
-        background: rgba(0, 51, 102, 0.01);
-        transition: var(--transition-smooth);
-    }
-
-        .compact-section:hover {
-            border-color: rgba(0, 51, 102, 0.15);
-            background: rgba(0, 51, 102, 0.02);
-        }
-
-    .compact-section-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #003366;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px dashed rgba(0, 51, 102, 0.1);
-    }
-
-    .compact-fields {
-        padding: 0.25rem;
-    }
-
-    .compact-input {
-        font-size: 0.85rem !important;
-    }
-
-        .compact-input .mud-input-control {
-            margin-top: 0 !important;
-        }
-
-        .compact-input .mud-input-label {
-            font-size: 0.8rem !important;
-        }
-
-        .compact-input .mud-input {
-            font-size: 0.85rem !important;
-            padding: 8px 12px !important;
-        }
-
-        .compact-input .mud-input-adornment {
-            font-size: 18px !important;
-        }
-
-    .compact-grid .mud-grid-item {
-        padding: 4px !important;
-    }
-
-    .compact-actions {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 2px solid rgba(0, 51, 102, 0.1);
-    }
-
-    .action-button {
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.85rem !important;
-    }
-
-    .alert-sm {
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.8rem !important;
-        border-radius: 8px;
-        margin-bottom: 1rem !important;
-    }
-
-    /* ====== LISTE ====== */
-    .search-input {
-        border-radius: 25px;
-    }
-
-        .search-input .mud-input-outlined-border {
-            border-radius: 25px;
-        }
-
-    /* espace entre formulaire et liste */
-    .list-gap {
-        margin-top: 2rem;
-    }
-
-    .banque-list {
-        padding: 1rem;
-        max-height: 500px;
-        overflow-y: auto;
-    }
-
-    .banque-item {
+    .btn-preview {
         background: white;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border: 2px solid transparent;
-        transition: var(--transition-smooth);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        color: #0EA5E9;
+        border-color: #BAE6FD;
+    }
+
+        .btn-preview:hover:not(:disabled) {
+            background: #0EA5E9;
+            color: white;
+        }
+
+        .btn-preview:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .btn-save {
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         position: relative;
         overflow: hidden;
     }
 
-        .banque-item:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 51, 102, 0.1);
-            border-color: rgba(0, 51, 102, 0.1);
+        .btn-save::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
         }
 
-        .banque-item.active {
-            border-color: #003366;
-            background: linear-gradient(90deg, rgba(0, 51, 102, 0.03), rgba(0, 51, 102, 0.01));
-            animation: pulse-border 2s infinite;
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
         }
 
-    @@keyframes pulse-border {
-        0%, 100% {
-            border-color: #003366;
-        }
+            .btn-save:hover::before {
+                left: 100%;
+            }
 
-        50% {
-            border-color: rgba(0, 51, 102, 0.5);
-        }
+    .saving-new {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 60%, #34D399 100%);
     }
 
-    .banque-avatar {
-        width: 40px;
-        height: 40px;
-        background: var(--primary-light);
-        border-radius: 10px;
+    .saving-edit {
+        background: linear-gradient(135deg, #EA580C 0%, #F97316 100%);
+    }
+
+    /* ═══════════ LISTE BANQUES PREMIUM ═══════════ */
+    .list-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .list-header {
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #BBF7D0;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .list-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .list-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+    .list-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+
+    .list-subtitle {
+        font-size: 0.82rem;
+        color: #047857;
+        margin: 2px 0 0 0;
+        font-weight: 600;
+    }
+
+    .list-search {
+        background: white;
+        border: 1px solid #BBF7D0;
+        border-radius: 24px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 240px;
+        transition: all 0.2s ease;
+    }
+
+        .list-search:focus-within {
+            border-color: #14A574;
+            box-shadow: 0 0 0 4px rgba(20, 165, 116, 0.12);
+        }
+
+        .list-search i {
+            color: #64748B;
+        }
+
+    .list-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.88rem;
+        color: #0F172A;
+    }
+
+        .list-search-input::placeholder {
+            color: #94A3B8;
+        }
+
+    .list-search-clear {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94A3B8;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 50%;
+    }
+
+        .list-search-clear:hover {
+            background: #F1F5F9;
+            color: #0F172A;
+        }
+
+    .list-body {
+        padding: 24px;
+        max-height: 700px;
+        overflow-y: auto;
+    }
+
+    /* === Grille banques (cartes premium) === */
+    .banques-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+    }
+
+    .banque-card {
+        background: white;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .banque-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0E7C5C, #14A574, #C9A86A);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .banque-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(14, 124, 92, 0.15);
+            border-color: #14A574;
+        }
+
+            .banque-card:hover::before {
+                opacity: 1;
+            }
+
+        .banque-card.is-active {
+            border-color: #14A574;
+            background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+        }
+
+            .banque-card.is-active::before {
+                opacity: 1;
+            }
+
+        /* === BOA spécial = aspect doré === */
+        .banque-card.is-boa {
+            border-color: #FCD34D;
+            background: linear-gradient(135deg, #FEFCE8 0%, #FFFFFF 100%);
+        }
+
+            .banque-card.is-boa::before {
+                background: linear-gradient(90deg, #FCD34D, #C9A86A, #92400E);
+                opacity: 1;
+            }
+
+            .banque-card.is-boa:hover {
+                box-shadow: 0 12px 32px rgba(201, 168, 106, 0.25);
+                border-color: #C9A86A;
+            }
+
+    /* Top : avatar + badge */
+    .banque-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .banque-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.3rem;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .detail-item {
-        display: flex;
+    .avatar-default {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+    }
+
+    .avatar-boa {
+        background: linear-gradient(135deg, #C9A86A, #FCD34D);
+        position: relative;
+    }
+
+        .avatar-boa::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 14px;
+            border: 1.5px dashed rgba(201, 168, 106, 0.5);
+            animation: rotate-slow 20s linear infinite;
+        }
+
+    @@keyframes rotate-slow {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .banque-badge {
+        display: inline-flex;
         align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .badge-boa {
+        background: linear-gradient(135deg, #C9A86A, #FCD34D);
+        color: #5C3A00;
+        box-shadow: 0 2px 8px rgba(201, 168, 106, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .badge-ref {
+        background: #DBEAFE;
+        color: #1E40AF;
+        border: 1px solid #BFDBFE;
+    }
+
+    /* Nom de la banque */
+    .banque-name-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .banque-name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0F172A;
+        line-height: 1.3;
+        letter-spacing: -0.2px;
+    }
+
+    .banque-sigle {
+        display: inline-block;
+        background: #F1F5F9;
+        color: #475569;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-weight: 700;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid #E2E8F0;
+        align-self: flex-start;
+    }
+
+    .banque-card.is-boa .banque-sigle {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    /* Détails */
+    .banque-details {
+        display: flex;
+        flex-direction: column;
         gap: 6px;
-        font-size: 0.8rem;
-        color: #495057;
-        margin-bottom: 4px;
+        padding: 10px 12px;
+        background: #F8FAFC;
+        border-radius: 8px;
+        border: 1px solid #F1F5F9;
     }
 
-    .banque-actions {
+    .banque-card.is-boa .banque-details {
+        background: #FEFCE8;
+        border-color: #FCD34D;
+    }
+
+    .detail-row {
         display: flex;
         align-items: center;
-        padding-top: 0.75rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        gap: 8px;
+        font-size: 0.8rem;
+        color: #475569;
     }
 
-        .banque-actions .mud-button-root {
-            font-size: 0.8rem !important;
-            min-height: 28px !important;
-            padding: 4px 12px !important;
+        .detail-row i {
+            color: #94A3B8;
+            font-size: 0.85rem;
+            width: 14px;
+            flex-shrink: 0;
         }
 
-    /* ====== RESPONSIVE ====== */
-    @@media (max-width: 768px) {
-        .header-row {
-            justify-content: center !important;
-            text-align: center;
-        }
-
-        .header-left {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .icon-container {
-            margin: 0 auto;
-        }
-
-        .header-cta {
-            width: 100%;
-        }
-
-        .stats-row {
-            margin-bottom: 1.5rem !important;
-        }
-
-        .stats-card {
-            height: auto;
-            padding: 0.75rem !important;
-        }
-
-        .stats-icon {
-            width: 36px;
-            height: 36px;
-        }
-
-        .stats-value {
-            font-size: 1.2rem;
-        }
-
-        .compact-section-header {
-            font-size: 0.8rem;
-        }
-
-        .banque-item {
-            padding: 0.75rem;
-        }
-
-        .detail-item {
-            font-size: 0.75rem;
-        }
+    .banque-card.is-boa .detail-row i {
+        color: #C9A86A;
     }
 
-    .mud-button.rounded-pill {
-        border-radius: 50px !important;
+    .detail-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    /* Scrollbar personnalisée */
-    .banque-list::-webkit-scrollbar {
+    .detail-mono {
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.75rem;
+    }
+
+    /* Actions */
+    .banque-card-actions {
+        display: flex;
+        gap: 6px;
+        padding-top: 10px;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .card-btn {
+        flex: 1;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .card-btn-view {
+        color: #0EA5E9;
+        border-color: #BAE6FD;
+    }
+
+        .card-btn-view:hover {
+            background: #0EA5E9;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .card-btn-edit {
+        color: #EA580C;
+        border-color: #FED7AA;
+    }
+
+        .card-btn-edit:hover {
+            background: #EA580C;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .card-btn-delete {
+        color: #DC2626;
+        border-color: #FECACA;
+    }
+
+        .card-btn-delete:hover:not(:disabled) {
+            background: #DC2626;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .card-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        color: #0E7C5C;
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+        box-shadow: inset 0 0 0 4px white, inset 0 0 0 5px rgba(14, 124, 92, 0.2);
+        position: relative;
+    }
+
+        .empty-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px dashed rgba(14, 124, 92, 0.25);
+            animation: rotate-slow 25s linear infinite;
+        }
+
+    .empty-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin-bottom: 6px;
+    }
+
+    .empty-subtitle {
+        color: #64748B;
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-action {
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+        .empty-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(14, 124, 92, 0.4);
+        }
+
+    /* Scrollbar */
+    .list-body::-webkit-scrollbar {
         width: 6px;
     }
 
-    .banque-list::-webkit-scrollbar-track {
-        background: rgba(0, 51, 102, 0.05);
+    .list-body::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #14A574, #C9A86A);
         border-radius: 10px;
     }
 
-    .banque-list::-webkit-scrollbar-thumb {
-        background: rgba(0, 51, 102, 0.2);
-        border-radius: 10px;
-    }
-
-        .banque-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 51, 102, 0.3);
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
+
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .banques-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-title {
+            font-size: 1.2rem !important;
+        }
+
+        .form-header,
+        .list-header {
+            padding: 14px 16px;
+        }
+    }
 </style>

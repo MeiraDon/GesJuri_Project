@@ -1,7 +1,8 @@
 ﻿@page "/choisirAct"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
-<PageTitle>ChoixAct</PageTitle>
+<PageTitle>Nouveau projet - GesCPSI</PageTitle>
 
 @using MudBlazor
 @using GesCPSI_Project.Models
@@ -12,63 +13,188 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
+<div class="choisir-page">
 
-<MudContainer MaxWidth="MaxWidth.False" Class="mt-8">
-
-    <MudCard Elevation="6" Class="pa-6 mx-auto justify-center" Style="max-width:900px">
-
-        <MudCardHeader Style="background-color:#003366;color:white;">
-            <MudText Typo="Typo.h6">
-                📄 Sélection du type d’acte
-            </MudText>
-        </MudCardHeader>
-
-        <MudCardContent>
-
-            <MudText Typo="Typo.subtitle1" Class="mb-4">
-                Choisissez le type d’acte à créer
-            </MudText>
-
-            <MudSelect T="int"
-                       Label="Type d'acte"
-                       Variant="Variant.Filled"
-                       Dense="true"
-                       Required="true"
-                       @bind-Value="selectedActeId">
-
-                @foreach (var acte in ajoutActList)
-                {
-                    <MudSelectItem Value="@acte.IdAjout">
-                        @acte.NomAct (@acte.CategorieClient)
-                    </MudSelectItem>
-                }
-
-            </MudSelect>
-
-            <MudDivider Class="my-5" />
-
-            <div class="text-end">
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.ArrowForward"
-                           Disabled="@(selectedActeId == 0)"
-                           OnClick="Continuer">
-                    Continuer
-                </MudButton>
+    <!-- ═════════════ HERO HEADER ═════════════ -->
+    <div class="choisir-hero">
+        <div class="hero-pattern"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="bi bi-stars"></i>
+                <span>NOUVEAU PROJET</span>
             </div>
+            <h1 class="hero-title">Quel acte souhaitez-vous créer ?</h1>
+            <p class="hero-subtitle">Sélectionnez le modèle adapté à votre dossier</p>
+        </div>
+    </div>
 
-        </MudCardContent>
-    </MudCard>
+    <!-- ═════════════ BARRE DE RECHERCHE ═════════════ -->
+    <div class="choisir-toolbar">
+        <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Rechercher un type d'acte..."
+                   @bind="_search"
+                   @bind:event="oninput" />
+            @if (!string.IsNullOrEmpty(_search))
+            {
+                <button class="search-clear" @onclick="@(() => _search = "")" title="Effacer">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            }
+        </div>
 
-    <MudPaper Class="mt-6 pa-2" Elevation="0">
-        <ListClientActPage />
-    </MudPaper>
+        <div class="filter-pills">
+            <button class="filter-pill @(_filterCat == null ? "active" : "")" @onclick="@(() => _filterCat = null)">
+                Tous (@ajoutActList.Count)
+            </button>
+            <button class="filter-pill @(_filterCat == "Personne Physique" ? "active" : "")" @onclick="@(() => _filterCat = "Personne Physique")">
+                <i class="bi bi-person-fill"></i>
+                <span>Personne Physique</span>
+            </button>
+            <button class="filter-pill @(_filterCat == "Personne Morale" ? "active" : "")" @onclick="@(() => _filterCat = "Personne Morale")">
+                <i class="bi bi-building-fill"></i>
+                <span>Personne Morale</span>
+            </button>
+        </div>
+    </div>
 
-</MudContainer>
+    <!-- ═════════════ GRILLE DE CARTES ═════════════ -->
+    @if (_loading)
+    {
+        <div class="loading-zone">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <p>Chargement des types d'actes...</p>
+        </div>
+    }
+    else if (!FilteredActes.Any())
+    {
+        <div class="empty-zone">
+            <div class="empty-icon"><i class="bi bi-search"></i></div>
+            <div class="empty-title">Aucun résultat</div>
+            <div class="empty-subtitle">Essayez avec d'autres termes ou changez de filtre.</div>
+            <button class="empty-action" @onclick="ResetFilters">Réinitialiser les filtres</button>
+        </div>
+    }
+    else
+    {
+        <div class="actes-grid">
+            @foreach (var acte in FilteredActes)
+            {
+                var isSelected = selectedActeId == acte.IdAjout;
+                var (icon, gradient) = GetActeStyle(acte);
+
+                <div class="acte-card @(isSelected ? "selected" : "")" @onclick="@(() => SelectActe(acte.IdAjout))">
+
+                    <!-- Marker de sélection -->
+                    <div class="selection-marker">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+
+                    <!-- Icône avec dégradé -->
+                    <div class="acte-icon-wrap" style="background: @gradient;">
+                        <i class="bi @icon"></i>
+                    </div>
+
+                    <!-- Contenu -->
+                    <div class="acte-body">
+                        <div class="acte-category @(acte.CategorieClient == "Personne Morale" ? "cat-morale" : "cat-physique")">
+                            @if (acte.CategorieClient == "Personne Morale")
+                            {
+                                <i class="bi bi-building-fill"></i>
+                                <span>@acte.CategorieClient</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-person-fill"></i>
+                                <span>@acte.CategorieClient</span>
+                            }
+                        </div>
+
+                        <h3 class="acte-title">@acte.NomAct</h3>
+
+                        <div class="acte-meta">
+                            <span class="meta-pill">
+                                <i class="bi bi-file-earmark-text"></i>
+                                Template #@((int)acte.TemplateType)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="acte-footer">
+                        <span class="acte-action">
+                            @if (isSelected)
+                            {
+                                <span><i class="bi bi-check2-circle"></i> Sélectionné</span>
+                            }
+                            else
+                            {
+                                <span>Cliquer pour choisir <i class="bi bi-arrow-right"></i></span>
+                            }
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ═════════════ CTA FLOTTANT ═════════════ -->
+    @if (selectedActeId > 0)
+    {
+        <div class="floating-cta">
+            <div class="cta-info">
+                <div class="cta-label">Acte sélectionné</div>
+                <div class="cta-name">@GetSelectedName()</div>
+            </div>
+            <div class="cta-actions">
+                <button class="cta-btn cta-btn-ghost" @onclick="@(() => selectedActeId = 0)">
+                    <i class="bi bi-x-lg"></i>
+                    <span>Annuler</span>
+                </button>
+                <button class="cta-btn cta-btn-primary" @onclick="Continuer">
+                    <span>Continuer</span>
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    }
+
+    
+</div>
 
 @code {
     private List<AjoutActModel> ajoutActList = new();
     private int selectedActeId = 0;
+
+    private string _search = "";
+    private string? _filterCat = null;
+    private bool _loading = true;
+
+    private List<AjoutActModel> FilteredActes
+    {
+        get
+        {
+            IEnumerable<AjoutActModel> filtered = ajoutActList;
+
+            if (!string.IsNullOrWhiteSpace(_filterCat))
+            {
+                filtered = filtered.Where(a =>
+                    string.Equals(a.CategorieClient?.Trim(), _filterCat, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var s = _search.Trim().ToLowerInvariant();
+                filtered = filtered.Where(a =>
+                    (a.NomAct ?? "").ToLowerInvariant().Contains(s) ||
+                    (a.CategorieClient ?? "").ToLowerInvariant().Contains(s));
+            }
+
+            return filtered.OrderBy(a => a.IdAjout).ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,22 +205,731 @@
     {
         try
         {
+            _loading = true;
             ajoutActList = await AjoutActService.GetAllAsync() ?? new List<AjoutActModel>();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Erreur lors du chargement des actes : {ex.Message}", Severity.Error);
         }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectActe(int id)
+    {
+        selectedActeId = (selectedActeId == id) ? 0 : id;
+    }
+
+    private string GetSelectedName()
+    {
+        var acte = ajoutActList.FirstOrDefault(a => a.IdAjout == selectedActeId);
+        return acte?.NomAct ?? "—";
+    }
+
+    private void ResetFilters()
+    {
+        _search = "";
+        _filterCat = null;
+    }
+
+    /// <summary>
+    /// Retourne (icône Bootstrap Icons, dégradé CSS) selon le type d'acte
+    /// </summary>
+    private (string icon, string gradient) GetActeStyle(AjoutActModel acte)
+    {
+        // On cast l'enum en int pour comparer aux numéros
+        var templateNum = (int)acte.TemplateType;
+
+        return templateNum switch
+        {
+            1 => ("bi-shield-shaded", "linear-gradient(135deg, #1A1F3A 0%, #2A2F4A 100%)"),
+            2 => ("bi-building-fill", "linear-gradient(135deg, #1F3C88 0%, #3F3A8A 100%)"),
+            3 => ("bi-person-badge", "linear-gradient(135deg, #0E7C5C 0%, #2F5D50 100%)"),
+            4 => ("bi-buildings", "linear-gradient(135deg, #92400E 0%, #C9A86A 100%)"),
+            5 => ("bi-house-door-fill", "linear-gradient(135deg, #9B1C2D 0%, #BE3144 100%)"),
+            _ => ("bi-file-earmark-text", "linear-gradient(135deg, #475569 0%, #64748B 100%)")
+        };
     }
 
     private void Continuer()
     {
         if (selectedActeId <= 0)
         {
-            Snackbar.Add("Veuillez sélectionner un type d’acte.", Severity.Warning);
+            Snackbar.Add("Veuillez sélectionner un type d'acte.", Severity.Warning);
             return;
         }
-
         NavigationManager.NavigateTo($"/saisirPage/{selectedActeId}");
     }
 }
+
+<style>
+    /* ════════════════════════════════════════════════
+               CHOISIR ACTE — DESIGN PREMIUM
+               ════════════════════════════════════════════════ */
+
+    .choisir-page {
+        padding: 24px;
+        background: linear-gradient(135deg, #F8FAFC 0%, #EEF2F7 100%);
+        min-height: calc(100vh - 100px);
+        position: relative;
+    }
+
+    /* ═══════════ HERO HEADER ═══════════ */
+    .choisir-hero {
+        background: radial-gradient(700px 350px at 85% 30%, rgba(201, 168, 106, 0.12), transparent 60%), radial-gradient(500px 300px at 15% 80%, rgba(20, 165, 116, 0.15), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%);
+        border-radius: 24px;
+        padding: 48px 40px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(14, 124, 92, 0.25);
+    }
+
+        /* Filigrane or subtil */
+        .choisir-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 106, 0.4) 25%, rgba(201, 168, 106, 0.7) 50%, rgba(201, 168, 106, 0.4) 75%, transparent 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+    .hero-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle at 20% 50%, rgba(201, 168, 106, 0.18) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%), radial-gradient(circle at 60% 80%, rgba(20, 165, 116, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 7px 18px;
+        border-radius: 24px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+        .hero-badge:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .hero-badge i {
+            font-size: 0.9rem;
+            color: #FCD34D;
+        }
+
+    .hero-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: white;
+        margin: 0 0 12px 0;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 40px rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ═══════════ TOOLBAR ═══════════ */
+    .choisir-toolbar {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .search-wrap {
+        flex: 1;
+        min-width: 280px;
+        position: relative;
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
+    }
+
+        .search-wrap:focus-within {
+            border-color: #14A574;
+            box-shadow: 0 0 0 4px rgba(20, 165, 116, 0.12);
+        }
+
+    .search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9CA3AF;
+        font-size: 1.1rem;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 14px 48px 14px 48px;
+        border: none;
+        background: transparent;
+        font-size: 0.95rem;
+        color: #1A1F3A;
+        outline: none;
+        border-radius: 14px;
+    }
+
+        .search-input::placeholder {
+            color: #9CA3AF;
+        }
+
+    .search-clear {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: #F3F4F6;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        transition: all 0.15s ease;
+    }
+
+        .search-clear:hover {
+            background: #E5E7EB;
+            color: #1A1F3A;
+        }
+
+    .filter-pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        background: white;
+        border: 1px solid #E5E7EB;
+        color: #6B7280;
+        padding: 10px 18px;
+        border-radius: 24px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+        .filter-pill i {
+            font-size: 0.95rem;
+        }
+
+        .filter-pill:hover {
+            border-color: #14A574;
+            color: #0E7C5C;
+            transform: translateY(-1px);
+        }
+
+        .filter-pill.active {
+            background: linear-gradient(135deg, #0E7C5C 0%, #14A574 60%, #34D399 100%);
+            border-color: #0E7C5C;
+            color: white;
+            box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+        }
+
+    /* ═══════════ GRILLE DE CARTES ═══════════ */
+    .actes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 120px;
+    }
+
+    .acte-card {
+        background: white;
+        border: 2px solid #E5E7EB;
+        border-radius: 18px;
+        padding: 24px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 240px;
+    }
+
+        /* === HOVER : Indigo doux (couleur d'invitation) === */
+        .acte-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%);
+            border-radius: 18px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .acte-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 32px rgba(79, 70, 229, 0.2);
+            border-color: transparent;
+        }
+
+            .acte-card:hover::before {
+                opacity: 1;
+            }
+
+        /* === SELECTED : Vert BOA (couleur de validation) === */
+        /* === SELECTED : Vert BOA dégradé profond (lisible pour texte blanc) === */
+        .acte-card.selected {
+            border-color: transparent;
+            background: linear-gradient(135deg, #0E7C5C 0%, #14A574 60%, #047857 100%);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(14, 124, 92, 0.4);
+            color: white;
+        }
+
+            .acte-card.selected::before {
+                opacity: 1;
+                background: linear-gradient(135deg, #14A574 0%, #0E7C5C 50%, #047857 100%);
+            }
+
+        .acte-card.selected {
+            border-color: transparent;
+            background: linear-gradient(135deg, rgba(201, 168, 106, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(201, 168, 106, 0.25);
+        }
+
+            .acte-card.selected::before {
+                opacity: 1;
+            }
+
+    /* === Marker de sélection === */
+    .selection-marker {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: white;
+        color: #047857;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 800;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2), inset 0 0 0 2px rgba(252, 211, 77, 0.4);
+        z-index: 2;
+    }
+
+    .acte-card.selected .selection-marker {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* === Icône === */
+    .acte-icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .acte-card.selected .acte-icon-wrap {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(255, 255, 255, 0.4), 0 0 0 4px rgba(252, 211, 77, 0.5);
+    }
+
+    .acte-card:hover .acte-icon-wrap {
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    /* === Body === */
+    .acte-body {
+        flex: 1;
+    }
+
+    .acte-category {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        margin-bottom: 12px;
+        border: 1px solid;
+    }
+
+        .acte-category i {
+            font-size: 0.8rem;
+        }
+
+    .cat-physique {
+        background: #EFF6FF;
+        color: #1E40AF;
+        border-color: #BFDBFE;
+    }
+
+    .cat-morale {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    /* Quand la card est selected (fond vert), les pills passent en blanc translucide */
+    .acte-card.selected .acte-category {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(4px);
+    }
+
+        .acte-card.selected .acte-category i {
+            color: #FCD34D;
+        }
+
+    .acte-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0F172A;
+        margin: 0 0 12px 0;
+        line-height: 1.4;
+        letter-spacing: -0.1px;
+        transition: color 0.2s ease;
+    }
+
+    .acte-card:hover .acte-title {
+        color: #1A1F3A;
+    }
+
+    .acte-card.selected .acte-title {
+        color: white;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        font-weight: 800;
+    }
+
+    .acte-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .meta-pill {
+        background: #F8FAFC;
+        color: #475569;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid #E2E8F0;
+        font-family: 'Monaco', 'Menlo', monospace;
+        letter-spacing: 0.3px;
+        transition: all 0.2s ease;
+    }
+
+        .meta-pill i {
+            color: #64748B;
+            font-size: 0.85rem;
+        }
+
+    /* Sur card selected, meta-pill devient sombre translucide */
+    .acte-card.selected .meta-pill {
+        background: rgba(0, 0, 0, 0.2);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+        .acte-card.selected .meta-pill i {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+    /* === Footer === */
+    .acte-footer {
+        padding-top: 16px;
+        margin-top: 16px;
+        border-top: 1px solid #E2E8F0;
+        transition: border-color 0.2s ease;
+    }
+
+    .acte-card:hover .acte-footer {
+        border-top-color: rgba(79, 70, 229, 0.2);
+    }
+
+    .acte-card.selected .acte-footer {
+        border-top-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .acte-action {
+        color: #64748B;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+        .acte-action i {
+            transition: transform 0.2s ease;
+        }
+
+    .acte-card:hover .acte-action {
+        color: #4F46E5;
+        font-weight: 700;
+    }
+
+        .acte-card:hover .acte-action i {
+            transform: translateX(3px);
+        }
+
+    .acte-card.selected .acte-action {
+        color: white;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+        .acte-card.selected .acte-action i {
+            color: #FCD34D;
+        }
+
+    /* ═══════════ EMPTY / LOADING ═══════════ */
+    .loading-zone,
+    .empty-zone {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 18px;
+        border: 1px solid #E5E7EB;
+    }
+
+        .loading-zone p {
+            color: #6B7280;
+            margin-top: 16px;
+        }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 16px;
+        color: #D1D5DB;
+        line-height: 1;
+    }
+
+    .empty-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1A1F3A;
+        margin-bottom: 8px;
+    }
+
+    .empty-subtitle {
+        color: #6B7280;
+        margin-bottom: 24px;
+    }
+
+    .empty-action {
+        background: linear-gradient(135deg, #1A1F3A 0%, #2A2F4A 100%);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+        .empty-action:hover {
+            transform: translateY(-2px);
+        }
+
+    /* ═══════════ CTA FLOTTANT ═══════════ */
+    .floating-cta {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border-radius: 18px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        border: 1px solid #E5E7EB;
+        z-index: 100;
+        animation: cta-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-width: calc(100% - 48px);
+    }
+
+    @@keyframes cta-slide-up {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+
+    .cta-info {
+        min-width: 0;
+    }
+
+    .cta-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #C9A86A;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+    }
+
+    .cta-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1A1F3A;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 280px;
+    }
+
+    .cta-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .cta-btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .cta-btn-ghost {
+        background: #F3F4F6;
+        color: #6B7280;
+    }
+
+        .cta-btn-ghost:hover {
+            background: #E5E7EB;
+            color: #1A1F3A;
+        }
+
+    .cta-btn-primary {
+        background: linear-gradient(135deg, #0E7C5C 0%, #2F5D50 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+        .cta-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(14, 124, 92, 0.4);
+        }
+
+
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 768px) {
+        .choisir-page {
+            padding: 16px;
+        }
+
+        .choisir-hero {
+            padding: 32px 24px;
+        }
+
+        .hero-title {
+            font-size: 1.8rem;
+        }
+
+        .actes-grid {
+            grid-template-columns: 1fr;
+            margin-bottom: 140px;
+        }
+
+        .floating-cta {
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .cta-actions {
+            width: 100%;
+        }
+
+        .cta-btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+</style>

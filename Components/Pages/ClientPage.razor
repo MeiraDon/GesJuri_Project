@@ -21,131 +21,227 @@
     <div class="row justify-content-center">
         <div class="col-12 col-xl-11">
 
-            <!-- HEADER -->
-            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
-                <div>
-                    <h1 class="h4 mb-1">
-                        <i class="bi bi-person-vcard me-2"></i>
-                        @(isEdit ? "Modifier un client" : "Créer un client")
-                    </h1>
-                    <div class="text-muted">
-                        @(string.IsNullOrWhiteSpace(roleLabel)
-                                                ? "Renseignez les informations du client et consultez la liste complète."
-                                                : $"Rôle visé : {roleLabel}")
+            <!-- ═════════════ HEADER COMPACT (harmonisé avec listAct/validationAct) ═════════════ -->
+            <MudPaper Class="client-hero mb-4" Elevation="0">
+                <div class="hero-bg-deco"></div>
+                <div class="hero-content">
+
+                    <div class="hero-main">
+                        <div class="hero-icon-wrap">
+                            <i class="bi @(isEdit ? "bi-person-fill-gear" : "bi-person-plus-fill")"></i>
+                        </div>
+                        <div class="hero-text">
+                            <h1 class="hero-title">
+                                @(isEdit ? "Modifier un client" : "Créer un client")
+                            </h1>
+                            <p class="hero-meta">
+                                @if (!string.IsNullOrWhiteSpace(roleLabel))
+                                {
+                                    <span class="meta-role-pill">
+                                        <i class="bi bi-bookmark-star-fill"></i>
+                                        Rôle : @roleLabel
+                                    </span>
+                                    <span class="meta-sep">·</span>
+                                }
+                                <span>Renseignez les informations du client</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="hero-actions">
+                        @if (acteId.HasValue)
+                        {
+                            <div class="hero-context-pill">
+                                <i class="bi bi-link-45deg"></i>
+                                <span>Lié à l'acte <strong>#@acteId</strong></span>
+                            </div>
+                        }
+                        @if (IdAjout > 0 && !acteId.HasValue)
+                        {
+                            <div class="hero-context-pill hero-context-pill-alt">
+                                <i class="bi bi-tag-fill"></i>
+                                <span>Type #@IdAjout</span>
+                            </div>
+                        }
+
+                        <!-- Bouton vers la liste complète -->
+                        <button class="hero-btn-gold" @onclick="GoToClientsList" title="Voir tous les clients enregistrés">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Voir tous les clients</span>
+                            <span class="hero-btn-count">@_clients.Count</span>
+                        </button>
+                    </div>
+
+                </div>
+            </MudPaper>
+
+            <!-- ═════════════ HERO BOARD (innovation MudBlazor) ═════════════ -->
+            <MudPaper Class="client-hero-board mb-4" Elevation="0">
+
+                <div class="hero-board-grid">
+
+                    <!-- COL 1 : Donut MudBlazor avec total au centre -->
+                    <div class="hero-donut-wrap">
+                        <MudChart ChartType="ChartType.Donut"
+                                  Width="160px"
+                                  Height="160px"
+                                  InputData="@_donutData"
+                                  InputLabels="@_donutLabels"
+                                  ChartOptions="@_donutOptions"
+                                  LegendPosition="Position.Bottom"
+                                  Class="hero-donut-chart">
+                        </MudChart>
+                        <div class="hero-donut-center">
+                            <div class="donut-value">@_clients.Count</div>
+                            <div class="donut-label">CLIENTS</div>
+                        </div>
+                    </div>
+
+                    <!-- COL 2 : Barres segmentées de répartition -->
+                    <div class="hero-bars-wrap">
+                        <div class="hero-bars-title">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                            <span>Répartition par type</span>
+                        </div>
+
+                        <div class="bar-row">
+                            <div class="bar-label">
+                                <span class="bar-dot dot-physique"></span>
+                                <span>Personnes physiques</span>
+                            </div>
+                            <div class="bar-value">
+                                <strong>@_nbPhysiques</strong>
+                                <span class="bar-pct">· @GetPct(_nbPhysiques)%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-fill-physique" style="width: @GetPct(_nbPhysiques)%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="bar-row">
+                            <div class="bar-label">
+                                <span class="bar-dot dot-morale"></span>
+                                <span>Personnes morales</span>
+                            </div>
+                            <div class="bar-value">
+                                <strong>@_nbMorales</strong>
+                                <span class="bar-pct">· @GetPct(_nbMorales)%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-fill-morale" style="width: @GetPct(_nbMorales)%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COL 3 : Métriques d'activité (compact info-block) -->
+                    <div class="hero-activity-wrap">
+                        <div class="activity-label">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Activité</span>
+                        </div>
+                        <div class="activity-value">
+                            <span class="activity-number">+@_nouveauxCeMois</span>
+                            <span class="activity-trend">
+                                <i class="bi bi-arrow-up-right"></i>
+                                ce mois
+                            </span>
+                        </div>
+                        <div class="activity-sub">
+                            Dernier ajout : <strong>@(_dernierClient ?? "—")</strong>
+                        </div>
+                    </div>
+
+                </div>
+            </MudPaper>
+
+            <!-- ═════════════ FORMULAIRE PREMIUM (avec indicateur de complétion) ═════════════ -->
+            <MudPaper Class="client-form-card mb-4" Elevation="0">
+
+                <!-- Barre de progression du formulaire (INNOVATION) -->
+                <div class="form-progress-bar">
+                    <div class="form-progress-info">
+                        <div class="form-progress-label">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span>Complétion du formulaire</span>
+                        </div>
+                        <div class="form-progress-pct">
+                            <span class="pct-value">@GetCompletionPct()%</span>
+                            <span class="pct-status">
+                                @if (GetCompletionPct() < 30)
+                                {
+                                    <span class="status-low">À démarrer</span>
+                                }
+                                else if (GetCompletionPct() < 70)
+                                {
+                                    <span class="status-mid">En cours</span>
+                                }
+                                else
+                                {
+                                    <span class="status-high">Presque prêt</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-progress-track">
+                        <div class="form-progress-fill" style="width: @GetCompletionPct()%;"></div>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    @if (acteId.HasValue)
-                    {
-                        <span class="badge text-bg-light">Acte #@acteId</span>
-                    }
-                    @if (IdAjout > 0)
-                    {
-                        <span class="badge text-bg-primary">TypeActeIdAjout: @IdAjout</span>
-                    }
-                </div>
-            </div>
-
-            <!-- STATS -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-stat bg-primary-light p-3 rounded-circle me-3">
-                                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Size="Size.Large" />
-                            </div>
-                            <div>
-                                <div class="text-muted small">Total clients</div>
-                                <div class="h3 fw-bold text-primary mb-0">@_clients.Count</div>
-                            </div>
-                        </div>
-                    </MudPaper>
-                </div>
-
-                <div class="col-md-4">
-                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-stat bg-success-light p-3 rounded-circle me-3">
-                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Success" Size="Size.Large" />
-                            </div>
-                            <div>
-                                <div class="text-muted small">Personnes physiques</div>
-                                <div class="h3 fw-bold text-success mb-0">@_clients.Count(c => string.Equals(c.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase))</div>
-                            </div>
-                        </div>
-                    </MudPaper>
-                </div>
-
-                <div class="col-md-4">
-                    <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-stat bg-warning-light p-3 rounded-circle me-3">
-                                <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Warning" Size="Size.Large" />
-                            </div>
-                            <div>
-                                <div class="text-muted small">Personnes morales</div>
-                                <div class="h3 fw-bold text-warning mb-0">@_clients.Count(c => string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))</div>
-                            </div>
-                        </div>
-                    </MudPaper>
-                </div>
-            </div>
-
-            <!-- FORM -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-
+                <div class="form-body">
                     <EditForm EditContext="@editContext" OnValidSubmit="SaveAsync">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
 
-                        <div class="border rounded p-3">
+                        <div class="form-inner-wrap">
                             <GesCPSI_Project.Components.Forms.ClientForm Model="@vm" />
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(errorMessage))
                         {
-                            <div class="alert alert-danger mt-3 mb-0">
-                                <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                            <div class="form-alert form-alert-error">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span>@errorMessage</span>
                             </div>
                         }
 
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
-                            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack" disabled="@isSaving">
-                                <i class="bi bi-arrow-left me-2"></i>Retour
+                        @if (!string.IsNullOrWhiteSpace(successMessage))
+                        {
+                            <div class="form-alert form-alert-success">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>@successMessage</span>
+                            </div>
+                        }
+
+                        <div class="form-actions">
+                            <button type="button" class="form-btn form-btn-back" @onclick="GoBack" disabled="@isSaving">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>Retour</span>
                             </button>
 
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-danger" @onclick="ResetForm" disabled="@isSaving">
-                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                            <div class="form-actions-right">
+                                <button type="button" class="form-btn form-btn-reset" @onclick="ResetForm" disabled="@isSaving">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    <span>Réinitialiser</span>
                                 </button>
 
-                                <button type="submit" class="btn btn-success" disabled="@isSaving">
+                                <button type="submit" class="form-btn form-btn-save" disabled="@isSaving">
                                     @if (isSaving)
                                     {
-                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                         <span>Enregistrement...</span>
                                     }
                                     else
                                     {
-                                        <i class="bi bi-check2 me-2"></i>
-                                        <span>Enregistrer</span>
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Enregistrer le client</span>
                                     }
                                 </button>
                             </div>
                         </div>
-
-                        @if (!string.IsNullOrWhiteSpace(successMessage))
-                        {
-                            <div class="alert alert-success mt-3 mb-0">
-                                <i class="bi bi-check-circle me-2"></i>@successMessage
-                            </div>
-                        }
                     </EditForm>
-
                 </div>
-            </div>
+
+            </MudPaper>
 
             <div class="text-muted small mb-4">
                 Si vous venez du wizard, vous serez renvoyé automatiquement après l’enregistrement.
@@ -156,175 +252,6 @@
     </div>
 </div>
 
-<div class="container-fluid px-3 px-md-4 pb-4" lang="fr">
-    <!-- LISTE DES CLIENTS -->
-    <MudPaper Class="mb-3" Elevation="1">
-        <div class="p-3">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-                <div>
-                    <MudText Typo="Typo.h6" Class="mb-1">
-                        📋 Liste des clients
-                    </MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Rechercher, filtrer, modifier ou sélectionner un client existant.
-                    </MudText>
-                </div>
-
-                <MudButton Variant="Variant.Outlined"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Refresh"
-                           OnClick="ReloadClientsAsync">
-                    Actualiser
-                </MudButton>
-            </div>
-
-            <div class="row g-3 align-items-center">
-                <div class="col-md-6">
-                    <MudTextField @bind-Value="_search"
-                                  Placeholder="Rechercher nom, raison sociale, téléphone, pièce..."
-                                  Variant="Variant.Outlined"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true"
-                                  FullWidth="true" />
-                </div>
-
-                <div class="col-md-4">
-                    <MudSelect T="string" @bind-Value="_typeClientFilter"
-                               Variant="Variant.Outlined"
-                               Label="Type de client"
-                               Clearable="true"
-                               FullWidth="true">
-                        <MudSelectItem T="string" Value="@((string?)null)">Tous</MudSelectItem>
-                        <MudSelectItem T="string" Value="@("Personne Physique")">Personne Physique</MudSelectItem>
-                        <MudSelectItem T="string" Value="@("Personne Morale")">Personne Morale</MudSelectItem>
-                    </MudSelect>
-                </div>
-
-                <div class="col-md-2 d-flex justify-content-end">
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Secondary"
-                               OnClick="ResetClientFilters"
-                               FullWidth="true">
-                        Effacer
-                    </MudButton>
-                </div>
-            </div>
-        </div>
-    </MudPaper>
-
-    @if (_loadingClients)
-    {
-        <div class="text-center py-5">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-            <div class="text-muted mt-3">Chargement des clients...</div>
-        </div>
-    }
-    else if (!FilteredClients.Any())
-    {
-        <div class="text-center py-5 my-4 bg-white rounded shadow-sm">
-            <i class="bi bi-people display-5 text-muted"></i>
-            <div class="h5 fw-bold mt-3">Aucun client trouvé</div>
-            <div class="text-muted">Essaie de modifier les filtres ou crée un nouveau client.</div>
-        </div>
-    }
-    else
-    {
-        <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
-            <MudTable Items="FilteredClients"
-                      Dense="true"
-                      Hover="true"
-                      Striped="true"
-                      Bordered="true"
-                      FixedHeader="true"
-                      Height="520px"
-                      RowsPerPage="10"
-                      Breakpoint="Breakpoint.Sm">
-
-                <HeaderContent>
-                    <MudTh>Type client</MudTh>
-                    <MudTh>Clients</MudTh>
-                    <MudTh>Compte / RCCM</MudTh>
-                    <MudTh>Numéro Pièce</MudTh>
-                    <MudTh>Téléphone</MudTh>
-                    <MudTh>Nationalité</MudTh>
-                    <MudTh class="text-end">Actions</MudTh>
-                </HeaderContent>
-
-                <RowTemplate>
-
-                    <MudTd>
-                        <MudChip T="string"
-                                 Color="@GetClientTypeColor(context)"
-                                 Variant="Variant.Outlined"
-                                 Size="Size.Small">
-                            @(string.IsNullOrWhiteSpace(context.TypeClient) ? "-" : context.TypeClient)
-                        </MudChip>
-                    </MudTd>
-
-                    <MudTd>
-                        <div class="fw-medium">@GetClientDisplayName(context)</div>
-                        <div class="text-muted small">@GetClientSubTitle(context)</div>
-                    </MudTd>
-
-                    <MudTd>
-                        @if (string.Equals(context.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <div><strong>N°RCCM :</strong> @(string.IsNullOrWhiteSpace(context.NumRCCM) ? "-" : context.NumRCCM)</div>
-                            <div><strong>N°Compte :</strong> @(string.IsNullOrWhiteSpace(context.NumCompte) ? "-" : context.NumCompte)</div>
-                        }
-                        else if (string.Equals(context.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <div><strong>N°:</strong> @(string.IsNullOrWhiteSpace(context.NumCompte) ? "-" : context.NumCompte)</div>
-                        }
-                        else
-                        {
-                            <span>-</span>
-                        }
-
-                    </MudTd>
-
-                    <MudTd>
-                        <strong>@context.TypePieceID :</strong> @context.NumPieceID
-                    </MudTd>
-
-                    <MudTd>
-                        <strong>Tel:</strong> @(FirstNonEmpty(context.TelCel, context.TelBur, context.TelDom, "-"))
-                    </MudTd>
-
-                    <MudTd>
-                        @(string.IsNullOrWhiteSpace(context.Nationalite) ? "-" : context.Nationalite)
-                    </MudTd>
-
-                    <MudTd class="text-end">
-                        <div class="d-inline-flex gap-1">
-                            <MudTooltip Text="Modifier">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="@(() => EditClientFromList(context.IdClt))" />
-                            </MudTooltip>
-
-                            @if (CanSelectClientForWizard)
-                            {
-                                <MudTooltip Text="Sélectionner ce client">
-                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                                   Color="Color.Success"
-                                                   Size="Size.Small"
-                                                   OnClick="@(() => SelectClientForWizard(context.IdClt))" />
-                                </MudTooltip>
-                            }
-                        </div>
-                    </MudTd>
-                </RowTemplate>
-
-                <PagerContent>
-                    <MudTablePager />
-                </PagerContent>
-            </MudTable>
-        </MudPaper>
-    }
-</div>
 
 @code {
     [Parameter] public int IdAjout { get; set; }
@@ -361,6 +288,89 @@
 
     private List<ClientModel> FilteredClients => GetFilteredClients();
 
+    // === Hero Board (Donut + Bars + Activité) ===
+    private double[] _donutData = new double[] { 0, 0 };
+    private string[] _donutLabels = new[] { "Physiques", "Morales" };
+
+    private ChartOptions _donutOptions = new ChartOptions
+        {
+            ChartPalette = new[] { "#0E7C5C", "#C9A86A" }
+        };
+
+    private int _nbPhysiques => _clients.Count(c => string.Equals(c.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase));
+    private int _nbMorales => _clients.Count(c => string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase));
+    private int _nouveauxCeMois => _clients.Count(c => c.IdClt > 0); // ⚠️ adapte si tu as un champ DateCreation
+    private string? _dernierClient => _clients.OrderByDescending(c => c.IdClt).FirstOrDefault() is { } c
+        ? (!string.IsNullOrWhiteSpace(c.NomRaisonsociale) ? c.NomRaisonsociale : $"{c.Nom} {c.Prenoms}".Trim())
+        : null;
+
+    private int GetPct(int value)
+    {
+        if (_clients.Count == 0) return 0;
+        return (int)Math.Round((double)value / _clients.Count * 100);
+    }
+
+    // Helper : pourcentage de complétion du formulaire (innovation)
+    private int GetCompletionPct()
+    {
+        if (vm == null) return 0;
+
+        var fields = new[]
+        {
+        vm.TypeClient,
+        vm.Nom,
+        vm.Prenoms,
+        vm.NomRaisonsociale,
+        vm.NomRepresentant,
+        vm.NumCompte,
+        vm.NumRCCM,
+        vm.Nationalite,
+        vm.PaysNaiss,
+        vm.LieuNaiss,
+        vm.Adressecomplet,
+        vm.VilleCommune,
+        vm.PaysResidn,
+        vm.TelCel,
+        vm.TelBur,
+        vm.ProfessionClt,
+        vm.SituationMatrim,
+        vm.TypePieceID,
+        vm.NumPieceID,
+        vm.LieuDelivPiece
+    };
+
+        int total = fields.Length;
+        int filled = fields.Count(f => !string.IsNullOrWhiteSpace(f));
+
+        return (int)Math.Round((double)filled / total * 100);
+    }
+
+    // Naviguer vers la liste complète (en gardant le contexte)
+    private void GoToClientsList()
+    {
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            queryParams.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+        if (!string.IsNullOrWhiteSpace(role))
+            queryParams.Add($"role={Uri.EscapeDataString(role)}");
+
+        if (acteId.HasValue)
+            queryParams.Add($"acteId={acteId.Value}");
+
+        if (IdAjout > 0)
+            queryParams.Add($"idAjout={IdAjout}");
+
+        var url = "/clientsListePage" + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void RefreshHeroBoard()
+    {
+        _donutData = new double[] { _nbPhysiques, _nbMorales };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         editContext = new EditContext(vm);
@@ -389,6 +399,7 @@
         {
             _loadingClients = true;
             _clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+            RefreshHeroBoard();
         }
         catch (Exception ex)
         {
@@ -730,4 +741,1151 @@
         else
             NavigationManager.NavigateTo($"/saisirPage/{IdAjout}", forceLoad: true);
     }
+
+    // === Helpers pour la liste stylée ===
+
+    // Avatar dégradé selon le type + ID (différencié pour Physique vs Morale)
+    private string GetClientAvatarGradient(ClientModel client)
+    {
+        if (string.Equals(client.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+        {
+            // Or pour personnes morales
+            var goldGradients = new[]
+            {
+            "linear-gradient(135deg, #C9A86A, #B58E50)",
+            "linear-gradient(135deg, #D97706, #B45309)",
+            "linear-gradient(135deg, #92400E, #78350F)"
+        };
+            return goldGradients[Math.Abs(client.IdClt) % goldGradients.Length];
+        }
+        else
+        {
+            // Marine pour personnes physiques
+            var marineGradients = new[]
+            {
+            "linear-gradient(135deg, #0A2540, #1F3C88)",
+            "linear-gradient(135deg, #1F3C88, #3F3A8A)",
+            "linear-gradient(135deg, #0E7C5C, #047857)",
+            "linear-gradient(135deg, #6366F1, #4F46E5)"
+        };
+            return marineGradients[Math.Abs(client.IdClt) % marineGradients.Length];
+        }
+    }
+
+    // Classe CSS pour le type chip
+    private string GetTypeClass(string? type) => type switch
+    {
+        "Personne Physique" => "type-pill-physique",
+        "Personne Morale" => "type-pill-morale",
+        _ => "type-pill-default"
+    };
+
+    // Innovation : 3 derniers clients = badge "Nouveau"
+    private bool IsRecentClient(ClientModel client)
+    {
+        var top3Ids = _clients
+            .OrderByDescending(c => c.IdClt)
+            .Take(3)
+            .Select(c => c.IdClt)
+            .ToList();
+        return top3Ids.Contains(client.IdClt);
+    }
+
 }
+
+<style>
+    /* ═══════════ HERO BOARD ═══════════ */
+    .client-hero-board {
+        background: white !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .client-hero-board::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -5%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(14, 124, 92, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+    .hero-board-grid {
+        display: grid;
+        grid-template-columns: 200px 1fr 180px;
+        gap: 32px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* === Bouton ROUGE DÉGRADÉ "Voir tous les clients" === */
+    .hero-btn-gold {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #B91C1C 0%, #7F1D1D 60%, #EF4444 100%);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(185, 28, 28, 0.4);
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .hero-btn-gold::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .hero-btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(185, 28, 28, 0.55);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+            .hero-btn-gold:hover::before {
+                left: 100%;
+            }
+
+        .hero-btn-gold i {
+            color: white;
+            font-size: 1rem;
+        }
+
+    .hero-btn-count {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        margin-left: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* === Donut central === */
+    .hero-donut-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 160px;
+        height: 160px;
+        margin: 0 auto;
+    }
+
+    .hero-donut-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+    }
+    /* === Masquer la légende native MudBlazor === */
+    .hero-donut-chart .mud-chart-legend,
+    .hero-donut-chart .mud-chart-legend-item {
+        display: none !important;
+    }
+
+    .donut-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #0A2540;
+        line-height: 1;
+    }
+
+    .donut-label {
+        font-size: 0.65rem;
+        color: #6B7280;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        margin-top: 4px;
+    }
+
+    /* === Barres segmentées === */
+    .hero-bars-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-left: 24px;
+        border-left: 1px solid #F1F5F9;
+    }
+
+    .hero-bars-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #0A2540;
+        font-weight: 700;
+        font-size: 0.92rem;
+        margin-bottom: 4px;
+    }
+
+        .hero-bars-title i {
+            color: #C9A86A;
+        }
+
+    .bar-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 12px;
+        align-items: center;
+    }
+
+    .bar-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1F2937;
+    }
+
+    .bar-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+
+    .dot-physique {
+        background: #0E7C5C;
+    }
+
+    .dot-morale {
+        background: #C9A86A;
+    }
+
+    .bar-value {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0A2540;
+        white-space: nowrap;
+    }
+
+    .bar-pct {
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 0.82rem;
+    }
+
+    .bar-track {
+        grid-column: 1 / -1;
+        height: 8px;
+        background: #F1F5F9;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-fill-physique {
+        background: linear-gradient(90deg, #0E7C5C 0%, #047857 100%);
+    }
+
+    .bar-fill-morale {
+        background: linear-gradient(90deg, #C9A86A 0%, #B58E50 100%);
+    }
+
+    /* === Activité === */
+    .hero-activity-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-left: 24px;
+        border-left: 1px solid #F1F5F9;
+    }
+
+    .activity-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+        .activity-label i {
+            color: #0E7C5C;
+        }
+
+    .activity-value {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .activity-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0E7C5C;
+        line-height: 1;
+    }
+
+    .activity-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.78rem;
+        color: #6B7280;
+        font-weight: 600;
+    }
+
+        .activity-trend i {
+            color: #0E7C5C;
+        }
+
+    .activity-sub {
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+
+        .activity-sub strong {
+            color: #0A2540;
+            font-weight: 700;
+        }
+    /* ═══════════ HEADER COMPACT (harmonisé) ═══════════ */
+    .client-hero {
+        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%) !important;
+        padding: 22px 28px !important;
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-bg-deco {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(201, 168, 106, 0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .hero-icon-wrap {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(201, 168, 106, 0.3);
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .hero-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .meta-role-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(201, 168, 106, 0.2);
+        color: #C9A86A;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    .meta-sep {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .hero-context-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        .hero-context-pill i {
+            color: #C9A86A;
+            font-size: 1rem;
+        }
+
+        .hero-context-pill strong {
+            color: #C9A86A;
+            font-weight: 800;
+        }
+
+    .hero-context-pill-alt {
+        background: rgba(201, 168, 106, 0.15);
+        border-color: rgba(201, 168, 106, 0.3);
+    }
+
+    /* ═══════════ FORMULAIRE PREMIUM ═══════════ */
+    .client-form-card {
+        background: white !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+
+    /* === Barre de progression (innovation) === */
+    .form-progress-bar {
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+        padding: 16px 24px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .form-progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .form-progress-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #0A2540;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+        .form-progress-label i {
+            color: #0E7C5C;
+            font-size: 1.1rem;
+        }
+
+    .form-progress-pct {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pct-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0A2540;
+    }
+
+    .pct-status {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+    }
+
+        .pct-status .status-low {
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .pct-status .status-mid {
+            background: #DBEAFE;
+            color: #1E40AF;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .pct-status .status-high {
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+    .form-progress-track {
+        height: 6px;
+        background: white;
+        border-radius: 3px;
+        overflow: hidden;
+        border: 1px solid #E5E7EB;
+    }
+
+    .form-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0E7C5C 0%, #047857 100%);
+        border-radius: 3px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* === Corps du formulaire === */
+    .form-body {
+        padding: 24px;
+    }
+
+    .form-inner-wrap {
+        background: #FAFBFC;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    /* === Alertes inline === */
+    .form-alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-top: 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+        .form-alert i {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+    .form-alert-error {
+        background: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    .form-alert-success {
+        background: #D1FAE5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    /* === Actions du formulaire === */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .form-actions-right {
+        display: flex;
+        gap: 10px;
+    }
+
+    .form-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+        .form-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .form-btn-back {
+        background: white;
+        border-color: #E5E7EB;
+        color: #6B7280;
+    }
+
+        .form-btn-back:hover:not(:disabled) {
+            background: #F9FAFB;
+            border-color: #0A2540;
+            color: #0A2540;
+        }
+
+    .form-btn-reset {
+        background: #FEF2F2;
+        border-color: #FECACA;
+        color: #DC2626;
+    }
+
+        .form-btn-reset:hover:not(:disabled) {
+            background: #DC2626;
+            color: white;
+            border-color: #DC2626;
+        }
+
+    .form-btn-save {
+        background: linear-gradient(135deg, #0E7C5C 0%, #047857 100%);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+        .form-btn-save:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(14, 124, 92, 0.4);
+        }
+
+    /* ═══════════ TOOLBAR LISTE ═══════════ */
+    .clients-list-toolbar {
+        background: white !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 14px !important;
+        padding: 18px 20px !important;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .toolbar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .toolbar-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .toolbar-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #0A2540 0%, #1F3C88 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 8px rgba(10, 37, 64, 0.2);
+    }
+
+    .toolbar-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0A2540;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .toolbar-subtitle {
+        font-size: 0.82rem;
+        color: #6B7280;
+        margin: 3px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .toolbar-subtitle .meta-strong {
+            color: #0A2540;
+            font-weight: 800;
+        }
+
+        .toolbar-subtitle .meta-light {
+            color: #9CA3AF;
+        }
+
+    .toolbar-refresh-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border: 1px solid #E5E7EB;
+        color: #0A2540;
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .toolbar-refresh-btn:hover:not(:disabled) {
+            background: #F9FAFB;
+            border-color: #0A2540;
+            transform: translateY(-1px);
+        }
+
+        .toolbar-refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    /* === Filtres toolbar === */
+    .toolbar-filters {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding-top: 14px;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .toolbar-search {
+        flex: 2;
+        min-width: 240px;
+        position: relative;
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+
+        .toolbar-search:focus-within {
+            background: white;
+            border-color: #0E7C5C;
+            box-shadow: 0 0 0 4px rgba(14, 124, 92, 0.1);
+        }
+
+    .toolbar-search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9CA3AF;
+        pointer-events: none;
+    }
+
+    .toolbar-search-input {
+        width: 100%;
+        padding: 10px 40px;
+        border: none;
+        background: transparent;
+        font-size: 0.9rem;
+        color: #1A1F3A;
+        outline: none;
+        border-radius: 10px;
+    }
+
+        .toolbar-search-input::placeholder {
+            color: #9CA3AF;
+        }
+
+    .toolbar-search-clear {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background: #E5E7EB;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+    }
+
+    .toolbar-type-select {
+        flex: 1.5;
+        min-width: 200px;
+    }
+
+    .toolbar-reset-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #FEF2F2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.25s ease;
+    }
+
+        .toolbar-reset-btn:hover {
+            background: #DC2626;
+            color: white;
+            transform: rotate(-180deg);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+    /* ═══════════ TABLE DES CLIENTS (style userpage) ═══════════ */
+    .clients-table-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 14px !important;
+        overflow: hidden;
+    }
+
+    .clients-table {
+        background: white !important;
+    }
+
+        .clients-table thead th {
+            background: #F8FAFC !important;
+            color: #0A2540 !important;
+            font-weight: 700 !important;
+            font-size: 0.78rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid #E1E4E8 !important;
+            padding: 14px 16px !important;
+        }
+
+        .clients-table tbody tr {
+            transition: background 0.15s ease;
+        }
+
+            .clients-table tbody tr:hover {
+                background: #F8FAFC !important;
+            }
+
+        .clients-table tbody td {
+            padding: 14px 16px !important;
+            vertical-align: middle !important;
+        }
+
+    /* === Cellule client (avatar + nom + sub) === */
+    .client-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .client-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .client-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .client-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .client-name {
+        font-weight: 700;
+        color: #0A2540;
+        font-size: 0.95rem;
+        letter-spacing: 0.1px;
+    }
+
+    .client-sub {
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    /* === Badge "Nouveau" (innovation) === */
+    .recent-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%);
+        color: #92400E;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid #FCD34D;
+        animation: recent-pulse 2.5s ease-in-out infinite;
+    }
+
+        .recent-badge i {
+            font-size: 0.7rem;
+        }
+
+    @@keyframes recent-pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 5px rgba(252, 211, 77, 0);
+        }
+    }
+
+    /* === Type pill (badge couleur subtile) === */
+    .type-pill {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: 1px solid;
+    }
+
+    .type-pill-physique {
+        background: #DBEAFE;
+        color: #1E40AF;
+        border-color: #93C5FD;
+    }
+
+    .type-pill-morale {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    .type-pill-default {
+        background: #F3F4F6;
+        color: #6B7280;
+        border-color: #E5E7EB;
+    }
+
+    /* === Cellules multi-lignes === */
+    .cell-multi {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .cell-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+
+    .cell-label {
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .cell-value {
+        color: #1A1F3A;
+        font-weight: 600;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.82rem;
+    }
+
+    .cell-empty {
+        color: #9CA3AF;
+        font-style: italic;
+    }
+
+    /* === Pièce d'identité === */
+    .piece-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .piece-type {
+        background: #F1F5F9;
+        color: #475569;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        width: fit-content;
+        margin-bottom: 4px;
+    }
+
+    .piece-num {
+        color: #0A2540;
+        font-weight: 600;
+        font-size: 0.85rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    /* === Téléphone === */
+    .phone-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #0A2540;
+        font-weight: 500;
+        font-size: 0.88rem;
+    }
+
+        .phone-cell i {
+            color: #0E7C5C;
+            font-size: 0.85rem;
+        }
+
+    /* === Nationalité === */
+    .nat-cell {
+        color: #0A2540;
+        font-weight: 500;
+        font-size: 0.88rem;
+    }
+
+    /* === Actions === */
+    .actions-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #E5E7EB;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.88rem;
+        transition: all 0.15s ease;
+    }
+
+    .action-btn-edit {
+        color: #1F3C88;
+    }
+
+        .action-btn-edit:hover:not(:disabled) {
+            background: #1F3C88;
+            color: white;
+            border-color: #1F3C88;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(31, 60, 136, 0.25);
+        }
+
+    .action-btn-select {
+        color: #0E7C5C;
+    }
+
+        .action-btn-select:hover:not(:disabled) {
+            background: #0E7C5C;
+            color: white;
+            border-color: #0E7C5C;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(14, 124, 92, 0.25);
+        }
+
+    /* === Spin animation === */
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* === Responsive === */
+    @@media (max-width: 768px) {
+        .toolbar-filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .toolbar-search,
+        .toolbar-type-select {
+            min-width: 0;
+            flex: none;
+        }
+    }
+
+    /* === Responsive === */
+    @@media (max-width: 992px) {
+        .hero-board-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .hero-bars-wrap,
+        .hero-activity-wrap {
+            padding-left: 0;
+            border-left: none;
+            border-top: 1px solid #F1F5F9;
+            padding-top: 20px;
+        }
+    }
+</style>

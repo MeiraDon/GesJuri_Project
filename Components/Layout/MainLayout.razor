@@ -1,26 +1,23 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using GesCPSI_Project.Models
 
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<UserModel> UserManager
 
 <MudLayout>
-    <MudAppBar Elevation="0" Style="
-           background:
-           radial-gradient(900px 400px at 10% 0%, rgba(21,138,92,.18), transparent 60%),
-           linear-gradient(135deg, #0A192F 0%, #004A88 100%);
-           border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <MudAppBar Elevation="0" Class="boa-appbar">
 
         <MudIconButton Icon="@Icons.Material.Filled.Menu"
                        Color="Color.Inherit"
                        Edge="Edge.Start"
                        OnClick="DrawerToggle"
-                       Style="color:#EAFBF6;" />
+                       Class="boa-menu-btn" />
 
         <MudElement HtmlTag="a"
-                    Class="ma-0"
-                    Style="font-weight:bold; color: #EAFBF6; font-size: x-large; text-transform:none;"
+                    Class="boa-logo-wrap"
                     href="/"
                     rel="noopener noreferrer">
             <MudImage Src="/Logo_boatg.jpg" Width="200" Height="50" Alt="Logo_boatg" Elevation="0" />
@@ -32,32 +29,61 @@
         <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
             <ActivatorContent>
                 <div class="appbar-user-chip" title="@_userEmail">
-                    <div class="appbar-avatar">@_initials</div>
+                    <div class="appbar-avatar">
+                        <span>@_initials</span>
+                    </div>
                     <div class="appbar-user-info">
-                        <div class="appbar-user-name">@_displayName</div>
+                        <div class="appbar-user-name">@_fullName</div>
                         <div class="appbar-user-role">@_roleLabel</div>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Style="color:rgba(255,255,255,.7);" />
+                    <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Class="appbar-user-chevron" />
                 </div>
             </ActivatorContent>
             <ChildContent>
+                <div class="user-menu-header">
+                    <div class="user-menu-avatar">@_initials</div>
+                    <div class="user-menu-details">
+                        <div class="user-menu-name">@_fullName</div>
+                        @if (!string.IsNullOrWhiteSpace(_fonction))
+                        {
+                            <div class="user-menu-fonction">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <span>@_fonction</span>
+                            </div>
+                        }
+                        <div class="user-menu-role">@_roleLabel</div>
+                        <div class="user-menu-email">
+                            <i class="bi bi-envelope-fill"></i>
+                            <span>@_userEmail</span>
+                        </div>
+                    </div>
+                </div>
+
+                <MudDivider />
+
                 <MudMenuItem Href="/profile">
-                    <div class="d-flex align-items-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Size="Size.Small" />
-                        <span>Mon profil</span>
+                    <div class="menu-item-content menu-profile">
+                        <div class="menu-item-icon">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="menu-item-text">Mon profil</span>
                     </div>
                 </MudMenuItem>
                 <MudMenuItem Href="/change-password">
-                    <div class="d-flex align-items-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.LockReset" Size="Size.Small" />
-                        <span>Changer mon mot de passe</span>
+                    <div class="menu-item-content menu-password">
+                        <div class="menu-item-icon">
+                            <i class="bi bi-key-fill"></i>
+                        </div>
+                        <span class="menu-item-text">Changer mon mot de passe</span>
                     </div>
                 </MudMenuItem>
                 <MudDivider />
                 <MudMenuItem Href="/Account/Logout">
-                    <div class="d-flex align-items-center gap-2" style="color: #d32f2f;">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" Color="Color.Error" />
-                        <span>Se déconnecter</span>
+                    <div class="menu-item-content menu-logout">
+                        <div class="menu-item-icon">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <span class="menu-item-text">Se déconnecter</span>
                     </div>
                 </MudMenuItem>
             </ChildContent>
@@ -73,21 +99,20 @@
         <NavMenu IsMiniMode="!_drawerOpen" />
     </MudDrawer>
 
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.False" Style="padding: 24px;">
-            <MudPaper Elevation="0">
-                @Body
-            </MudPaper>
-        </MudContainer>
+    <MudMainContent Class="boa-main-content">
+        <div class="main-content-wrapper">
+            @Body
+        </div>
     </MudMainContent>
 </MudLayout>
 
 @code {
     bool _drawerOpen = true;
     private string _userEmail = "";
-    private string _displayName = "Utilisateur";
+    private string _fullName = "Utilisateur";
     private string _initials = "U";
     private string _roleLabel = "—";
+    private string _fonction = "";
 
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
 
@@ -99,12 +124,39 @@
         if (user.Identity?.IsAuthenticated == true)
         {
             _userEmail = user.Identity.Name ?? "";
-            _displayName = _userEmail.Contains('@') ? _userEmail.Split('@')[0] : _userEmail;
 
-            _initials = string.IsNullOrEmpty(_displayName) ? "U"
-                      : _displayName.Length >= 2 ? _displayName[..2].ToUpper()
-                      : _displayName[..1].ToUpper();
+            // ===== Récupérer le user complet depuis la BDD =====
+            var userModel = await UserManager.FindByNameAsync(_userEmail);
 
+            if (userModel != null)
+            {
+                // Construire le nom complet depuis NomComplet
+                var nomComplet = userModel.NomComplet?.Trim() ?? "";
+
+                if (!string.IsNullOrWhiteSpace(nomComplet))
+                {
+                    _fullName = nomComplet;
+                }
+                else
+                {
+                    // Fallback : extraire de l'email
+                    _fullName = _userEmail.Contains('@') ? _userEmail.Split('@')[0] : _userEmail;
+                }
+
+                // Récupérer la fonction métier (Caissier, Juriste, etc.)
+                _fonction = userModel.Fonction?.Trim() ?? "";
+
+                // Initiales depuis NomComplet
+                _initials = GetInitials(_fullName);
+            }
+            else
+            {
+                // Fallback complet si user non trouvé
+                _fullName = _userEmail.Contains('@') ? _userEmail.Split('@')[0] : _userEmail;
+                _initials = GetInitials(_fullName);
+            }
+
+            // ===== Label du rôle (gardé pour le menu dropdown) =====
             if (user.IsInRole(RoleNames.Admin))
                 _roleLabel = "Administrateur";
             else if (user.IsInRole(RoleNames.Responsable))
@@ -113,10 +165,108 @@
                 _roleLabel = "Agent Juridique";
         }
     }
+
+    private string GetInitials(string nomComplet)
+    {
+        if (string.IsNullOrWhiteSpace(nomComplet))
+        {
+            return _userEmail.Length >= 2 ? _userEmail[..2].ToUpper() : "U";
+        }
+
+        // Découper en mots et prendre la 1ère lettre des 2 premiers mots
+        var mots = nomComplet
+            .Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Take(2)
+            .ToList();
+
+        if (mots.Count >= 2)
+        {
+            return $"{mots[0][..1].ToUpper()}{mots[1][..1].ToUpper()}";
+        }
+        else if (mots.Count == 1 && mots[0].Length >= 2)
+        {
+            return mots[0][..2].ToUpper();
+        }
+        else if (mots.Count == 1)
+        {
+            return mots[0][..1].ToUpper();
+        }
+
+        return "U";
+    }
 }
 
 <style>
-    /* ====== APP BAR USER CHIP ====== */
+
+    /* ════════════════════════════════════════════════════════════════
+           WRAPPER CONTENU PRINCIPAL — Pas de padding inutile
+           ════════════════════════════════════════════════════════════════ */
+    .main-content-wrapper {
+        width: 100%;
+        min-height: calc(100vh - 64px); /* 100vh moins la hauteur de la AppBar */
+        padding: 0; /* Pas de padding ici */
+        margin: 0;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+           APP BAR — Vert profond BOA avec glow ambiant
+           ════════════════════════════════════════════════════════════════ */
+    .boa-appbar {
+        background: radial-gradient(900px 400px at 10% 0%, rgba(20, 165, 116, 0.22), transparent 60%), radial-gradient(700px 350px at 85% 50%, rgba(201, 168, 106, 0.12), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E3D2E 60%, #052218 100%) !important;
+        border-bottom: 1px solid rgba(201, 168, 106, 0.2) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        position: relative;
+    }
+
+        .boa-appbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 106, 0.4) 25%, rgba(201, 168, 106, 0.6) 50%, rgba(201, 168, 106, 0.4) 75%, transparent 100%);
+            pointer-events: none;
+        }
+
+    /* ════════════════════════════════════════════════════════════════
+           BOUTON MENU
+           ════════════════════════════════════════════════════════════════ */
+    .boa-menu-btn {
+        color: #C9A86A !important;
+        transition: all 0.2s ease !important;
+        border-radius: 10px !important;
+    }
+
+        .boa-menu-btn:hover {
+            background: rgba(201, 168, 106, 0.15) !important;
+            color: #E0BD7E !important;
+            transform: scale(1.05);
+        }
+
+    /* ════════════════════════════════════════════════════════════════
+           LOGO
+           ════════════════════════════════════════════════════════════════ */
+    .boa-logo-wrap {
+        margin: 0;
+        font-weight: bold;
+        font-size: x-large;
+        text-transform: none;
+        padding: 4px 12px;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .boa-logo-wrap:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+    /* ════════════════════════════════════════════════════════════════
+       USER CHIP — Vert sobre compact (ancien style)
+       ════════════════════════════════════════════════════════════════ */
     .appbar-user-chip {
         display: flex;
         align-items: center;
@@ -129,16 +279,17 @@
         transition: all 0.2s ease;
     }
 
-    .appbar-user-chip:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(201, 168, 106, 0.4);
-    }
+        .appbar-user-chip:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(201, 168, 106, 0.4);
+        }
 
+    /* === Avatar vert dégradé compact === */
     .appbar-avatar {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #158A5C, #2F5D50);
+        background: linear-gradient(135deg, #14A574, #0E7C5C 60%, #0A2922);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -146,19 +297,39 @@
         font-weight: 700;
         font-size: 12px;
         letter-spacing: 0.5px;
-        box-shadow: 0 2px 8px rgba(21, 138, 92, 0.4);
+        box-shadow: 0 2px 8px rgba(20, 165, 116, 0.4);
+        position: relative;
+        flex-shrink: 0;
     }
 
+        .appbar-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 8px;
+            height: 8px;
+            background: #C9A86A;
+            border-radius: 50%;
+            border: 1.5px solid #0A2922;
+        }
+
+        .appbar-avatar span {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+    /* === Infos utilisateur compactes === */
     .appbar-user-info {
         display: flex;
         flex-direction: column;
-        line-height: 1.1;
+        line-height: 1.15;
     }
 
     .appbar-user-name {
         color: #EAFBF6;
         font-size: 13px;
         font-weight: 600;
+        letter-spacing: 0.1px;
     }
 
     .appbar-user-role {
@@ -166,5 +337,230 @@
         font-size: 10.5px;
         font-weight: 500;
         letter-spacing: 0.3px;
+    }
+
+    .appbar-user-chevron {
+        color: rgba(255, 255, 255, 0.7) !important;
+        transition: transform 0.2s ease;
+    }
+
+    .appbar-user-chip:hover .appbar-user-chevron {
+        color: rgba(201, 168, 106, 0.9) !important;
+    }
+    /* ════════════════════════════════════════════════════════════════
+           MENU DROPDOWN HEADER — Carte premium de l'utilisateur
+           ════════════════════════════════════════════════════════════════ */
+    .user-menu-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        background: linear-gradient(135deg, #0A2922 0%, #0E3D2E 60%, #14A574 100%);
+        color: white;
+        margin: -8px -8px 0 -8px;
+    }
+
+    .user-menu-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #14A574, #0E7C5C);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(20, 165, 116, 0.5), inset 0 0 0 1.5px rgba(201, 168, 106, 0.5);
+        flex-shrink: 0;
+    }
+
+    .user-menu-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .user-menu-name {
+        color: white;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+
+    .user-menu-fonction {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10.5px;
+        font-weight: 700;
+        margin-top: 4px;
+        width: fit-content;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+        .user-menu-fonction i {
+            color: #FCD34D;
+            font-size: 10px;
+        }
+
+    .user-menu-role {
+        color: #FCD34D;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    .user-menu-email {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 11px;
+        font-weight: 500;
+        margin-top: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        overflow: hidden;
+        max-width: 220px;
+    }
+
+        .user-menu-email i {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .user-menu-email span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+    /* ════════════════════════════════════════════════════════════════
+           MAIN CONTENT
+           ════════════════════════════════════════════════════════════════ */
+    .boa-main-content {
+        background: radial-gradient(1000px 600px at 20% 0%, rgba(14, 124, 92, 0.03), transparent 60%), radial-gradient(800px 500px at 90% 90%, rgba(201, 168, 106, 0.04), transparent 60%), #F8FAF9 !important;
+        min-height: 100vh;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+           MENU DROPDOWN
+           ════════════════════════════════════════════════════════════════ */
+    ::deep .mud-menu-list {
+        border-radius: 12px !important;
+        border: 1px solid rgba(30, 64, 175, 0.15) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+        overflow: hidden !important;
+        padding: 8px !important;
+        min-width: 280px;
+    }
+
+        ::deep .mud-menu-list .mud-list-item {
+            transition: all 0.15s ease;
+            border-radius: 8px;
+        }
+
+            ::deep .mud-menu-list .mud-list-item:hover {
+                background: rgba(20, 165, 116, 0.06) !important;
+            }
+
+
+    /* ════════════════════════════════════════════════════════════════
+           MENU ITEMS — Cohérence vert BOA + doré
+           ════════════════════════════════════════════════════════════════ */
+    .menu-item-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .menu-item-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+        border: 1px solid;
+    }
+
+    .menu-item-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #0A2540;
+        transition: color 0.2s ease;
+    }
+
+    /* === Mon profil : Vert BOA principal === */
+    .menu-profile .menu-item-icon {
+        background: linear-gradient(135deg, #ECFDF5, #DCFCE7);
+        color: #0E7C5C;
+        border-color: #BBF7D0;
+    }
+
+    .menu-profile:hover .menu-item-icon {
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+        color: white;
+        border-color: transparent;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+    /* === Changer mot de passe : Or BOA === */
+    .menu-password .menu-item-icon {
+        background: linear-gradient(135deg, #FEF3C7, #FEFCE8);
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    .menu-password:hover .menu-item-icon {
+        background: linear-gradient(135deg, #FCD34D, #F59E0B);
+        color: white;
+        border-color: transparent;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(252, 211, 77, 0.4);
+    }
+
+    /* === Se déconnecter : Rouge bordeaux discret === */
+    .menu-logout .menu-item-icon {
+        background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+        color: #9B1C2D;
+        border-color: #FECACA;
+    }
+
+    .menu-logout .menu-item-text {
+        color: #9B1C2D;
+        font-weight: 700;
+    }
+
+    .menu-logout:hover .menu-item-icon {
+        background: linear-gradient(135deg, #9B1C2D, #DC2626);
+        color: white;
+        border-color: transparent;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(155, 28, 45, 0.3);
+    }
+
+    .menu-logout:hover .menu-item-text {
+        color: #7F1D1D;
+    }
+
+    /* === Hover global des items du menu === */
+    ::deep .mud-menu-list .mud-list-item:hover {
+        background: rgba(20, 165, 116, 0.06) !important;
     }
 </style>

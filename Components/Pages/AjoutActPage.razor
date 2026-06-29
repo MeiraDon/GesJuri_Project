@@ -1,7 +1,9 @@
 ﻿@page "/ajouterAct"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
-<PageTitle>AjoutAct</PageTitle>
+<PageTitle>Gestion des types d'actes - GesCPSI</PageTitle>
+
 @using MudBlazor
 @using GesCPSI_Project.Models
 @using GesCPSI_Project.Interfaces
@@ -11,173 +13,372 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
+<div class="ajout-page">
 
+    <!-- ═════════════ HEADER BLEU ROYAL ═════════════ -->
+    <div class="ajout-topbar">
+        <div class="topbar-bg-deco"></div>
+        <div class="topbar-content">
+            <div class="topbar-title-block">
+                <div class="topbar-icon">
+                    <i class="bi bi-sliders2-vertical"></i>
+                </div>
+                <div>
+                    <h1 class="topbar-title">Atelier des Modèles</h1>
+                    <p class="topbar-subtitle">
+                        <i class="bi bi-tools"></i>
+                        Configurez les types d'actes disponibles dans l'application
+                    </p>
+                </div>
+            </div>
 
+            <div class="topbar-stats">
+                <div class="topbar-stat stat-total">
+                    <div class="stat-icon-mini">
+                        <i class="bi bi-collection-fill"></i>
+                    </div>
+                    <div class="stat-data">
+                        <div class="stat-num">@ajoutActList.Count</div>
+                        <div class="stat-lbl">Total</div>
+                    </div>
+                </div>
 
-<MudContainer MaxWidth="MaxWidth.False" Class="mt-6">
+                <div class="stat-divider-vert"></div>
 
-    <MudCard Elevation="6" Class="pa-6 mx-auto mb-8" Style="max-width:650px;">
-        <MudCardHeader Style="background-color:#003366;color:white;">
-            <MudText Typo="Typo.h6">➕ Ajout d'un type d'acte</MudText>
-        </MudCardHeader>
+                <div class="topbar-stat stat-pp">
+                    <div class="stat-icon-mini">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="stat-data">
+                        <div class="stat-num">@CountPP</div>
+                        <div class="stat-lbl">Pers. Physique</div>
+                    </div>
+                </div>
 
-        <MudCardContent>
-            <MudForm @ref="form">
+                <div class="stat-divider-vert"></div>
 
-                <MudSelect T="string"
-                           Label="Catégorie de client"
-                           Variant="Variant.Filled"
-                           @bind-Value="ajoutActModel.CategorieClient"
-                           Required="true"
-                           Class="mb-6">
+                <div class="topbar-stat stat-pm">
+                    <div class="stat-icon-mini">
+                        <i class="bi bi-building-fill"></i>
+                    </div>
+                    <div class="stat-data">
+                        <div class="stat-num">@CountPM</div>
+                        <div class="stat-lbl">Pers. Morale</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <MudSelectItem Value="@("Personne Physique")">
-                        Personne Physique
-                    </MudSelectItem>
+    <!-- ═════════════ SPLIT WORKSPACE ═════════════ -->
+    <div class="workspace-split">
 
-                    <MudSelectItem Value="@("Personne Morale")">
-                        Personne Morale
-                    </MudSelectItem>
+        <!-- ───── ZONE FORMULAIRE (gauche, sticky) ───── -->
+        <div class="form-pane">
+            <div class="form-sticky">
+                <div class="form-card">
 
-                    
+                    <div class="form-card-header">
+                        <div class="form-mode-pill @(isEditing ? "mode-edit" : "mode-new")">
+                            @if (isEditing)
+                            {
+                                <i class="bi bi-pencil-fill"></i>
+                                <span>Modification</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-plus-circle-fill"></i>
+                                <span>Nouveau modèle</span>
+                            }
+                        </div>
 
-                </MudSelect>
-
-                @* 🆕 SÉLECTEUR DE MODÈLE *@
-                <MudSelect T="TemplateType"
-                           Label="Modèle d'acte officiel à utiliser"
-                           Variant="Variant.Filled"
-                           @bind-Value="ajoutActModel.TemplateType"
-                           Required="true"
-                           HelperText="Détermine le rendu PDF et l'aperçu officiel"
-                           Class="mb-6">
-                    <MudSelectItem Value="@TemplateType.CautionnementSpecifiquePhysique">
-                        Cautionnement Spécifique — Personne Physique
-                    </MudSelectItem>
-                    <MudSelectItem Value="@TemplateType.CautionnementSpecifiqueMorale">
-                        Cautionnement Spécifique — Personne Morale
-                    </MudSelectItem>
-                    <MudSelectItem Value="@TemplateType.ToutEngagementPhysique">
-                        Tout Engagement — Personne Physique
-                    </MudSelectItem>
-                    <MudSelectItem Value="@TemplateType.ToutEngagementMorale">
-                        Tout Engagement — Personne Morale
-                    </MudSelectItem>
-                    <MudSelectItem Value="@TemplateType.DelegationLoyersMorale">
-                        Délégation de Loyers — Personne Morale
-                    </MudSelectItem>
-                </MudSelect>
-
-                <MudTextField @bind-Value="ajoutActModel.NomAct"
-                              @bind-Value:after="@(() => SuggererTemplateType())"
-                              Label="Nom du type d'acte"
-                              Variant="Variant.Filled"
-                              Required="true"
-                              RequiredError="Le nom est obligatoire"
-                              FullWidth
-                              Class="mb-6" />
-
-                <MudTextField @bind-Value="ajoutActModel.Description"
-                              @bind-Value:after="@(() => SuggererTemplateType())"
-                              Label="Description"
-                              Variant="Variant.Filled"
-                              Lines="3"
-                              FullWidth
-                              Class="mb-6" />
-
-                <MudStack Class="mt-4" Row="true" Justify="Justify.FlexEnd" Style="gap: 8px;">
-                    <MudButton Color="Color.Primary"
-                               Variant="Variant.Filled"
-                               OnClick="AjouterOuModifierActe"
-                               StartIcon="@Icons.Material.Filled.Save"
-                               Size="Size.Medium"
-                               Disabled="@isSaving">
-                        @if (isSaving)
+                        @if (isEditing)
                         {
-                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary" Class="mr-2" />
+                            <button class="form-cancel-btn" @onclick="ResetForm" title="Annuler la modification">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
                         }
-                        @(isEditing ? "Modifier" : "Enregistrer")
-                    </MudButton>
-                </MudStack>
-            </MudForm>
-        </MudCardContent>
-    </MudCard>
+                    </div>
 
-    
-    <MudCard Elevation="4" Class="pa-6 mx-auto mb-8">
-        <MudText Typo="Typo.h6" Class="mb-4">📋 Liste des types d'actes enregistrés</MudText>
+                    <MudForm @ref="form">
+
+                        <!-- Catégorie -->
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="field-number">1</span>
+                                Catégorie de client
+                            </label>
+                            <MudSelect T="string"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       @bind-Value="ajoutActModel.CategorieClient"
+                                       Required="true">
+                                <MudSelectItem Value="@("Personne Physique")">Personne Physique</MudSelectItem>
+                                <MudSelectItem Value="@("Personne Morale")">Personne Morale</MudSelectItem>
+                            </MudSelect>
+                        </div>
+
+                        <!-- Modèle d'acte -->
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="field-number">2</span>
+                                Modèle d'acte officiel
+                            </label>
+                            <MudSelect T="TemplateType"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       @bind-Value="ajoutActModel.TemplateType"
+                                       Required="true">
+                                <MudSelectItem Value="@TemplateType.CautionnementSpecifiquePhysique">Cautionnement Spécifique — PP</MudSelectItem>
+                                <MudSelectItem Value="@TemplateType.CautionnementSpecifiqueMorale">Cautionnement Spécifique — PM</MudSelectItem>
+                                <MudSelectItem Value="@TemplateType.ToutEngagementPhysique">Tout Engagement — PP</MudSelectItem>
+                                <MudSelectItem Value="@TemplateType.ToutEngagementMorale">Tout Engagement — PM</MudSelectItem>
+                                <MudSelectItem Value="@TemplateType.DelegationLoyersMorale">Délégation de Loyers — PM</MudSelectItem>
+                            </MudSelect>
+                            <div class="field-helper">Détermine le rendu PDF et l'aperçu officiel</div>
+                        </div>
+
+                        <!-- Nom -->
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="field-number">3</span>
+                                Nom du type d'acte
+                            </label>
+                            <MudTextField @bind-Value="ajoutActModel.NomAct"
+                                          @bind-Value:after="@(() => SuggererTemplateType())"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Required="true"
+                                          RequiredError="Le nom est obligatoire"
+                                          Placeholder="Ex: Cautionnement spécifique particulier" />
+                        </div>
+
+                        <!-- Description -->
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="field-number">4</span>
+                                Description (optionnel)
+                            </label>
+                            <MudTextField @bind-Value="ajoutActModel.Description"
+                                          @bind-Value:after="@(() => SuggererTemplateType())"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Lines="3"
+                                          Placeholder="Quelques mots pour expliquer ce type d'acte..." />
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="form-actions">
+                            <button class="form-btn form-btn-primary"
+                                    @onclick="AjouterOuModifierActe"
+                                    disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-mini"></span>
+                                    <span>Enregistrement...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi @(isEditing ? "bi-check2" : "bi-plus-circle-fill")"></i>
+                                    <span>@(isEditing ? "Mettre à jour" : "Enregistrer")</span>
+                                }
+                            </button>
+
+                            @if (isEditing)
+                            {
+                                <button class="form-btn form-btn-ghost" @onclick="ResetForm">
+                                    Annuler
+                                </button>
+                            }
+                        </div>
+
+                    </MudForm>
+                </div>
+            </div>
+        </div>
+
+        <!-- ───── ZONE PRÉVISUALISATION (droite) ───── -->
+        <div class="preview-pane">
+            <div class="preview-label">
+                <i class="bi bi-eye-fill"></i>
+                <span>APERÇU EN DIRECT</span>
+            </div>
+
+            @{
+                var (previewIcon, previewGradient) = GetActeStyle(ajoutActModel.TemplateType);
+                var hasName = !string.IsNullOrWhiteSpace(ajoutActModel.NomAct);
+                var hasCat = !string.IsNullOrWhiteSpace(ajoutActModel.CategorieClient);
+            }
+
+            <div class="preview-card @(isEditing ? "preview-edit-mode" : "")">
+                @if (isEditing)
+                {
+                    <div class="preview-ribbon">
+                        <i class="bi bi-pencil-fill"></i>
+                        Modification en cours
+                    </div>
+                }
+
+                <div class="preview-icon-wrap" style="background: @previewGradient;">
+                    <i class="bi @previewIcon"></i>
+                </div>
+
+                <div class="preview-body">
+                    @if (hasCat)
+                    {
+                        var isMorale = ajoutActModel.CategorieClient == "Personne Morale";
+                        <div class="preview-cat @(isMorale ? "preview-cat-morale" : "preview-cat-physique")">
+                            <i class="bi @(isMorale ? "bi-building-fill" : "bi-person-fill")"></i>
+                            <span>@ajoutActModel.CategorieClient</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="preview-cat preview-cat-empty">
+                            <i class="bi bi-question-circle"></i>
+                            <span>Catégorie non définie</span>
+                        </div>
+                    }
+
+                    <h2 class="preview-title @(!hasName ? "preview-empty" : "")">
+                        @(hasName ? ajoutActModel.NomAct : "Nom du type d'acte...")
+                    </h2>
+
+                    <p class="preview-desc @(string.IsNullOrWhiteSpace(ajoutActModel.Description) ? "preview-empty" : "")">
+                        @(string.IsNullOrWhiteSpace(ajoutActModel.Description) ? "La description apparaîtra ici..." : ajoutActModel.Description)
+                    </p>
+
+                    <div class="preview-divider"></div>
+
+                    <div class="preview-template-info">
+                        <div class="template-label">Modèle PDF</div>
+                        <div class="template-value">
+                            <i class="bi bi-file-earmark-text"></i>
+                            @GetTemplateLabel(ajoutActModel.TemplateType)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-hint">
+                <i class="bi bi-info-circle"></i>
+                <span>Cette carte se met à jour automatiquement pendant votre saisie</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═════════════ LISTE DES ACTES (cards) ═════════════ -->
+    <section class="list-section">
+        <div class="list-header">
+            <div class="list-title-block">
+                <h2 class="list-title">
+                    <i class="bi bi-collection"></i>
+                    Modèles enregistrés
+                </h2>
+                <p class="list-subtitle">
+                    <i class="bi bi-pencil"></i> pour modifier ·
+                    <i class="bi bi-trash"></i> pour supprimer
+                </p>
+            </div>
+
+            <div class="filter-pills">
+                <button class="filter-pill @(_filterCat == null ? "active" : "")" @onclick="@(() => _filterCat = null)">
+                    Tous (@ajoutActList.Count)
+                </button>
+                <button class="filter-pill @(_filterCat == "Personne Physique" ? "active" : "")" @onclick="@(() => _filterCat = "Personne Physique")">
+                    <i class="bi bi-person-fill"></i>
+                    <span>PP (@CountPP)</span>
+                </button>
+                <button class="filter-pill @(_filterCat == "Personne Morale" ? "active" : "")" @onclick="@(() => _filterCat = "Personne Morale")">
+                    <i class="bi bi-building-fill"></i>
+                    <span>PM (@CountPM)</span>
+                </button>
+            </div>
+        </div>
 
         @if (isLoading)
         {
-            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+            <div class="loading-zone">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            </div>
         }
-
-        @if (ajoutActList == null || ajoutActList.Count == 0)
+        else if (!FilteredList.Any())
         {
-            <MudAlert Severity="Severity.Info" Elevation="2" Class="mb-4">
-                Aucun type d'acte n'a été enregistré pour le moment.
-            </MudAlert>
+            <div class="empty-zone">
+                <div class="empty-icon">
+                    <i class="bi bi-folder-plus"></i>
+                </div>
+                <div class="empty-title">Aucun modèle enregistré</div>
+                <div class="empty-subtitle">Créez votre premier type d'acte avec le formulaire à gauche</div>
+            </div>
         }
         else
         {
-            <MudTable Items="ajoutActList" Dense="true" Hover="true" Bordered="true" Striped="true" Elevation="0" Loading="@isLoading" Class="mb-4">
-                <HeaderContent>
-                    <MudTh>Catégorie</MudTh>
-                    <MudTh>Nom</MudTh>
-                    <MudTh>Modèle</MudTh>
-                    <MudTh>Description</MudTh>
-                    <MudTh Style="width: 120px;">Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>@context.CategorieClient</MudTd>
-                    <MudTd>@context.NomAct</MudTd>
-                    <MudTd>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
-                            @GetTemplateLabel(context.TemplateType)
-                        </MudChip>
-                    </MudTd>
-                    <MudTd>
-                        @if (!string.IsNullOrEmpty(context.Description))
-                        {
-                            <MudTooltip Text="@context.Description">
-                                <MudText Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    @context.Description
-                                </MudText>
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudText Color="Color.Default" Style="font-style: italic;">Non renseignée</MudText>
-                        }
-                    </MudTd>
-                    <MudTd>
-                        <MudStack Row="true" Spacing="2">
-                            <MudTooltip Text="Modifier">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="@(() => ModifierActe(context))" />
-                            </MudTooltip>
+            <div class="cards-grid">
+                @foreach (var acte in FilteredList)
+                {
+                    var (icon, gradient) = GetActeStyle(acte.TemplateType);
+                    var isCurrentEdit = isEditing && idEnEdition == acte.IdAjout;
 
-                            <MudTooltip Text="Supprimer">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Color="Color.Error"
-                                               Size="Size.Small"
-                                               OnClick="@(() => ConfirmerSuppression(context.IdAjout))" />
-                            </MudTooltip>
-                        </MudStack>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
+                    <div class="list-card @(isCurrentEdit ? "list-card-editing" : "")">
+
+                        @if (isCurrentEdit)
+                        {
+                            <div class="editing-tag">
+                                <i class="bi bi-pencil-fill"></i> En cours
+                            </div>
+                        }
+
+                        <div class="list-card-head">
+                            <div class="list-card-icon" style="background: @gradient;">
+                                <i class="bi @icon"></i>
+                            </div>
+                            <div class="list-card-actions">
+                                <button class="card-action-btn card-action-edit"
+                                        @onclick="@(() => ModifierActe(acte))"
+                                        title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="card-action-btn card-action-delete"
+                                        @onclick="@(() => ConfirmerSuppression(acte.IdAjout))"
+                                        title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="list-card-body">
+                            <div class="list-cat @(acte.CategorieClient == "Personne Morale" ? "list-cat-morale" : "list-cat-physique")">
+                                <i class="bi @(acte.CategorieClient == "Personne Morale" ? "bi-building-fill" : "bi-person-fill")"></i>
+                                <span>@acte.CategorieClient</span>
+                            </div>
+
+                            <h3 class="list-card-title">@acte.NomAct</h3>
+
+                            @if (!string.IsNullOrWhiteSpace(acte.Description))
+                            {
+                                <p class="list-card-desc">@acte.Description</p>
+                            }
+                            else
+                            {
+                                <p class="list-card-desc list-empty-desc">Pas de description</p>
+                            }
+                        </div>
+
+                        <div class="list-card-foot">
+                            <span class="list-template-tag">
+                                <i class="bi bi-file-earmark-text"></i>
+                                @GetTemplateLabel(acte.TemplateType)
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
         }
+    </section>
 
-        <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Total : @(ajoutActList?.Count ?? 0) type(s) d'acte
-        </MudText>
-    </MudCard>
-</MudContainer>
-
-
+</div>
 
 
 @code {
@@ -188,6 +389,16 @@
     private bool isLoading = false;
     private bool isEditing = false;
     private int? idEnEdition = null;
+
+    private string? _filterCat = null;
+
+    private int CountPP => ajoutActList.Count(a => a.CategorieClient == "Personne Physique");
+    private int CountPM => ajoutActList.Count(a => a.CategorieClient == "Personne Morale");
+
+    private List<AjoutActModel> FilteredList =>
+        string.IsNullOrEmpty(_filterCat)
+            ? ajoutActList
+            : ajoutActList.Where(a => a.CategorieClient == _filterCat).ToList();
 
     protected override async Task OnInitializedAsync() => await ChargerListeAsync();
 
@@ -216,6 +427,16 @@
         TemplateType.ToutEngagementMorale => "Tout Engag. PM",
         TemplateType.DelegationLoyersMorale => "Délég. Loyers PM",
         _ => "—"
+    };
+
+    private (string icon, string gradient) GetActeStyle(TemplateType type) => type switch
+    {
+        TemplateType.CautionnementSpecifiquePhysique => ("bi-shield-shaded", "linear-gradient(135deg, #1A1F3A 0%, #2A2F4A 100%)"),
+        TemplateType.CautionnementSpecifiqueMorale => ("bi-building-fill", "linear-gradient(135deg, #1F3C88 0%, #3F3A8A 100%)"),
+        TemplateType.ToutEngagementPhysique => ("bi-person-badge", "linear-gradient(135deg, #0E7C5C 0%, #2F5D50 100%)"),
+        TemplateType.ToutEngagementMorale => ("bi-buildings", "linear-gradient(135deg, #92400E 0%, #C9A86A 100%)"),
+        TemplateType.DelegationLoyersMorale => ("bi-house-door-fill", "linear-gradient(135deg, #9B1C2D 0%, #BE3144 100%)"),
+        _ => ("bi-file-earmark-text", "linear-gradient(135deg, #475569 0%, #64748B 100%)")
     };
 
     private async Task AjouterOuModifierActe()
@@ -256,7 +477,8 @@
                     {
                         NomAct = ajoutActModel.NomAct?.Trim() ?? string.Empty,
                         Description = ajoutActModel.Description?.Trim(),
-                        CategorieClient = ajoutActModel.CategorieClient
+                        CategorieClient = ajoutActModel.CategorieClient,
+                        TemplateType = ajoutActModel.TemplateType
                     };
                 result = await AjoutActService.AddAsync(nouveauActe);
             }
@@ -273,18 +495,6 @@
             }
         }
         finally { isSaving = false; }
-    }
-
-    private void OnNomActChanged(string newValue)
-    {
-        ajoutActModel.NomAct = newValue;
-        SuggererTemplateType();
-    }
-
-    private void OnCategorieClientChanged(string newValue)
-    {
-        ajoutActModel.CategorieClient = newValue;
-        SuggererTemplateType();
     }
 
     private void SuggererTemplateType()
@@ -304,14 +514,13 @@
                 ? TemplateType.ToutEngagementMorale
                 : TemplateType.ToutEngagementPhysique;
         }
-        else  // Par défaut : cautionnement spécifique
+        else
         {
             ajoutActModel.TemplateType = estMorale
                 ? TemplateType.CautionnementSpecifiqueMorale
                 : TemplateType.CautionnementSpecifiquePhysique;
         }
     }
-
 
     private void ModifierActe(AjoutActModel acte)
     {
@@ -329,26 +538,22 @@
     private async Task ConfirmerSuppression(int id)
     {
         var parameters = new DialogParameters<DialogConfirmation>
-    {
-        { x => x.ContentText, "Êtes-vous sûr de vouloir supprimer ce type d'acte ? Cette action est irréversible." }
-    };
+        {
+            { x => x.ContentText, "Êtes-vous sûr de vouloir supprimer ce type d'acte ? Cette action est irréversible." }
+        };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
 
-        // Ouvre le dialogue
         var dialogRef = await DialogService.ShowAsync<DialogConfirmation>("Confirmation", parameters, options);
-
-        // Récupère le résultat en sécurisant le null
         var result = await dialogRef.Result.ConfigureAwait(false);
 
-        if (result?.Data is true) // ✅ null check ajouté
+        if (result?.Data is true)
         {
-            await SupprimerActeConfirmé(id);
+            await SupprimerActeConfirme(id);
         }
     }
 
-
-    private async Task SupprimerActeConfirmé(int id)
+    private async Task SupprimerActeConfirme(int id)
     {
         try
         {
@@ -384,3 +589,1017 @@
         form?.ResetValidation();
     }
 }
+
+<style>
+    /* ════════════════════════════════════════════════
+           ATELIER DES MODÈLES — DESIGN BLEU ROYAL BNP
+           ════════════════════════════════════════════════ */
+    .ajout-page {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        padding: 8px;
+        background: radial-gradient(800px 500px at 80% 20%, rgba(30, 64, 175, 0.04), transparent 60%), radial-gradient(600px 400px at 20% 80%, rgba(79, 70, 229, 0.04), transparent 60%), #F5F7FB;
+        min-height: 100vh;
+    }
+
+    /* ═══════════ HEADER BLEU ROYAL ═══════════ */
+    .ajout-topbar {
+        background: radial-gradient(700px 350px at 85% 30%, rgba(252, 211, 77, 0.1), transparent 60%), radial-gradient(500px 300px at 15% 80%, rgba(79, 70, 229, 0.2), transparent 65%), linear-gradient(135deg, #0A1E5C 0%, #1E40AF 40%, #2563EB 75%, #1E3A8A 100%);
+        padding: 24px 28px;
+        border-radius: 18px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(30, 64, 175, 0.3);
+    }
+
+        /* Filigrane or en bas */
+        .ajout-topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 25%, rgba(252, 211, 77, 0.7) 50%, rgba(252, 211, 77, 0.4) 75%, transparent 100%);
+            pointer-events: none;
+        }
+
+        /* Motif "plan d'architecte" (grille subtile) */
+        .ajout-topbar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+    .topbar-bg-deco {
+        position: absolute;
+        top: -40%;
+        right: -10%;
+        width: 380px;
+        height: 380px;
+        background: radial-gradient(circle, rgba(252, 211, 77, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .topbar-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .topbar-title-block {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    /* Icône Atelier (engrenages or sur bleu) */
+    .topbar-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(252, 211, 77, 0.25), rgba(255, 255, 255, 0.1));
+        border: 1.5px solid rgba(252, 211, 77, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.7rem;
+        flex-shrink: 0;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        position: relative;
+    }
+
+        .topbar-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 16px;
+            border: 1.5px dashed rgba(252, 211, 77, 0.35);
+            animation: rotate-slow 30s linear infinite;
+        }
+
+    @@keyframes rotate-slow {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .topbar-title {
+        color: white;
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.4px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .topbar-subtitle {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.88rem;
+        margin: 4px 0 0 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+
+        .topbar-subtitle i {
+            color: #FCD34D;
+            font-size: 0.95rem;
+        }
+
+    /* === Stats inline premium === */
+    .topbar-stats {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(252, 211, 77, 0.3);
+        border-radius: 14px;
+        padding: 10px 18px;
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .topbar-stat {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+        .topbar-stat:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+    .stat-icon-mini {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-total .stat-icon-mini {
+        background: linear-gradient(135deg, #FCD34D, #F59E0B);
+        color: #1A1A2E;
+    }
+
+    .stat-pp .stat-icon-mini {
+        background: linear-gradient(135deg, #34D399, #10B981);
+    }
+
+    .stat-pm .stat-icon-mini {
+        background: linear-gradient(135deg, #A78BFA, #7C3AED);
+    }
+
+    .stat-data {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+
+    .stat-num {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: white;
+        font-feature-settings: "tnum" 1;
+        letter-spacing: -0.5px;
+    }
+
+    .stat-lbl {
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+        white-space: nowrap;
+    }
+
+    .stat-divider-vert {
+        width: 1px;
+        height: 32px;
+        background: linear-gradient(180deg, transparent 0%, rgba(252, 211, 77, 0.4) 30%, rgba(252, 211, 77, 0.4) 70%, transparent 100%);
+        flex-shrink: 0;
+    }
+
+    /* ═══════════ WORKSPACE SPLIT (formulaire + preview) ═══════════ */
+    .workspace-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    /* ═══════════ FORM PANE ═══════════ */
+    .form-pane {
+        position: relative;
+    }
+
+    .form-sticky {
+        position: sticky;
+        top: 16px;
+    }
+
+    .form-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Bandeau bleu en haut du formulaire */
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1E40AF, #3B82F6, #FCD34D);
+        }
+
+    .form-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px dashed #E5E7EB;
+    }
+
+    .form-mode-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 24px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .mode-new {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        color: white;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+    }
+
+    .mode-edit {
+        background: linear-gradient(135deg, #EA580C, #F97316);
+        color: white;
+        box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+    }
+
+    .form-cancel-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #FEF2F2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+        .form-cancel-btn:hover {
+            background: #DC2626;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+    /* === Champs du formulaire === */
+    .field-group {
+        margin-bottom: 18px;
+    }
+
+    .field-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #1E3A8A;
+        margin-bottom: 8px;
+        letter-spacing: -0.1px;
+    }
+
+    .field-number {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3);
+    }
+
+    .field-helper {
+        font-size: 0.75rem;
+        color: #64748B;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-style: italic;
+    }
+
+    /* === Actions du formulaire === */
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 2px dashed #E5E7EB;
+    }
+
+    .form-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.25s ease;
+        white-space: nowrap;
+    }
+
+    .form-btn-primary {
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 60%, #1E3A8A 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(30, 64, 175, 0.4);
+        flex: 1;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .form-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .form-btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(30, 64, 175, 0.6);
+        }
+
+        .form-btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .form-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .form-btn-ghost {
+        background: white;
+        color: #64748B;
+        border-color: #E5E7EB;
+    }
+
+        .form-btn-ghost:hover {
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+
+    .spinner-mini {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ═══════════ PREVIEW PANE (droite) ═══════════ */
+    .preview-pane {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .preview-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #FCD34D, #F59E0B);
+        color: #92400E;
+        padding: 6px 14px;
+        border-radius: 24px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        align-self: flex-start;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        animation: preview-pulse 2.5s ease-in-out infinite;
+    }
+
+    @@keyframes preview-pulse {
+        0%, 100% {
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }
+
+        50% {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+        }
+    }
+
+    .preview-card {
+        background: white;
+        border: 2px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(30, 64, 175, 0.08);
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+        .preview-card:hover {
+            box-shadow: 0 12px 32px rgba(30, 64, 175, 0.12);
+        }
+
+        .preview-card.preview-edit-mode {
+            border-color: #F97316;
+            background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%);
+        }
+
+    .preview-ribbon {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #EA580C, #F97316);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
+    }
+
+    .preview-icon-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.4rem;
+        margin-bottom: 18px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .preview-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .preview-cat {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        border: 1px solid;
+        align-self: flex-start;
+    }
+
+    .preview-cat-physique {
+        background: #EFF6FF;
+        color: #1E40AF;
+        border-color: #BFDBFE;
+    }
+
+    .preview-cat-morale {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    .preview-cat-empty {
+        background: #F1F5F9;
+        color: #94A3B8;
+        border-color: #E2E8F0;
+        font-style: italic;
+    }
+
+    .preview-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0;
+        line-height: 1.3;
+        letter-spacing: -0.3px;
+    }
+
+        .preview-title.preview-empty,
+        .preview-desc.preview-empty {
+            color: #94A3B8;
+            font-style: italic;
+            font-weight: 600;
+        }
+
+    .preview-desc {
+        font-size: 0.88rem;
+        color: #475569;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .preview-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #E2E8F0 30%, #E2E8F0 70%, transparent 100%);
+        margin: 4px 0;
+    }
+
+    .preview-template-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .template-label {
+        font-size: 0.72rem;
+        color: #64748B;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .template-value {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        color: #FCD34D;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        font-family: 'Monaco', 'Menlo', monospace;
+        align-self: flex-start;
+        box-shadow: 0 2px 8px rgba(30, 64, 175, 0.25);
+    }
+
+    .preview-hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #EFF6FF;
+        color: #1E40AF;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid #BFDBFE;
+    }
+
+        .preview-hint i {
+            color: #3B82F6;
+            font-size: 1rem;
+        }
+
+    /* ═══════════ LIST SECTION ═══════════ */
+    .list-section {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .list-header {
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #BFDBFE;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .list-title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .list-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #1E3A8A;
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+
+        .list-title i {
+            color: #3B82F6;
+            font-size: 1.3rem;
+        }
+
+    .list-subtitle {
+        font-size: 0.82rem;
+        color: #1E40AF;
+        margin: 0;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .list-subtitle i {
+            font-size: 0.85rem;
+        }
+
+    .filter-pills {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        background: white;
+        border: 1px solid #BFDBFE;
+        color: #475569;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .filter-pill i {
+            font-size: 0.9rem;
+        }
+
+        .filter-pill:hover {
+            border-color: #3B82F6;
+            color: #1E40AF;
+            transform: translateY(-1px);
+        }
+
+        .filter-pill.active {
+            background: linear-gradient(135deg, #1E40AF, #3B82F6);
+            color: white;
+            border-color: #1E40AF;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+    /* === Cards grid === */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        padding: 24px;
+    }
+
+    .list-card {
+        background: white;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .list-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1E40AF, #3B82F6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .list-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(30, 64, 175, 0.15);
+            border-color: #3B82F6;
+        }
+
+            .list-card:hover::before {
+                opacity: 1;
+            }
+
+    .list-card-editing {
+        border-color: #F97316;
+        background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%);
+    }
+
+        .list-card-editing::before {
+            background: linear-gradient(90deg, #EA580C, #F97316);
+            opacity: 1;
+        }
+
+    .editing-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: linear-gradient(135deg, #EA580C, #F97316);
+        color: white;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4);
+    }
+
+    .list-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .list-card-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.4rem;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .list-card:hover .list-card-icon {
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    .list-card-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .card-action-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        background: white;
+        border: 1px solid #E5E7EB;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        transition: all 0.2s ease;
+    }
+
+    .card-action-edit {
+        color: #1E40AF;
+    }
+
+        .card-action-edit:hover {
+            background: #1E40AF;
+            color: white;
+            border-color: #1E40AF;
+            transform: translateY(-1px);
+        }
+
+    .card-action-delete {
+        color: #DC2626;
+    }
+
+        .card-action-delete:hover {
+            background: #DC2626;
+            color: white;
+            border-color: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    .list-card-body {
+        flex: 1;
+    }
+
+    .list-cat {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        margin-bottom: 8px;
+        border: 1px solid;
+    }
+
+        .list-cat i {
+            font-size: 0.8rem;
+        }
+
+    .list-cat-physique {
+        background: #EFF6FF;
+        color: #1E40AF;
+        border-color: #BFDBFE;
+    }
+
+    .list-cat-morale {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    .list-card-title {
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin: 0 0 6px 0;
+        line-height: 1.35;
+        letter-spacing: -0.1px;
+    }
+
+    .list-card-desc {
+        font-size: 0.82rem;
+        color: #64748B;
+        margin: 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .list-empty-desc {
+        font-style: italic;
+        color: #94A3B8;
+    }
+
+    .list-card-foot {
+        padding-top: 10px;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .list-template-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: linear-gradient(135deg, #0A2540, #1E40AF);
+        color: #FCD34D;
+        padding: 4px 10px;
+        border-radius: 7px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        font-family: 'Monaco', 'Menlo', monospace;
+        border: 1px solid rgba(252, 211, 77, 0.2);
+    }
+
+    /* ═══════════ EMPTY / LOADING ═══════════ */
+    .loading-zone,
+    .empty-zone {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+        color: #1E40AF;
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+        box-shadow: inset 0 0 0 4px white, inset 0 0 0 5px rgba(30, 64, 175, 0.2);
+        position: relative;
+    }
+
+        .empty-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px dashed rgba(30, 64, 175, 0.3);
+            animation: rotate-slow 25s linear infinite;
+        }
+
+    .empty-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin-bottom: 6px;
+    }
+
+    .empty-subtitle {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 1024px) {
+        .workspace-split {
+            grid-template-columns: 1fr;
+        }
+
+        .form-sticky {
+            position: static;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .topbar-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .topbar-stats {
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .stat-divider-vert {
+            display: none;
+        }
+
+        .topbar-title {
+            font-size: 1.3rem;
+        }
+
+        .cards-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

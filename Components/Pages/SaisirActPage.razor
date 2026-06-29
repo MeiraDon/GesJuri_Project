@@ -31,353 +31,548 @@
 @inject IActeWorkflow WorkflowService
 @inject AuthenticationStateProvider AuthStateProvider
 
-<div class="container py-4" lang="fr">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-10">
+<div class="saisie-shell" lang="fr">
 
-            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-                <div>
-                    <h1 class="h4 mb-1">Saisie – Acte de cautionnement</h1>
-                    <div class="text-muted">Renseignez les informations étape par étape.</div>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge text-bg-primary">Étape @((int)step + 1)/7</span>
-                    <span class="text-muted small">@GetStepLabel(step)</span>
-                </div>
+    <!-- ═══════════════ TOP BAR ═══════════════ -->
+    <header class="saisie-topbar">
+        <div class="topbar-left">
+            <button class="btn-back-circle" @onclick="OnBack" disabled="@(step == WizardStep.Participants && isBusy)" title="Retour">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div>
+                <div class="topbar-title">@(ajoutAct?.NomAct ?? "Nouvel acte")</div>
+                <div class="topbar-subtitle">@GetStepLabel(step) • Étape @((int)step + 1) sur 7</div>
             </div>
-
-            <MudPaper Class="pa-3 mb-3" Elevation="0" Style="border:1px dashed rgba(0,51,102,.2); border-radius:10px;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <MudText Typo="Typo.subtitle2" Class="mb-0">
-                        Banque liée à l’acte
-                    </MudText>
-
-                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
-                        @GetBanqueActeLabel()
-                    </MudChip>
-                </div>
-
-                @if (boaBank is not null)
-                {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                        Cette application crée uniquement des actes pour la banque BOA-TOGO.
-                    </MudText>
-                }
-                else
-                {
-                    <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">
-                        La banque BOA-TOGO n’est pas configurée dans le référentiel.
-                    </MudText>
-                }
-            </MudPaper>
-
-            <div class="card shadow-sm">
-                <div class="card-body">
-
-                    <EditForm EditContext="@CurrentContext" OnSubmit="@(_ => Task.CompletedTask)">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-
-                        <div class="mb-3">
-                            <div class="progress" style="height: 10px;" aria-label="Progression">
-                                <div class="progress-bar" role="progressbar"
-                                     style="@($"width: {GetProgressPercent()}%")"
-                                     aria-valuenow="@GetProgressPercent()" aria-valuemin="0" aria-valuemax="100">
-                                </div>
-                            </div>
-                        </div>
-
-                        @* =================== PARTICIPANTS (NOUVEAU) =================== *@
-                        @if (step == WizardStep.Participants)
-                        {
-                            <ClientHeader Title="Participants" Subtitle="Choisissez ou créez les personnes (Débiteur / Caution / Témoins)"
-                                          IconCss="bi bi-people big-bold-icon" />
-
-                            <div class="row g-3">
-                                <div class="col-12 col-lg-6">
-                                    @RenderParticipantCard(ParticipantRole.Debiteur, "Débiteur", "bi bi-person")
-                                </div>
-                                <div class="col-12 col-lg-6">
-                                    @RenderParticipantCard(ParticipantRole.Caution, "Caution", "bi bi-person-lock")
-                                </div>
-                                @if (showTemoins)
-                                {
-                                    <div class="col-12 col-lg-6">
-                                        @RenderParticipantCard(ParticipantRole.Temoin1, "Témoin 1", "bi bi-person-check")
-                                    </div>
-
-                                    <div class="col-12 col-lg-6">
-                                        @RenderParticipantCard(ParticipantRole.Temoin2, "Témoin 2", "bi bi-person-check")
-                                    </div>
-                                }
-                            </div>
-
-                            <div class="alert alert-info mt-3 mb-0">
-                                <i class="bi bi-lightbulb me-2"></i>
-                                Astuce : recherchez par <b>nom</b>, <b>téléphone</b> ou <b>pièce</b> (Type + Numéro).
-                            </div>
-                        }
-
-                        @* =================== CAUTIONNEMENT =================== *@
-                        @if (step == WizardStep.Cautionnement)
-                        {
-                            <ClientHeader Title="Cautionnement" Subtitle="Informations juridiques de l'acte de cautionnement"
-                                          IconCss="bi bi-file-earmark-text big-bold-icon" />
-                            <CascadingValue Value="cautionnementContext" IsFixed="true">
-                                <GesCPSI_Project.Components.Forms.CautionnementForm Cautionnement="@model.Cautionnement" />
-                            </CascadingValue>
-                        }
-
-                        @* =================== PRET =================== *@
-                        @if (step == WizardStep.Pret)
-                        {
-                            <ClientHeader Title="Prêt" Subtitle="Informations sur le prêt bancaire"
-                                          IconCss="bi bi-cash-coin big-bold-icon" />
-                            <CascadingValue Value="pretContext" IsFixed="true">
-                                <GesCPSI_Project.Components.Forms.PretForm Pret="@model.Pret" />
-                            </CascadingValue>
-                        }
-
-                        @* =================== AUTORISATION =================== *@
-                        @if (step == WizardStep.Autorisation)
-                        {
-                            <ClientHeader Title="Autorisation de débit" Subtitle="Autorisation de prélèvement bancaire"
-                                          IconCss="bi bi-credit-card big-bold-icon" />
-                            <CascadingValue Value="autorisationContext" IsFixed="true">
-                                <GesCPSI_Project.Components.Forms.AutorisationForm Autorisation="@model.Autorisation" />
-                            </CascadingValue>
-                        }
-
-                        @* =================== CHARGE =================== *@
-                        @if (step == WizardStep.Charge)
-                        {
-                            <ClientHeader Title="Charges" Subtitle="Frais et taxes associés à l'acte"
-                                          IconCss="bi bi-receipt big-bold-icon" />
-                            <CascadingValue Value="chargeContext" IsFixed="true">
-                                <GesCPSI_Project.Components.Forms.ChargeForm Charge="@model.Charge" />
-                            </CascadingValue>
-                        }
-
-                        @* =================== ENTITE JURIDIQUE =================== *@
-                        @if (step == WizardStep.EntiteJuridique)
-                        {
-                            <ClientHeader Title="Entité Juridique" Subtitle="Informations sur l'officier public"
-                                          IconCss="bi bi-building big-bold-icon" />
-                            <CascadingValue Value="entiteJurContext" IsFixed="true">
-                                <GesCPSI_Project.Components.Forms.EntiteJurForm EntiteJuridique="@model.EntiteJuridique" />
-                            </CascadingValue>
-                        }
-
-                        @* =================== RECAP =================== *@
-                        @if (step == WizardStep.Recap)
-                        {
-                            <ClientHeader Title="Récapitulatif" Subtitle="Vérifiez avant de valider"
-                                          IconCss="bi bi-clipboard-check big-bold-icon" />
-
-                            <ValidationSummary />
-
-                            <div class="row g-3">
-
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                            <div class="fw-semibold">
-                                                <i class="bi bi-people me-2"></i>Participants
-                                            </div>
-                                            <span class="badge text-bg-light">
-                                                Acte : @(currentActeId ?? ActeId ?? 0)
-                                            </span>
-                                        </div>
-
-                                        <div class="row g-2 mt-2">
-                                            <div class="col-12 col-lg-6">
-                                                @RenderParticipantRecap("Débiteur", participants[ParticipantRole.Debiteur])
-                                            </div>
-                                            <div class="col-12 col-lg-6">
-                                                @RenderParticipantRecap("Caution", participants[ParticipantRole.Caution])
-                                            </div>
-                                            @if (showTemoins)
-                                            {
-                                                <div class="col-12 col-lg-6">
-                                                    @RenderParticipantRecap("Témoin 1", participants[ParticipantRole.Temoin1])
-                                                </div>
-
-                                                <div class="col-12 col-lg-6">
-                                                    @RenderParticipantRecap("Témoin 2", participants[ParticipantRole.Temoin2])
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- =================== CAUTIONNEMENT =================== -->
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="fw-semibold mb-2">Cautionnement</div>
-                                        <dl class="row mb-0">
-                                            <dt class="col-4 text-muted">N° cautionnement</dt>
-                                            <dd class="col-8 mb-1">@model.Cautionnement.NumeroCautionmt</dd>
-                                            <dt class="col-4 text-muted">Montant</dt>
-                                            <dd class="col-8 mb-1">@model.Cautionnement.MontantCautionne.ToString("N0") FCFA</dd>
-                                            <dt class="col-4 text-muted">Date signature</dt>
-                                            <dd class="col-8 mb-1">@model.Cautionnement.DateSignatureCautionmt.ToString("dd/MM/yyyy")</dd>
-                                            <dt class="col-4 text-muted">Date expiration</dt>
-                                            <dd class="col-8 mb-0">@model.Cautionnement.DateExpirationCautionmt.ToString("dd/MM/yyyy")</dd>
-                                        </dl>
-                                    </div>
-                                </div>
-
-                                <!-- =================== PRET =================== -->
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="fw-semibold mb-2">Prêt</div>
-                                        <dl class="row mb-0">
-                                            <dt class="col-4 text-muted">Référence</dt>
-                                            <dd class="col-8 mb-1">@model.Pret.ReferenceConvention</dd>
-
-                                            <dt class="col-4 text-muted">Montant</dt>
-                                            <dd class="col-8 mb-1">@model.Pret.MontantConcours.ToString("N0") FCFA</dd>
-
-                                            <dt class="col-4 text-muted">Durée</dt>
-                                            <dd class="col-8 mb-1">@model.Pret.DureMoisPret mois</dd>
-
-                                            <dt class="col-4 text-muted">Date signature</dt>
-                                            <dd class="col-8 mb-0">@model.Pret.DateSignaturePret.ToString("dd/MM/yyyy")</dd>
-                                        </dl>
-                                    </div>
-                                </div>
-
-                                <!-- =================== AUTORISATION =================== -->
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="fw-semibold mb-2">Autorisation de débit</div>
-                                        <dl class="row mb-0">
-                                            <dt class="col-4 text-muted">N° autorisation</dt>
-                                            <dd class="col-8 mb-1">@model.Autorisation.NumeroAutorisation</dd>
-
-                                            <dt class="col-4 text-muted">Date</dt>
-                                            <dd class="col-8 mb-1">@model.Autorisation.DateAutorisation.ToString("dd/MM/yyyy")</dd>
-
-                                            <dt class="col-4 text-muted">Lieu</dt>
-                                            <dd class="col-8 mb-1">@model.Autorisation.LieuAutorisation</dd>
-
-                                            <dt class="col-4 text-muted">Montant max autorisé</dt>
-                                            <dd class="col-8 mb-1">@model.Autorisation.MontantMaxAutorise.ToString("N0") FCFA</dd>
-
-                                            <dt class="col-4 text-muted">Conditions</dt>
-                                            <dd class="col-8 mb-0">@model.Autorisation.ConditionsAutorisation</dd>
-                                        </dl>
-                                    </div>
-                                </div>
-
-                                <!-- =================== CHARGES =================== -->
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="fw-semibold mb-2">Charges</div>
-                                        <dl class="row mb-0">
-                                            <dt class="col-4 text-muted">Type</dt>
-                                            <dd class="col-8 mb-1">@model.Charge.TypeCharge</dd>
-
-                                            <dt class="col-4 text-muted">Montant</dt>
-                                            <dd class="col-8 mb-1">@model.Charge.MontantCharge.ToString("N0") FCFA</dd>
-
-                                            <dt class="col-4 text-muted">Date</dt>
-                                            <dd class="col-8 mb-1">@model.Charge.DateCharge.ToString("dd/MM/yyyy")</dd>
-
-                                            <dt class="col-4 text-muted">Payé par</dt>
-                                            <dd class="col-8 mb-1">@model.Charge.PayePar</dd>
-
-                                            <dt class="col-4 text-muted">Statut</dt>
-                                            <dd class="col-8 mb-0">@model.Charge.StatutCharge</dd>
-                                        </dl>
-                                    </div>
-                                </div>
-
-                                <!-- =================== ENTITE JURIDIQUE =================== -->
-                                <div class="col-12">
-                                    <div class="border rounded p-3">
-                                        <div class="fw-semibold mb-2">Entité juridique</div>
-                                        <dl class="row mb-0">
-                                            <dt class="col-4 text-muted">Date acte</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.DateActeJuridique.ToString("dd/MM/yyyy")</dd>
-
-                                            <dt class="col-4 text-muted">Référence</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.Reference</dd>
-
-                                            <dt class="col-4 text-muted">Nom huissier</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.NomHuissier</dd>
-
-                                            <dt class="col-4 text-muted">Ville huissier</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.VilleHuissier</dd>
-
-                                            <dt class="col-4 text-muted">N° dossier</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.NumeroDossier</dd>
-
-                                            <dt class="col-4 text-muted">Responsable</dt>
-                                            <dd class="col-8 mb-1">@model.EntiteJuridique.Responsable</dd>
-
-                                            <dt class="col-4 text-muted">Fonction</dt>
-                                            <dd class="col-8 mb-0">@model.EntiteJuridique.FonctionResponsable</dd>
-                                        </dl>
-                                    </div>
-                                </div>
-
-                            </div>
-
-
-                            @if (!string.IsNullOrWhiteSpace(successMessage))
-                            {
-                                <div class="alert alert-success mt-3 mb-0" role="alert">
-                                    <i class="bi bi-check-circle me-2"></i>@successMessage
-                                </div>
-                            }
-
-                            @if (!string.IsNullOrWhiteSpace(errorMessage))
-                            {
-                                <div class="alert alert-danger mt-3 mb-0" role="alert">
-                                    <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
-                                </div>
-                            }
-                        }
-
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
-                            <button type="button" class="btn btn-outline-secondary"
-                                    @onclick="OnBack" disabled="@(step == WizardStep.Participants)"> 
-                                <i class="bi bi-arrow-left me-2"></i>Précédent
-                            </button>
-
-                            <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-outline-danger"
-                                        @onclick="OnReset" disabled="@isBusy">
-                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
-                                </button>
-
-                                @if (step != WizardStep.Recap)
-                                {
-                                    <button type="button" class="btn btn-primary" disabled="@isBusy" @onclick="OnNext">
-                                        Suivant<i class="bi bi-arrow-right ms-2"></i>
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button type="button" class="btn btn-success"
-                                            @onclick="OnSubmit" disabled="@isBusy">
-                                        <i class="bi bi-check me-2"></i>Valider
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    </EditForm>
-
-                </div>
-            </div>
-
-            <div class="text-muted small mt-3">
-                Astuce : vous pouvez revenir en arrière à tout moment pour corriger les informations.
-            </div>
-
         </div>
+        <div class="topbar-right">
+            <div class="topbar-progress-pill">
+                <div class="progress-pill-fill" style="width: @(GetProgressPercent())%;"></div>
+                <span class="progress-pill-text">@GetProgressPercent()%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ STEPPER HORIZONTAL ═══════════════ -->
+    <div class="stepper-horizontal">
+        @{
+            var steps = new[]
+            {
+        new { Step = WizardStep.Participants, Icon = "people-fill", Label = "Participants" },
+        new { Step = WizardStep.Cautionnement, Icon = "shield-shaded", Label = "Cautionnement" },
+        new { Step = WizardStep.Pret, Icon = "cash-stack", Label = "Prêt" },
+        new { Step = WizardStep.Autorisation, Icon = "card-checklist", Label = "Autorisation" },
+        new { Step = WizardStep.Charge, Icon = "receipt-cutoff", Label = "Charges" },
+        new { Step = WizardStep.EntiteJuridique, Icon = "building-check", Label = "Entité Jur." },
+        new { Step = WizardStep.Recap, Icon = "check2-circle", Label = "Récap" }
+        };
+        }
+
+        <div class="stepper-line"></div>
+        <div class="stepper-line-progress" style="width: calc(@(((int)step / 6.0) * 100)% - 24px);"></div>
+
+        @foreach (var s in steps)
+        {
+            var stepIndex = (int)s.Step;
+            var currentIndex = (int)step;
+            var stateClass = stepIndex < currentIndex ? "done"
+            : stepIndex == currentIndex ? "current"
+            : "todo";
+
+            <div class="step-dot-container">
+                <div class="step-dot step-dot-@stateClass" title="@s.Label">
+                    @if (stepIndex < currentIndex)
+                    {
+                        <i class="bi bi-check2"></i>
+                    }
+                    else if (stepIndex == currentIndex)
+                    {
+                        <i class="bi bi-@s.Icon"></i>
+                    }
+                    else
+                    {
+                        <span>@(stepIndex + 1)</span>
+                    }
+                </div>
+                <div class="step-dot-label @(stateClass == "current" ? "label-active" : "")">@s.Label</div>
+            </div>
+        }
     </div>
+
+    <!-- ═══════════════ ZONE PRINCIPALE ═══════════════ -->
+    <div class="main-content">
+        <EditForm EditContext="@CurrentContext" OnSubmit="@(_ => Task.CompletedTask)">
+            <DataAnnotationsValidator />
+
+            @* =================== PARTICIPANTS =================== *@
+            @if (step == WizardStep.Participants)
+            {
+                <div class="content-card" @key="@WizardStep.Participants">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Participants</div>
+                            <div class="content-card-subtitle">Choisissez ou créez les personnes (Débiteur, Caution, Témoins)</div>
+                        </div>
+                    </div>
+
+                    <div class="participants-grid">
+                        <div class="participant-cell">
+                            @RenderParticipantCard(ParticipantRole.Debiteur, "Débiteur", "bi bi-person")
+                        </div>
+                        <div class="participant-cell">
+                            @RenderParticipantCard(ParticipantRole.Caution, "Caution", "bi bi-person-lock")
+                        </div>
+                        @if (showTemoins)
+                        {
+                            <div class="participant-cell">
+                                @RenderParticipantCard(ParticipantRole.Temoin1, "Témoin 1", "bi bi-person-check")
+                            </div>
+                            <div class="participant-cell">
+                                @RenderParticipantCard(ParticipantRole.Temoin2, "Témoin 2", "bi bi-person-check")
+                            </div>
+                        }
+                    </div>
+
+                    <div class="tip-banner">
+                        <i class="bi bi-lightbulb-fill"></i>
+                        <span>Recherchez par <strong>nom</strong>, <strong>téléphone</strong> ou <strong>pièce</strong> (Type + Numéro)</span>
+                    </div>
+                </div>
+            }
+
+            @* =================== CAUTIONNEMENT =================== *@
+            @if (step == WizardStep.Cautionnement)
+            {
+                <div class="content-card" @key="@WizardStep.Cautionnement">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-shield-shaded"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Cautionnement</div>
+                            <div class="content-card-subtitle">Informations juridiques de l'acte de cautionnement</div>
+                        </div>
+                    </div>
+                    <CascadingValue Value="cautionnementContext" IsFixed="true">
+                        <GesCPSI_Project.Components.Forms.CautionnementForm Cautionnement="@model.Cautionnement" />
+                    </CascadingValue>
+                </div>
+            }
+
+            @* =================== PRET =================== *@
+            @if (step == WizardStep.Pret)
+            {
+                <div class="content-card" @key="@WizardStep.Pret">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Prêt</div>
+                            <div class="content-card-subtitle">Informations sur le prêt bancaire</div>
+                        </div>
+                    </div>
+                    <CascadingValue Value="pretContext" IsFixed="true">
+                        <GesCPSI_Project.Components.Forms.PretForm Pret="@model.Pret" />
+                    </CascadingValue>
+                </div>
+            }
+
+            @* =================== AUTORISATION =================== *@
+            @if (step == WizardStep.Autorisation)
+            {
+                <div class="content-card" @key="@WizardStep.Autorisation">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-card-checklist"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Autorisation de débit</div>
+                            <div class="content-card-subtitle">Autorisation de prélèvement bancaire</div>
+                        </div>
+                    </div>
+                    <CascadingValue Value="autorisationContext" IsFixed="true">
+                        <GesCPSI_Project.Components.Forms.AutorisationForm Autorisation="@model.Autorisation" />
+                    </CascadingValue>
+                </div>
+            }
+
+            @* =================== CHARGE =================== *@
+            @if (step == WizardStep.Charge)
+            {
+                <div class="content-card" @key="@WizardStep.Charge">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-receipt-cutoff"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Charges</div>
+                            <div class="content-card-subtitle">Frais et taxes associés à l'acte</div>
+                        </div>
+                    </div>
+                    <CascadingValue Value="chargeContext" IsFixed="true">
+                        <GesCPSI_Project.Components.Forms.ChargeForm Charge="@model.Charge" />
+                    </CascadingValue>
+                </div>
+            }
+
+            @* =================== ENTITE JURIDIQUE =================== *@
+            @if (step == WizardStep.EntiteJuridique)
+            {
+                <div class="content-card" @key="@WizardStep.EntiteJuridique">
+                    <div class="content-card-header">
+                        <div class="content-card-icon">
+                            <i class="bi bi-building-check"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Entité juridique</div>
+                            <div class="content-card-subtitle">Informations sur l'officier public</div>
+                        </div>
+                    </div>
+                    <CascadingValue Value="entiteJurContext" IsFixed="true">
+                        <GesCPSI_Project.Components.Forms.EntiteJurForm EntiteJuridique="@model.EntiteJuridique" />
+                    </CascadingValue>
+                </div>
+            }
+
+            @* =================== RECAP =================== *@
+            @* =================== RECAP =================== *@
+            @if (step == WizardStep.Recap)
+            {
+                <div class="content-card recap-card" @key="@WizardStep.Recap">
+
+                    <div class="content-card-header">
+                        <div class="content-card-icon recap-icon">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                        <div>
+                            <div class="content-card-title">Récapitulatif final</div>
+                            <div class="content-card-subtitle">Vérifiez toutes les informations avant de valider l'acte</div>
+                        </div>
+                    </div>
+
+                    <ValidationSummary />
+
+                    @* ═══════════ BANDEAU RÉSUMÉ EXÉCUTIF ═══════════ *@
+                    <div class="executive-summary">
+                        <div class="exec-bg-deco"></div>
+                        <div class="exec-content">
+                            <div class="exec-left">
+                                <div class="exec-label">Montant cautionnement</div>
+                                <div class="exec-amount">@model.Cautionnement.MontantCautionne.ToString("N0")</div>
+                                <div class="exec-currency">FCFA</div>
+                            </div>
+                            <div class="exec-divider"></div>
+                            <div class="exec-right">
+                                <div class="exec-info-item">
+                                    <i class="bi bi-file-earmark-text-fill"></i>
+                                    <div>
+                                        <div class="exec-info-label">Type d'acte</div>
+                                        <div class="exec-info-value">@(ajoutAct?.NomAct ?? "Cautionnement")</div>
+                                    </div>
+                                </div>
+                                <div class="exec-info-item">
+                                    <i class="bi bi-bank2"></i>
+                                    <div>
+                                        <div class="exec-info-label">Banque</div>
+                                        <div class="exec-info-value">@(boaBank?.SigleBnq ?? "BOA-TOGO")</div>
+                                    </div>
+                                </div>
+                                <div class="exec-info-item">
+                                    <i class="bi bi-hash"></i>
+                                    <div>
+                                        <div class="exec-info-label">N° Acte</div>
+                                        <div class="exec-info-value">#@(currentActeId ?? ActeId ?? 0)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* ═══════════ PARTICIPANTS ═══════════ *@
+                    <div class="recap-block">
+                        <div class="recap-block-header">
+                            <div class="recap-block-icon recap-icon-participants">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="recap-block-title">Participants</div>
+                            <div class="recap-block-count">
+                                @{
+                                    var nbParticipants = participants.Count(p => p.Value.Selected is not null);
+                                }
+                                @nbParticipants assigné@(nbParticipants > 1 ? "s" : "")
+                            </div>
+                        </div>
+
+                        <div class="participants-recap-modern">
+                            @RenderParticipantRecapModern("Débiteur", "bi bi-person-fill", "debiteur", participants[ParticipantRole.Debiteur])
+                            @RenderParticipantRecapModern("Caution", "bi bi-person-lock", "caution", participants[ParticipantRole.Caution])
+                            @if (showTemoins)
+                            {
+                                @RenderParticipantRecapModern("Témoin 1", "bi bi-person-check", "temoin1", participants[ParticipantRole.Temoin1])
+                                @RenderParticipantRecapModern("Témoin 2", "bi bi-person-check", "temoin2", participants[ParticipantRole.Temoin2])
+                            }
+                        </div>
+                    </div>
+
+                    @* ═══════════ GRID 2 COLONNES ═══════════ *@
+                    <div class="recap-grid-modern">
+
+                        <!-- Cautionnement -->
+                        <div class="recap-block">
+                            <div class="recap-block-header">
+                                <div class="recap-block-icon recap-icon-caution">
+                                    <i class="bi bi-shield-shaded"></i>
+                                </div>
+                                <div class="recap-block-title">Cautionnement</div>
+                            </div>
+                            <div class="recap-block-body">
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-hash"></i> N° cautionnement</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Cautionnement.NumeroCautionmt) ? "—" : model.Cautionnement.NumeroCautionmt)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-cash-coin"></i> Montant</span>
+                                    <span class="recap-row-val recap-money">@model.Cautionnement.MontantCautionne.ToString("N0") FCFA</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-pen"></i> Date signature</span>
+                                    <span class="recap-row-val">@model.Cautionnement.DateSignatureCautionmt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-x-circle"></i> Date expiration</span>
+                                    <span class="recap-row-val">@model.Cautionnement.DateExpirationCautionmt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-geo-alt"></i> Lieu</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Cautionnement.LieuSignatureCautionmt) ? "—" : model.Cautionnement.LieuSignatureCautionmt)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prêt -->
+                        <div class="recap-block">
+                            <div class="recap-block-header">
+                                <div class="recap-block-icon recap-icon-pret">
+                                    <i class="bi bi-cash-stack"></i>
+                                </div>
+                                <div class="recap-block-title">Prêt</div>
+                            </div>
+                            <div class="recap-block-body">
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-hash"></i> Référence</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Pret.ReferenceConvention) ? "—" : model.Pret.ReferenceConvention)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-cash-coin"></i> Montant</span>
+                                    <span class="recap-row-val recap-money">@model.Pret.MontantConcours.ToString("N0") FCFA</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-percent"></i> Taux</span>
+                                    <span class="recap-row-val">@model.Pret.Taux %</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-hourglass-split"></i> Durée</span>
+                                    <span class="recap-row-val">@model.Pret.DureMoisPret mois</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-pen"></i> Date signature</span>
+                                    <span class="recap-row-val">@model.Pret.DateSignaturePret.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Autorisation -->
+                        <div class="recap-block">
+                            <div class="recap-block-header">
+                                <div class="recap-block-icon recap-icon-auto">
+                                    <i class="bi bi-card-checklist"></i>
+                                </div>
+                                <div class="recap-block-title">Autorisation de débit</div>
+                            </div>
+                            <div class="recap-block-body">
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-hash"></i> Numéro</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Autorisation.NumeroAutorisation) ? "—" : model.Autorisation.NumeroAutorisation)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-cash-coin"></i> Plafond</span>
+                                    <span class="recap-row-val recap-money">@model.Autorisation.MontantMaxAutorise.ToString("N0") FCFA</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-calendar-event"></i> Date</span>
+                                    <span class="recap-row-val">@model.Autorisation.DateAutorisation.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-geo-alt"></i> Lieu</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Autorisation.LieuAutorisation) ? "—" : model.Autorisation.LieuAutorisation)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charges -->
+                        <div class="recap-block">
+                            <div class="recap-block-header">
+                                <div class="recap-block-icon recap-icon-charge">
+                                    <i class="bi bi-receipt-cutoff"></i>
+                                </div>
+                                <div class="recap-block-title">Charges</div>
+                            </div>
+                            <div class="recap-block-body">
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-tag"></i> Type</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Charge.TypeCharge) ? "—" : model.Charge.TypeCharge)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-cash-coin"></i> Montant</span>
+                                    <span class="recap-row-val recap-money">@model.Charge.MontantCharge.ToString("N0") FCFA</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-person-circle"></i> Payé par</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Charge.PayePar) ? "—" : model.Charge.PayePar)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-circle-fill"></i> Statut</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.Charge.StatutCharge) ? "—" : model.Charge.StatutCharge)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    @* ═══════════ ENTITÉ JURIDIQUE — PLEINE LARGEUR ═══════════ *@
+                    <div class="recap-block recap-block-full">
+                        <div class="recap-block-header">
+                            <div class="recap-block-icon recap-icon-entite">
+                                <i class="bi bi-building-check"></i>
+                            </div>
+                            <div class="recap-block-title">Entité juridique</div>
+                        </div>
+                        <div class="recap-block-body">
+                            <div class="recap-entite-grid">
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-calendar-event"></i> Date acte</span>
+                                    <span class="recap-row-val">@model.EntiteJuridique.DateActeJuridique.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-hash"></i> Référence</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.EntiteJuridique.Reference) ? "—" : model.EntiteJuridique.Reference)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-person-badge"></i> Huissier</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.EntiteJuridique.NomHuissier) ? "—" : model.EntiteJuridique.NomHuissier)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-geo-alt"></i> Ville</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.EntiteJuridique.VilleHuissier) ? "—" : model.EntiteJuridique.VilleHuissier)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-folder-fill"></i> N° dossier</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.EntiteJuridique.NumeroDossier) ? "—" : model.EntiteJuridique.NumeroDossier)</span>
+                                </div>
+                                <div class="recap-row">
+                                    <span class="recap-row-key"><i class="bi bi-person-fill"></i> Responsable</span>
+                                    <span class="recap-row-val">@(string.IsNullOrEmpty(model.EntiteJuridique.Responsable) ? "—" : model.EntiteJuridique.Responsable)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* ═══════════ DISCLAIMER FINAL ═══════════ *@
+                    <div class="recap-disclaimer">
+                        <div class="disclaimer-icon">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </div>
+                        <div class="disclaimer-content">
+                            <div class="disclaimer-title">Prêt à valider ?</div>
+                            <div class="disclaimer-text">
+                                Une fois validé, cet acte passera en statut <strong>"En attente d'envoi"</strong> au responsable juridique.
+                                Vous pourrez toujours le retrouver dans <strong>/listAct</strong>.
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <div class="alert-banner alert-success">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>@successMessage</span>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert-banner alert-error">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>@errorMessage</span>
+                        </div>
+                    }
+                </div>
+            }
+        </EditForm>
+    </div>
+
+    <!-- ═══════════════ FOOTER STICKY ═══════════════ -->
+    <footer class="saisie-footer">
+        <div class="footer-info">
+            @if (currentActeId.HasValue || ActeId.HasValue)
+            {
+                <div class="footer-tag">
+                    <span class="footer-tag-emoji">📌</span>
+                    <span>Acte #@(currentActeId ?? ActeId ?? 0)</span>
+                </div>
+            }
+            <div class="footer-tag footer-tag-bank">
+                <span class="footer-tag-emoji">🏦</span>
+                <span>@(boaBank?.SigleBnq ?? "BOA-TOGO")</span>
+            </div>
+        </div>
+
+        <div class="footer-actions">
+            <button class="btn-action btn-secondary" @onclick="OnReset" disabled="@isBusy" title="Réinitialiser tout">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span class="btn-text-hide-mobile">Réinitialiser</span>
+            </button>
+
+            <button class="btn-action btn-ghost" @onclick="OnBack" disabled="@(step == WizardStep.Participants || isBusy)">
+                <i class="bi bi-arrow-left"></i>
+                <span>Précédent</span>
+            </button>
+
+            @if (step != WizardStep.Recap)
+            {
+                <button class="btn-action btn-primary" @onclick="OnNext" disabled="@isBusy">
+                    @if (isBusy)
+                    {
+                        <span class="spinner-mini"></span>
+                        <span>Enregistrement...</span>
+                    }
+                    else
+                    {
+                        <span>Suivant</span>
+                        <i class="bi bi-arrow-right"></i>
+                    }
+                </button>
+            }
+            else
+            {
+                <button class="btn-action btn-success" @onclick="OnSubmit" disabled="@isBusy">
+                    @if (isBusy)
+                    {
+                        <span class="spinner-mini"></span>
+                        <span>Validation...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-check2-all"></i>
+                        <span>Valider l'acte</span>
+                    }
+                </button>
+            }
+        </div>
+    </footer>
 </div>
 
 @code {
@@ -653,113 +848,186 @@
 
     // =================== UI HELPERS ===================
 
-    private RenderFragment RenderParticipantCard(ParticipantRole role, string title, string iconCss) => @<div class="border rounded p-3 h-100" style="border-color: rgba(0,51,102,.15);">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-        <div class="fw-semibold">
-            <i class="@iconCss me-2"></i>@title
+    private RenderFragment RenderParticipantCard(ParticipantRole role, string title, string iconCss) => @<div class="participant-card participant-role-@role.ToString().ToLower()">
+
+        @* HEADER DU PARTICIPANT *@
+        <div class="pc-header">
+            <div class="pc-header-left">
+                <div class="pc-role-icon">
+                    <i class="@iconCss"></i>
+                </div>
+                <div class="pc-role-name">@title</div>
+            </div>
+
+            @if (participants[role].Selected is not null)
+        {
+            <div class="pc-status pc-status-ok">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Assigné</span>
+            </div>
+        }
+        else
+        {
+            <div class="pc-status pc-status-empty">
+                <i class="bi bi-dash-circle"></i>
+                <span>Non assigné</span>
+            </div>
+        }
         </div>
 
-        @if (participants[role].Selected is not null)
-                {
-        <span class="badge text-bg-success">
-            <i class="bi bi-check2 me-1"></i>Assigné
-        </span>
-                }
-                else
-                {
-        <span class="badge text-bg-light">Non assigné</span>
-                }
-    </div>
+        @* BODY DU PARTICIPANT *@
+        <div class="pc-body">
 
-@if (participants[role].Selected is not null)
-    {
-    <div class="bg-light rounded p-2 mb-2">
-        <div class="fw-semibold">@DisplayClientName(participants[role].Selected!)</div>
-        <div class="small text-muted">
-            <span class="me-2"><i class="bi bi-telephone me-1"></i>@(participants[role].Selected!.TelCel)</span>
-            <span><i class="bi bi-person-vcard me-1"></i>@(participants[role].Selected!.TypePieceID) @(participants[role].Selected!.NumPieceID)</span>
-        </div>
-        <div class="d-flex gap-2 mt-2 flex-wrap">
-            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => ClearParticipant(role)" disabled="@isBusy">
-                <i class="bi bi-x-lg me-1"></i>Changer
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => OpenClientEditPage(role)" disabled="@isBusy">
-                <i class="bi bi-pencil me-1"></i>Modifier client
-            </button>
-        </div>
-    </div>
-    }
+            @if (participants[role].Selected is not null)
+        {
+                @* ════════════ MODE ASSIGNÉ : VUE ÉPURÉE ════════════ *@
+        var selected = participants[role].Selected!;
 
-    <div class="mb-2">
-        <MudTextField @bind-Value="participants[role].Search"
-                      Label="Rechercher un client (nom / téléphone / pièce)"
-                      Variant="Variant.Outlined" Dense="true"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-    </div>
-
-    <div class="d-flex gap-2 flex-wrap">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@isBusy"
-                   OnClick="() => SearchClientsAsync(role)">
-            Rechercher
-        </MudButton>
-
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Disabled="@isBusy"
-                   OnClick="() => OpenCreateClientDialogAsync(role)">
-            Créer (Dialog)
-        </MudButton>
-
-        <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" Disabled="@isBusy"
-                   OnClick="() => OpenCreateClientPage(role)">
-            Créer (Page)
-        </MudButton>
-    </div>
-
-@if (!string.IsNullOrWhiteSpace(participants[role].InfoMessage))
-    {
-    <div class="alert alert-warning mt-2 mb-0">
-        <i class="bi bi-exclamation-triangle me-2"></i>@participants[role].InfoMessage
-    </div>
-    }
-
-@if (participants[role].IsSearching)
-    {
-    <div class="text-muted small mt-2">
-        <i class="bi bi-arrow-repeat me-2"></i>Recherche en cours...
-    </div>
-    }
-
-@if (participants[role].Results?.Any() == true)
-    {
-    <div class="mt-2">
-        <div class="small text-muted mb-1">Résultats</div>
-
-        <div class="list-group">
-            @foreach (var c in participants[role].Results.Take(10))
-                        {
-            <div class="list-group-item d-flex justify-content-between align-items-start gap-2">
-                <div>
-                    <div class="fw-semibold">@DisplayClientName(c)</div>
-                    <div class="small text-muted">
-                        <span class="me-2"><i class="bi bi-telephone me-1"></i>@c.TelCel</span>
-                        <span><i class="bi bi-person-vcard me-1"></i>@c.TypePieceID @c.NumPieceID</span>
+            <div class="pc-selected-card">
+                <div class="pc-selected-avatar">
+                    @GetClientInitials(selected)
+                </div>
+                <div class="pc-selected-info">
+                    <div class="pc-selected-name">@DisplayClientName(selected)</div>
+                    <div class="pc-selected-meta">
+                        @if (!string.IsNullOrWhiteSpace(selected.TelCel))
+                    {
+                        <div class="pc-meta-line">
+                            <i class="bi bi-telephone-fill"></i>
+                            <span>@selected.TelCel</span>
+                        </div>
+                    }
+                        @if (!string.IsNullOrWhiteSpace(selected.NumPieceID))
+                    {
+                        <div class="pc-meta-line">
+                            <i class="bi bi-person-vcard"></i>
+                            <span>@selected.TypePieceID @selected.NumPieceID</span>
+                        </div>
+                    }
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-success" @onclick="() => SelectClient(role, c)" disabled="@isBusy">
-                    <i class="bi bi-check me-1"></i>Sélectionner
+            </div>
+
+            <div class="pc-actions-selected">
+                <button class="pc-btn pc-btn-change" @onclick="() => ClearParticipant(role)" disabled="@isBusy">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span>Changer</span>
+                </button>
+                <button class="pc-btn pc-btn-edit" @onclick="() => OpenClientEditPage(role)" disabled="@isBusy">
+                    <i class="bi bi-pencil-fill"></i>
+                    <span>Modifier</span>
                 </button>
             </div>
-                        }
-        </div>
+        }
+        else
+        {
+                @* ════════════ MODE RECHERCHE : VUE COMPLÈTE ════════════ *@
 
-        @if (participants[role].Results.Count > 10)
+                @* === BARRE DE RECHERCHE AVEC AUTO-SEARCH === *@
+            <div class="pc-search-wrap">
+                <i class="bi bi-search pc-search-icon"></i>
+                <input type="text"
+                       class="pc-search-input"
+                       placeholder="Rechercher par nom, téléphone ou pièce..."
+                       value="@participants[role].Search"
+                       @oninput="async e => await OnSearchInputAsync(role, e.Value?.ToString() ?? string.Empty)" />
+                @if (participants[role].IsSearching)
+            {
+                <div class="pc-search-spinner"></div>
+            }
+            </div>
+
+                @* === MESSAGES === *@
+            @if (!string.IsNullOrWhiteSpace(participants[role].InfoMessage))
+        {
+            <div class="pc-info-msg">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@participants[role].InfoMessage</span>
+            </div>
+        }
+
+                @* === RÉSULTATS === *@
+            @if (participants[role].Results?.Any() == true)
+        {
+            <div class="pc-results">
+                <div class="pc-results-label">
+                    <i class="bi bi-list-ul"></i>
+                    <span>@participants[role].Results.Count résultat@(participants[role].Results.Count > 1 ? "s" : "")</span>
+                </div>
+
+                <div class="pc-results-list">
+                    @foreach (var c in participants[role].Results.Take(10))
                 {
-        <div class="small text-muted mt-1">
-            Affichage limité à 10 résultats. Affinez votre recherche.
-        </div>
+                    <div class="pc-result-item" @onclick="() => SelectClient(role, c)">
+                        <div class="pc-result-avatar">@GetClientInitials(c)</div>
+                        <div class="pc-result-info">
+                            <div class="pc-result-name">@DisplayClientName(c)</div>
+                            <div class="pc-result-meta">
+                                @if (!string.IsNullOrWhiteSpace(c.TelCel))
+                            {
+                                <span><i class="bi bi-telephone"></i> @c.TelCel</span>
+                            }
+                                @if (!string.IsNullOrWhiteSpace(c.NumPieceID))
+                            {
+                                <span><i class="bi bi-person-vcard"></i> @c.NumPieceID</span>
+                            }
+                            </div>
+                        </div>
+                        <button class="pc-result-select" disabled="@isBusy">
+                            <i class="bi bi-check2"></i>
+                        </button>
+                    </div>
                 }
-    </div>
-    }
-</div>;
+                </div>
+
+                @if (participants[role].Results.Count > 10)
+            {
+                <div class="pc-results-more">
+                    <i class="bi bi-info-circle"></i>
+                    10 résultats affichés. Affinez votre recherche pour plus de précision.
+                </div>
+            }
+            </div>
+        }
+
+                @* === LIEN "CRÉER" — APPARAÎT UNIQUEMENT SI PAS DE RÉSULTAT OU SI MENU OUVERT === *@
+            <div class="pc-create-zone">
+                <button class="pc-create-toggle @(_openCreateMenu == role ? "open" : "")"
+                        @onclick="() => ToggleCreateMenu(role)"
+                        disabled="@isBusy">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Créer un nouveau client</span>
+                    <i class="bi bi-chevron-down pc-create-arrow"></i>
+                </button>
+
+                @if (_openCreateMenu == role)
+            {
+                <div class="pc-create-menu">
+                    <button class="pc-create-option" @onclick="() => OpenCreateClientDialogAsync(role)" disabled="@isBusy">
+                        <div class="pc-create-option-icon pc-create-icon-dialog">
+                            <i class="bi bi-window"></i>
+                        </div>
+                        <div class="pc-create-option-info">
+                            <div class="pc-create-option-title">Fenêtre rapide</div>
+                            <div class="pc-create-option-desc">Saisie rapide dans une popup</div>
+                        </div>
+                    </button>
+
+                    <button class="pc-create-option" @onclick="() => OpenCreateClientPage(role)" disabled="@isBusy">
+                        <div class="pc-create-option-icon pc-create-icon-page">
+                            <i class="bi bi-file-earmark-plus"></i>
+                        </div>
+                        <div class="pc-create-option-info">
+                            <div class="pc-create-option-title">Page complète</div>
+                            <div class="pc-create-option-desc">Formulaire détaillé sur page dédiée</div>
+                        </div>
+                    </button>
+                </div>
+            }
+            </div>
+        }
+        </div>
+    </div>;
 
 private RenderFragment RenderParticipantRecap(string title, ParticipantState ps) => @<div class="border rounded p-2 h-100">
     <div class="fw-semibold mb-1">@title</div>
@@ -777,6 +1045,41 @@ else
 }
 </div>;
 
+    private RenderFragment RenderParticipantRecapModern(string title, string iconCss, string colorKey, ParticipantState ps) => @<div class="participant-recap-card pr-@colorKey">
+        @if (ps.Selected is null)
+    {
+        <div class="pr-empty">
+            <div class="pr-empty-icon">
+                <i class="bi bi-question-circle"></i>
+            </div>
+            <div class="pr-empty-text">Non assigné</div>
+            <div class="pr-empty-role">@title</div>
+        </div>
+    }
+    else
+    {
+        <div class="pr-content">
+            <div class="pr-avatar-wrap">
+                <div class="pr-avatar">@GetClientInitials(ps.Selected)</div>
+                <div class="pr-role-badge">
+                    <i class="@iconCss"></i>
+                </div>
+            </div>
+            <div class="pr-info">
+                <div class="pr-name">@DisplayClientName(ps.Selected)</div>
+                <div class="pr-role">@title</div>
+                @if (!string.IsNullOrWhiteSpace(ps.Selected.TelCel))
+            {
+                <div class="pr-meta">
+                    <i class="bi bi-telephone"></i>
+                    <span>@ps.Selected.TelCel</span>
+                </div>
+            }
+            </div>
+        </div>
+    }
+    </div>;
+
 private static string DisplayClientName(ClientModel c)
 {
     // Personne morale : raison sociale + représentant (si dispo)
@@ -788,6 +1091,75 @@ private static string DisplayClientName(ClientModel c)
 
     // Personne physique
     return $"{c.Nom} {c.Prenoms}".Trim();
+}
+
+
+    private static string GetClientInitials(ClientModel? c)
+    {
+        if (c is null) return "?";
+
+        // Personne morale : initiales de la raison sociale
+        if (!string.IsNullOrWhiteSpace(c.NomRaisonsociale))
+        {
+            var parts = c.NomRaisonsociale.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2) return (parts[0][..1] + parts[1][..1]).ToUpper();
+            return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+        }
+
+        // Personne physique : N (Nom) + P (Prénom)
+        var nom = (c.Nom ?? "").Trim();
+        var pre = (c.Prenoms ?? "").Trim();
+
+        var initials = "";
+        if (nom.Length > 0) initials += nom[0];
+        if (pre.Length > 0) initials += pre[0];
+
+        return string.IsNullOrEmpty(initials) ? "?" : initials.ToUpper();
+    }
+
+
+    // ═════════ AUTO-SEARCH ET MENU CRÉER ═════════
+
+private ParticipantRole? _openCreateMenu = null;
+private System.Threading.CancellationTokenSource? _searchCts;
+
+private void ToggleCreateMenu(ParticipantRole role)
+{
+    _openCreateMenu = _openCreateMenu == role ? null : role;
+}
+
+private async Task OnSearchInputAsync(ParticipantRole role, string value)
+{
+    participants[role].Search = value;
+    _openCreateMenu = null; // Ferme le menu créer si ouvert
+
+    // Annule la recherche précédente si l'utilisateur tape encore
+    _searchCts?.Cancel();
+    _searchCts = new System.Threading.CancellationTokenSource();
+    var token = _searchCts.Token;
+
+    try
+    {
+        // Debounce 300ms : attend que l'utilisateur arrête de taper
+        await Task.Delay(300, token);
+
+        if (token.IsCancellationRequested) return;
+
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+        {
+            participants[role].Results.Clear();
+            participants[role].InfoMessage = null;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        await SearchClientsAsync(role);
+        await InvokeAsync(StateHasChanged);
+    }
+    catch (TaskCanceledException)
+    {
+        // Normal — l'utilisateur a continué de taper
+    }
 }
 
 // =================== PARTICIPANTS ACTIONS ===================
@@ -1133,18 +1505,48 @@ private async Task SaveStepAsync()
 
     selectedBanqueId = boaId.Value;
 
-    // Toujours mettre à jour la banque si l'utilisateur change
-    var acte = await TypesActService.GetByIdAsync(acteId);
-    if (acte is not null)
-    {
-        acte.IdBnq = boaId.Value;
-        acte.DateMaj = NowUtc();
+        // Toujours mettre à jour la banque si l'utilisateur change
+        var acte = await TypesActService.GetByIdAsync(acteId);
+        if (acte is not null)
+        {
+            acte.IdBnq = boaId.Value;
+            acte.DateMaj = NowUtc();
 
-        // await TypesActService.UpdateAsync(acte);
-        var updateActe = await TypesActService.UpdateAsync(acte);
-        if (!updateActe.IsSuccess)
-            throw new InvalidOperationException(updateActe.ErrorMessage ?? "Erreur mise à jour acte.");
-    }
+            // 🆕 Si l'acte était en Rejeté et que l'utilisateur modifie quelque chose,
+            // on le repasse automatiquement en Brouillon
+            if (_wasRejected && acte.StatutWorkflow == ActeStatut.Rejete)
+            {
+                acte.StatutWorkflow = ActeStatut.Brouillon;
+                acte.Statut = "Brouillon";
+                acte.MotifRejet = null;  // On efface le motif puisque l'acte est corrigé
+
+                // Logger dans l'audit
+                var userId = await GetCurrentUserIdAsync();
+                if (userId.HasValue)
+                {
+                    try
+                    {
+                        // On utilise un log direct dans l'audit
+                        await WorkflowService.RouvrirAsync(acte.IdActe, userId.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[AUDIT] Erreur log re-brouillon acte #{acte.IdActe} : {ex.Message}");
+                    }
+                }
+
+                Snackbar.Add(
+                    $"Acte #{acte.IdActe} repassé en Brouillon suite à vos modifications. Vous pourrez le renvoyer en validation.",
+                    Severity.Success);
+
+                // Reset le flag pour éviter de re-déclencher à chaque étape
+                _wasRejected = false;
+            }
+
+            var updateActe = await TypesActService.UpdateAsync(acte);
+            if (!updateActe.IsSuccess)
+                throw new InvalidOperationException(updateActe.ErrorMessage ?? "Erreur mise à jour acte.");
+        }
 
     switch (step)
     {
@@ -1465,33 +1867,52 @@ private async Task UpsertEntiteJurAsync(int acteId)
 
 // =================== LOAD EXISTING ACTE ===================
 
-private async Task LoadExistingActe(int acteId)
-{
-    try
+    private bool _wasRejected = false;  // 🆕 Flag pour tracer si l'acte était en Rejeté
+    private string? _oldMotifRejet = null;  // 🆕 Pour log dans l'audit
+
+    private async Task LoadExistingActe(int acteId)
     {
-        isBusy = true;
+        try
+        {
+            isBusy = true;
 
-        var acte = await TypesActService.GetByIdAsync(acteId);
-        if (acte is null) return;
+            var acte = await TypesActService.GetByIdAsync(acteId);
+            if (acte is null) return;
 
-        currentActeId = acte.IdActe;
-        selectedBanqueId = acte.IdBnq ?? boaBank?.IdBnq;
+            currentActeId = acte.IdActe;
+            selectedBanqueId = acte.IdBnq ?? boaBank?.IdBnq;
 
-        await LoadParticipantsForActe(acteId);
-        await LoadActeDetails(acteId);
+            // 🆕 Détecter si l'acte était en statut Rejeté
+            if (acte.StatutWorkflow == ActeStatut.Rejete)
+            {
+                _wasRejected = true;
+                _oldMotifRejet = acte.MotifRejet;
 
-        await EnsureParticipantSnapshotsAsync();
-        StateHasChanged();
+                Snackbar.Add(
+                    $"Cet acte avait été rejeté. Motif : {acte.MotifRejet ?? "—"}. Il repassera automatiquement en Brouillon après vos modifications.",
+                    Severity.Warning,
+                    config =>
+                    {
+                        config.RequireInteraction = true;
+                        config.VisibleStateDuration = 10000;
+                    });
+            }
+
+            await LoadParticipantsForActe(acteId);
+            await LoadActeDetails(acteId);
+
+            await EnsureParticipantSnapshotsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur lors du chargement de l'acte : {ex.Message}";
+        }
+        finally
+        {
+            isBusy = false;
+        }
     }
-    catch (Exception ex)
-    {
-        errorMessage = $"Erreur lors du chargement de l'acte : {ex.Message}";
-    }
-    finally
-    {
-        isBusy = false;
-    }
-}
 
 private async Task LoadParticipantsForActe(int acteId)
 {

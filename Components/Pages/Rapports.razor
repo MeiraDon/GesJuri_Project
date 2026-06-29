@@ -1,0 +1,959 @@
+﻿@page "/rapports"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IRapportService RapportService
+@inject IDashboard DashboardService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+
+<PageTitle>Rapports — GesCPSI</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+    <div class="rapports-page">
+
+        <!-- ═════════════ HEADER VERT BOA + BORDEAUX ═════════════ -->
+        <MudPaper Class="rapports-hero" Elevation="0">
+            <div class="hero-bg-deco"></div>
+            <div class="hero-content">
+                <div class="hero-main">
+                    <div class="hero-icon-wrap">
+                        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                    </div>
+                    <div class="hero-text">
+                        <h1 class="hero-title">Rapports d'activité</h1>
+                        <p class="hero-meta">
+                            <span class="meta-strong">Direction Juridique</span>
+                            <span class="meta-sep">·</span>
+                            <span>analyse et synthèse</span>
+                            <span class="meta-sep">·</span>
+                            <span class="meta-boa">
+                                <i class="bi bi-shield-fill-check"></i>
+                                @_roleLabel
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="hero-actions">
+                    <MudTooltip Text="Réinitialiser les filtres">
+                        <button class="hero-btn-icon" @onclick="ResetFilters">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </MudTooltip>
+                    <button class="hero-btn-primary" @onclick="GenerateReport" disabled="@_isLoading">
+                        @if (_isLoading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            <span>Génération...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-play-fill"></i>
+                            <span>Générer le rapport</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- ═════════════ FILTRES PÉRIODE ═════════════ -->
+        <div class="filter-card">
+            <div class="filter-card-header">
+                <div class="filter-icon">
+                    <i class="bi bi-calendar-range-fill"></i>
+                </div>
+                <div class="filter-text">
+                    <div class="filter-title">Période d'analyse</div>
+                    <div class="filter-subtitle">Définissez l'intervalle pour votre rapport</div>
+                </div>
+            </div>
+
+            <div class="filter-body">
+                <!-- Préselections rapides -->
+                <div class="preset-tabs">
+                    <button class="preset-tab @(_preset == "month" ? "active" : "")" @onclick='() => ApplyPreset("month")'>
+                        <i class="bi bi-calendar3"></i>
+                        <span>Mois en cours</span>
+                    </button>
+                    <button class="preset-tab @(_preset == "lastmonth" ? "active" : "")" @onclick='() => ApplyPreset("lastmonth")'>
+                        <i class="bi bi-calendar-minus"></i>
+                        <span>Mois dernier</span>
+                    </button>
+                    <button class="preset-tab @(_preset == "quarter" ? "active" : "")" @onclick='() => ApplyPreset("quarter")'>
+                        <i class="bi bi-calendar-week"></i>
+                        <span>Ce trimestre</span>
+                    </button>
+                    <button class="preset-tab @(_preset == "year" ? "active" : "")" @onclick='() => ApplyPreset("year")'>
+                        <i class="bi bi-calendar4"></i>
+                        <span>Cette année</span>
+                    </button>
+                    <button class="preset-tab @(_preset == "custom" ? "active" : "")" @onclick='() => _preset = "custom"'>
+                        <i class="bi bi-sliders"></i>
+                        <span>Personnalisé</span>
+                    </button>
+                </div>
+
+                <!-- Dates -->
+                <div class="date-inputs">
+                    <div class="date-input-wrap">
+                        <label class="date-label">Date de début</label>
+                        <input type="date" class="date-input" @bind="_dateDebut" @bind:format="yyyy-MM-dd" />
+                    </div>
+                    <div class="date-arrow">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                    <div class="date-input-wrap">
+                        <label class="date-label">Date de fin</label>
+                        <input type="date" class="date-input" @bind="_dateFin" @bind:format="yyyy-MM-dd" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════════ APERÇU DES KPI (après génération) ═════════════ -->
+        @if (_rapport != null)
+        {
+            <div class="kpi-preview-card">
+                <div class="kpi-preview-header">
+                    <div class="filter-icon icon-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="filter-text">
+                        <div class="filter-title">Aperçu du rapport</div>
+                        <div class="filter-subtitle">
+                            Du @_rapport.DateDebut.ToString("dd MMM yyyy") au @_rapport.DateFin.ToString("dd MMM yyyy")
+                            · <strong>@_rapport.Total acte@(_rapport.Total > 1 ? "s" : "")</strong> au total
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kpi-grid-preview">
+                    <div class="kpi-preview kpi-total">
+                        <div class="kpi-preview-label">Total</div>
+                        <div class="kpi-preview-value">@_rapport.Total</div>
+                    </div>
+                    <div class="kpi-preview kpi-valid">
+                        <div class="kpi-preview-label">Validés</div>
+                        <div class="kpi-preview-value">@_rapport.Valides</div>
+                        <div class="kpi-preview-pct">@_rapport.TauxValidation%</div>
+                    </div>
+                    <div class="kpi-preview kpi-pending">
+                        <div class="kpi-preview-label">En attente</div>
+                        <div class="kpi-preview-value">@_rapport.EnAttente</div>
+                    </div>
+                    <div class="kpi-preview kpi-rejected">
+                        <div class="kpi-preview-label">Rejetés</div>
+                        <div class="kpi-preview-value">@_rapport.Rejetes</div>
+                        <div class="kpi-preview-pct">@_rapport.TauxRejet%</div>
+                    </div>
+                </div>
+
+                <!-- ═════════════ EXPORTS ═════════════ -->
+                <div class="exports-section">
+                    <div class="exports-title">
+                        <i class="bi bi-download"></i>
+                        <span>Télécharger le rapport</span>
+                    </div>
+                    <div class="exports-buttons">
+                        <button class="export-btn export-pdf" @onclick="DownloadPdf" disabled="@_isExporting">
+                            <div class="export-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                            <div class="export-info">
+                                <div class="export-name">PDF</div>
+                                <div class="export-desc">Rapport imprimable</div>
+                            </div>
+                        </button>
+                        <button class="export-btn export-excel" @onclick="DownloadExcel" disabled="@_isExporting">
+                            <div class="export-icon"><i class="bi bi-file-earmark-excel-fill"></i></div>
+                            <div class="export-info">
+                                <div class="export-name">Excel</div>
+                                <div class="export-desc">Tableau analysable</div>
+                            </div>
+                        </button>
+                        <button class="export-btn export-word" @onclick="DownloadWord" disabled="@_isExporting">
+                            <div class="export-icon"><i class="bi bi-file-earmark-word-fill"></i></div>
+                            <div class="export-info">
+                                <div class="export-name">Word</div>
+                                <div class="export-desc">Document éditable</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!_isLoading)
+        {
+            <!-- État initial : aucun rapport généré -->
+            <div class="empty-state-rapport">
+                <div class="empty-icon">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+                <div class="empty-title">Aucun rapport généré</div>
+                <div class="empty-subtitle">
+                    Sélectionnez une période et cliquez sur <strong>« Générer le rapport »</strong> pour commencer
+                </div>
+            </div>
+        }
+
+    </div>
+</MudContainer>
+
+@code {
+    private DateTime _dateDebut = DateTime.Today.AddDays(-DateTime.Today.Day + 1);
+    private DateTime _dateFin = DateTime.Today;
+    private string _preset = "month";
+    private bool _isLoading;
+    private bool _isExporting;
+
+    private RapportActiviteDto? _rapport;
+    private int? _currentUserId;
+    private string _userRole = "";
+    private string _userEmail = "";
+    private string _roleLabel = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            _userEmail = user.Identity.Name ?? "";
+            var nameIdentifier = user.Claims.FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
+            if (int.TryParse(nameIdentifier, out var id))
+                _currentUserId = id;
+
+            if (user.IsInRole(RoleNames.Admin)) { _userRole = RoleNames.Admin; _roleLabel = "Administrateur"; }
+            else if (user.IsInRole(RoleNames.Responsable)) { _userRole = RoleNames.Responsable; _roleLabel = "Responsable Juridique"; }
+            else if (user.IsInRole(RoleNames.Agent)) { _userRole = RoleNames.Agent; _roleLabel = "Agent Juridique"; }
+        }
+
+        ApplyPreset("month");
+    }
+
+    private void ApplyPreset(string preset)
+    {
+        _preset = preset;
+        var today = DateTime.Today;
+
+        switch (preset)
+        {
+            case "month":
+                _dateDebut = new DateTime(today.Year, today.Month, 1);
+                _dateFin = today;
+                break;
+            case "lastmonth":
+                var lastMonth = today.AddMonths(-1);
+                _dateDebut = new DateTime(lastMonth.Year, lastMonth.Month, 1);
+                _dateFin = new DateTime(today.Year, today.Month, 1).AddDays(-1);
+                break;
+            case "quarter":
+                var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1);
+                _dateDebut = quarterStart;
+                _dateFin = today;
+                break;
+            case "year":
+                _dateDebut = new DateTime(today.Year, 1, 1);
+                _dateFin = today;
+                break;
+        }
+    }
+
+    private void ResetFilters()
+    {
+        _rapport = null;
+        ApplyPreset("month");
+    }
+
+    private async Task GenerateReport()
+    {
+        if (_dateDebut > _dateFin)
+        {
+            Snackbar.Add("La date de début doit être antérieure à la date de fin.", Severity.Warning);
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            var restrictId = _userRole == RoleNames.Agent ? _currentUserId : null;
+            _rapport = await RapportService.GenerateActivityReportAsync(
+                _dateDebut, _dateFin, _userRole, restrictId, _userEmail);
+
+            Snackbar.Add($"Rapport généré : {_rapport.Total} actes analysés.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (_rapport == null) return;
+        _isExporting = true;
+        try
+        {
+            var bytes = await RapportService.ExportToPdfAsync(_rapport);
+            await DownloadFile(bytes, $"rapport-activite-{DateTime.Now:yyyyMMdd-HHmmss}.pdf", "application/pdf");
+            Snackbar.Add("Rapport PDF téléchargé.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur PDF : {ex.Message}", Severity.Error);
+        }
+        finally { _isExporting = false; }
+    }
+
+    private async Task DownloadExcel()
+    {
+        if (_rapport == null) return;
+        _isExporting = true;
+        try
+        {
+            var bytes = await RapportService.ExportToExcelAsync(_rapport);
+            await DownloadFile(bytes, $"rapport-activite-{DateTime.Now:yyyyMMdd-HHmmss}.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            Snackbar.Add("Rapport Excel téléchargé.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur Excel : {ex.Message}", Severity.Error);
+        }
+        finally { _isExporting = false; }
+    }
+
+    private async Task DownloadWord()
+    {
+        if (_rapport == null) return;
+        _isExporting = true;
+        try
+        {
+            var bytes = await RapportService.ExportToWordAsync(_rapport);
+            await DownloadFile(bytes, $"rapport-activite-{DateTime.Now:yyyyMMdd-HHmmss}.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            Snackbar.Add("Rapport Word téléchargé.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur Word : {ex.Message}", Severity.Error);
+        }
+        finally { _isExporting = false; }
+    }
+
+    private async Task DownloadFile(byte[] bytes, string fileName, string mimeType)
+    {
+        var base64 = Convert.ToBase64String(bytes);
+        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, base64, mimeType);
+    }
+}
+
+<style>
+    .rapports-page {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: radial-gradient(800px 500px at 80% 20%, rgba(14, 124, 92, 0.03), transparent 60%), #F5F7FB;
+        min-height: 100vh;
+        padding: 8px;
+    }
+
+    /* ═══ HEADER VERT BOA ÉPURÉ (cohérent avec Paramètres) ═══ */
+    .rapports-hero {
+        background: radial-gradient(800px 400px at 90% 20%, rgba(252, 211, 77, 0.15), transparent 60%), radial-gradient(600px 300px at 20% 80%, rgba(20, 165, 116, 0.18), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 28px 32px !important;
+        border-radius: 20px !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(10, 41, 34, 0.25), inset 0 1px 0 rgba(252, 211, 77, 0.15);
+    }
+
+        /* Filigrane doré en bas */
+        .rapports-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.5) 25%, rgba(252, 211, 77, 0.9) 50%, rgba(252, 211, 77, 0.5) 75%, transparent 100%);
+            box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+            z-index: 3;
+        }
+
+        /* Filigrane doré en haut */
+        .rapports-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 10%, rgba(252, 211, 77, 0.7) 50%, rgba(252, 211, 77, 0.4) 90%, transparent 100%);
+            z-index: 3;
+        }
+
+    .hero-bg-deco {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.3) 50%, transparent 100%);
+        transform: rotate(-2deg);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .hero-icon-wrap {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        border: 1.5px solid rgba(252, 211, 77, 0.5);
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.7rem;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.5);
+    }
+
+    .hero-title {
+        color: white;
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin: 0;
+        background: linear-gradient(180deg, #FFFFFF 0%, #FCD34D 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: 'Georgia', serif;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+        margin: 6px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Georgia', serif;
+        font-style: italic;
+    }
+
+    .meta-strong {
+        color: #FCD34D;
+        font-weight: 800;
+        background: rgba(252, 211, 77, 0.2);
+        padding: 3px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(252, 211, 77, 0.45);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .meta-sep {
+        color: rgba(252, 211, 77, 0.5);
+    }
+
+    .meta-boa {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(252, 211, 77, 0.18);
+        color: #FCD34D;
+        padding: 3px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 1px solid rgba(252, 211, 77, 0.45);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .meta-boa i {
+            color: #FCD34D;
+        }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .hero-btn-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: rgba(252, 211, 77, 0.12);
+        border: 1px solid rgba(252, 211, 77, 0.35);
+        color: #FCD34D;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+    }
+
+        .hero-btn-icon:hover {
+            transform: rotate(60deg);
+        }
+
+    .hero-btn-primary {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        color: white;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        padding: 11px 22px;
+        border-radius: 11px;
+        font-weight: 800;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(14, 124, 92, 0.5);
+    }
+
+        .hero-btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #14A574 0%, #FCD34D 50%, #14A574 100%);
+            color: #0A2540;
+        }
+
+        .hero-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    /* ═══ FILTER CARD ═══ */
+    .filter-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    .filter-card-header {
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid #BBF7D0;
+    }
+
+    .filter-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+    }
+
+    .icon-success {
+        background: linear-gradient(135deg, #14A574, #FCD34D);
+    }
+
+    .filter-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0F172A;
+    }
+
+    .filter-subtitle {
+        font-size: 0.82rem;
+        color: #047857;
+        font-weight: 600;
+    }
+
+    .filter-body {
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Preset tabs */
+    .preset-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .preset-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: #F1F5F9;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        color: #5E6B7D;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .preset-tab:hover:not(.active) {
+            background: rgba(14, 124, 92, 0.08);
+            color: #0E7C5C;
+            border-color: #14A574;
+        }
+
+        .preset-tab.active {
+            background: linear-gradient(135deg, #0E7C5C, #14A574);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(14, 124, 92, 0.3);
+        }
+
+    /* Date inputs */
+    .date-inputs {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+    }
+
+    .date-input-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .date-label {
+        font-size: 0.75rem;
+        color: #5E6B7D;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .date-input {
+        padding: 10px 14px;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        color: #0A2540;
+        font-weight: 600;
+        background: white;
+        transition: all 0.2s ease;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #0E7C5C;
+            box-shadow: 0 0 0 4px rgba(14, 124, 92, 0.12);
+        }
+
+    .date-arrow {
+        color: #94A3B8;
+        font-size: 1.2rem;
+        padding-bottom: 10px;
+    }
+
+    /* ═══ KPI PREVIEW ═══ */
+    .kpi-preview-card {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        animation: slide-in 0.4s ease;
+    }
+
+    @@keyframes slide-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .kpi-preview-header {
+        background: linear-gradient(135deg, #ECFDF5 0%, #DCFCE7 100%);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid #BBF7D0;
+    }
+
+    .kpi-grid-preview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        padding: 22px 24px;
+    }
+
+    .kpi-preview {
+        padding: 18px;
+        border-radius: 12px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1.5px solid;
+    }
+
+    .kpi-preview-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .kpi-preview-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1;
+        font-feature-settings: "tnum" 1;
+    }
+
+    .kpi-preview-pct {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-top: 6px;
+        opacity: 0.8;
+    }
+
+    .kpi-total {
+        background: linear-gradient(135deg, #F8FAFC, white);
+        border-color: #CBD5E1;
+    }
+
+        .kpi-total .kpi-preview-value {
+            color: #0A2540;
+        }
+
+        .kpi-total .kpi-preview-label {
+            color: #5E6B7D;
+        }
+
+    .kpi-valid {
+        background: linear-gradient(135deg, #ECFDF5, white);
+        border-color: #BBF7D0;
+    }
+
+        .kpi-valid .kpi-preview-value, .kpi-valid .kpi-preview-pct {
+            color: #14A574;
+        }
+
+        .kpi-valid .kpi-preview-label {
+            color: #047857;
+        }
+
+    .kpi-pending {
+        background: linear-gradient(135deg, #FFFBEB, white);
+        border-color: #FCD34D;
+    }
+
+        .kpi-pending .kpi-preview-value {
+            color: #D97706;
+        }
+
+        .kpi-pending .kpi-preview-label {
+            color: #92400E;
+        }
+
+    .kpi-rejected {
+        background: linear-gradient(135deg, #FEF2F2, white);
+        border-color: #FCA5A5;
+    }
+
+        .kpi-rejected .kpi-preview-value, .kpi-rejected .kpi-preview-pct {
+            color: #DC2626;
+        }
+
+        .kpi-rejected .kpi-preview-label {
+            color: #9B1C2D;
+        }
+
+    /* ═══ EXPORTS ═══ */
+    .exports-section {
+        background: #F8FAFC;
+        padding: 22px 24px;
+        border-top: 1px solid #E5E7EB;
+    }
+
+    .exports-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #0A2540;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .exports-title i {
+            color: #14A574;
+        }
+
+    .exports-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    .export-btn {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: white;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        text-align: left;
+    }
+
+        .export-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .export-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .export-pdf .export-icon {
+        background: linear-gradient(135deg, #DC2626, #EF4444);
+    }
+
+    .export-pdf:hover:not(:disabled) {
+        border-color: #DC2626;
+    }
+
+    .export-excel .export-icon {
+        background: linear-gradient(135deg, #14A574, #16A34A);
+    }
+
+    .export-excel:hover:not(:disabled) {
+        border-color: #14A574;
+    }
+
+    .export-word .export-icon {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+    }
+
+    .export-word:hover:not(:disabled) {
+        border-color: #1E40AF;
+    }
+
+    .export-info {
+        flex: 1;
+    }
+
+    .export-name {
+        font-weight: 800;
+        color: #0A2540;
+        font-size: 1rem;
+    }
+
+    .export-desc {
+        font-size: 0.78rem;
+        color: #5E6B7D;
+    }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty-state-rapport {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border: 2px dashed #E5E7EB;
+        border-radius: 16px;
+    }
+
+    .empty-icon {
+        width: 88px;
+        height: 88px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+        color: #0E7C5C;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        box-shadow: inset 0 0 0 4px white, inset 0 0 0 5px rgba(14, 124, 92, 0.2);
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0A2540;
+        margin-bottom: 6px;
+    }
+
+    .empty-subtitle {
+        color: #5E6B7D;
+        font-size: 0.95rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .kpi-grid-preview, .exports-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .date-inputs {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .date-arrow {
+            display: none;
+        }
+    }
+</style>

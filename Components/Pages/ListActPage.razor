@@ -27,353 +27,401 @@
 
 <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
 
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-            @* <MudText Typo="Typo.h4" Class="fw-bold text-gradient-primary mb-1">
-                <i class="bi bi-folder2-open me-2"></i>Gestion des Actes
-            </MudText> *@
+    <div class="listact-page">
 
-            <MudText Typo="Typo.body1" Color="Color.Secondary">
-                Gérez vos actes en cours (les actes archivés sont dans la section dédiée).
-            </MudText>
-        </div>
-
-        <div class="d-flex gap-2">
-            <MudButton Color="Color.Primary" Variant="Variant.Filled"
-            StartIcon="@Icons.Material.Filled.Add"
-            OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))"
-            Class="px-4 rounded-pill">
-                Nouvel acte
-            </MudButton>
-
-            <MudTooltip Text="Actualiser la liste">
-                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                Color="Color.Secondary"
-                Disabled="@_loading"
-                OnClick="ReloadAsync" /> @* Variant="Variant.Outlined" *@
-            </MudTooltip>
-        </div>
-    </div>
-
-    <!-- Stats -->
-    <!-- Stats -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-2-4 col-sm-6">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-secondary-light p-2 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Secondary" />
+        <!-- ═════════════ HEADER DÉGRADÉ MARINE ═════════════ -->
+        <MudPaper Class="listact-hero" Elevation="0">
+            <div class="hero-bg-deco"></div>
+            <div class="hero-content">
+                <div class="hero-main">
+                    <div class="hero-icon-wrap">
+                        <i class="bi bi-folder2-open"></i>
                     </div>
-                    <div>
-                        <div class="text-muted small">Total</div>
-                        <div class="h4 fw-bold text-primary mb-0">@_actes.Count</div>
+                    <div class="hero-text">
+                        <h1 class="hero-title">Gestion des Actes</h1>
+                        <p class="hero-meta">
+                            <span class="meta-strong">@_actes.Count(a => a.StatutWorkflow != ActeStatut.Archive) actes</span>
+                            <span class="meta-sep">·</span>
+                            <span>@_actes.Count(a => a.StatutWorkflow == ActeStatut.Brouillon || a.StatutWorkflow == ActeStatut.EnAttenteValidation) en cours</span>
+                            <span class="meta-sep">·</span>
+                            <span class="meta-live">
+                                <span class="live-dot"></span>
+                                Mises à jour en temps réel
+                            </span>
+                        </p>
                     </div>
                 </div>
-            </MudPaper>
-        </div>
 
-        <div class="col-md-2-4 col-sm-6">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-default-light p-2 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Default" />
-                    </div>
-                    <div>
-                        <div class="text-muted small">Brouillons</div>
-                        <div class="h4 fw-bold mb-0" style="color:#5E6B7D;">
-                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Brouillon)
+                <div class="hero-actions">
+                    <MudTooltip Text="Actualiser">
+                        <button class="hero-btn-icon" @onclick="ReloadAsync" disabled="@_loading">
+                            <i class="bi bi-arrow-clockwise @(_loading ? "spinning" : "")"></i>
+                        </button>
+                    </MudTooltip>
+                    <button class="hero-btn-primary" @onclick='() => NavigationManager.NavigateTo("/choisirAct")'>
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Nouvel acte</span>
+                    </button>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- ═════════════ STATS CARDS (5 colonnes garanties) ═════════════ -->
+        <div class="stats-grid-5">
+
+            <MudCard Elevation="2" Class="rounded-lg mud-theme-primary hover-lift stat-mini-card">
+                <MudCardContent>
+                    <div class="stat-mini-content">
+                        <div class="stat-mini-text">
+                            <div class="stat-mini-value">@_actes.Count(a => a.StatutWorkflow != ActeStatut.Archive)</div>
+                            <div class="stat-mini-label">Total des Actes</div>
                         </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Class="stat-mini-icon" />
                     </div>
-                </div>
-            </MudPaper>
-        </div>
+                </MudCardContent>
+            </MudCard>
 
-        <div class="col-md-2-4 col-sm-6">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-warning-light p-2 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" />
-                    </div>
-                    <div>
-                        <div class="text-muted small">En attente</div>
-                        <div class="h4 fw-bold text-warning mb-0">
-                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation)
+            <MudCard Elevation="2" Class="rounded-lg mud-theme-secondary hover-lift stat-mini-card">
+                <MudCardContent>
+                    <div class="stat-mini-content">
+                        <div class="stat-mini-text">
+                            <div class="stat-mini-value">@_actes.Count(a => a.StatutWorkflow == ActeStatut.Brouillon)</div>
+                            <div class="stat-mini-label">Brouillons</div>
                         </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="stat-mini-icon" />
                     </div>
-                </div>
-            </MudPaper>
-        </div>
+                </MudCardContent>
+            </MudCard>
 
-        <div class="col-md-2-4 col-sm-6">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-success-light p-2 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
-                    </div>
-                    <div>
-                        <div class="text-muted small">Validés</div>
-                        <div class="h4 fw-bold text-success mb-0">
-                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Valide)
+            <MudCard Elevation="2" Class="rounded-lg mud-theme-warning hover-lift stat-mini-card">
+                <MudCardContent>
+                    <div class="stat-mini-content">
+                        <div class="stat-mini-text">
+                            <div class="stat-mini-value">@_actes.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation)</div>
+                            <div class="stat-mini-label">En attente</div>
                         </div>
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Class="stat-mini-icon" />
                     </div>
-                </div>
-            </MudPaper>
-        </div>
+                </MudCardContent>
+            </MudCard>
 
-        <div class="col-md-2-4 col-sm-6">
-            <MudPaper Class="p-3 h-100 shadow-sm hover-lift" Elevation="1">
-                <div class="d-flex align-items-center">
-                    <div class="icon-stat bg-error-light p-2 rounded-circle me-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
-                    </div>
-                    <div>
-                        <div class="text-muted small">Rejetés</div>
-                        <div class="h4 fw-bold text-error mb-0">
-                            @_actes.Count(a => a.StatutWorkflow == ActeStatut.Rejete)
+            <MudCard Elevation="2" Class="rounded-lg mud-theme-success hover-lift stat-mini-card">
+                <MudCardContent>
+                    <div class="stat-mini-content">
+                        <div class="stat-mini-text">
+                            <div class="stat-mini-value">@_actes.Count(a => a.StatutWorkflow == ActeStatut.Valide)</div>
+                            <div class="stat-mini-label">Validés</div>
                         </div>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="stat-mini-icon" />
                     </div>
-                </div>
-            </MudPaper>
+                </MudCardContent>
+            </MudCard>
+
+            <MudCard Elevation="2" Class="rounded-lg mud-theme-error hover-lift stat-mini-card">
+                <MudCardContent>
+                    <div class="stat-mini-content">
+                        <div class="stat-mini-text">
+                            <div class="stat-mini-value">@_actes.Count(a => a.StatutWorkflow == ActeStatut.Rejete)</div>
+                            <div class="stat-mini-label">Rejetés</div>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Class="stat-mini-icon" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+
         </div>
-    </div>
 
-    <!-- Tabs -->
-    <MudPaper Class="mb-3" Elevation="1">
-        <MudTabs @bind-ActivePanelIndex="_activeTabIndex" Color="Color.Primary">
-            <MudTabPanel Text="Tous" />
-            <MudTabPanel Text="Brouillons" />
-            <MudTabPanel Text="En attente" />
-            <MudTabPanel Text="Validés" />
-            <MudTabPanel Text="Rejetés" />
-        </MudTabs>
+        <!-- ═════════════ TABS MODERNES ═════════════ -->
+        <!-- ═════════════ TABS MODERNES ═════════════ -->
+        <div class="custom-tabs">
+            @* Onglet "Tous" : visible pour tous *@
+            <button class="custom-tab @(_activeTabIndex == 0 ? "active" : "")" @onclick="@(() => { _activeTabIndex = 0; })">
+                <i class="bi bi-grid-3x3"></i>
+                <span>Tous</span>
+                <span class="custom-tab-count">@GetCountForTab(0)</span>
+            </button>
 
-        <!-- Filters -->
-        <div class="p-3 border-top">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-4">
-                    <MudTextField @bind-Value="_search"
-                    Placeholder="Rechercher (ID, type, débiteur...)"
-                    Variant="Variant.Outlined"
-                    Adornment="Adornment.Start"
-                    AdornmentIcon="@Icons.Material.Filled.Search"
-                    Immediate="true"
-                    FullWidth="true" />
+            @* Onglet "Brouillons" : caché pour le Responsable *@
+            @if (!_isResponsable || _isAdmin)
+            {
+                <button class="custom-tab @(_activeTabIndex == 1 ? "active" : "")" @onclick="@(() => { _activeTabIndex = 1; })">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Brouillons</span>
+                    <span class="custom-tab-count">@GetCountForTab(1)</span>
+                </button>
+            }
+
+            @* Onglet "En attente" : visible pour tous *@
+            <button class="custom-tab @(_activeTabIndex == 2 ? "active" : "")" @onclick="@(() => { _activeTabIndex = 2; })">
+                <i class="bi bi-hourglass-split"></i>
+                <span>En attente</span>
+                <span class="custom-tab-count">@GetCountForTab(2)</span>
+            </button>
+
+            @* Onglet "Validés" : visible pour tous *@
+            <button class="custom-tab @(_activeTabIndex == 3 ? "active" : "")" @onclick="@(() => { _activeTabIndex = 3; })">
+                <i class="bi bi-check-circle"></i>
+                <span>Validés</span>
+                <span class="custom-tab-count">@GetCountForTab(3)</span>
+            </button>
+
+            @* Onglet "Rejetés" : caché pour le Responsable *@
+            @if (!_isResponsable || _isAdmin)
+            {
+                <button class="custom-tab @(_activeTabIndex == 4 ? "active" : "")" @onclick="@(() => { _activeTabIndex = 4; })">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Rejetés</span>
+                    <span class="custom-tab-count">@GetCountForTab(4)</span>
+                </button>
+            }
+        </div>
+
+        <!-- ═════════════ FILTRES ÉQUILIBRÉS ═════════════ -->
+        <div class="listact-filters">
+
+            <!-- Groupe gauche : filtres -->
+            <div class="filters-group">
+
+                <div class="filter-search">
+                    <i class="bi bi-search filter-search-icon"></i>
+                    <input type="text"
+                           class="filter-search-input"
+                           placeholder="Rechercher par ID, type, débiteur ou caution..."
+                           @bind="_search"
+                           @bind:event="oninput" />
+                    @if (!string.IsNullOrEmpty(_search))
+                    {
+                        <button class="filter-search-clear" @onclick='() => _search = ""'>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    }
                 </div>
 
-                <div class="col-md-4">
-                    <MudSelect T="ActeStatut?" @bind-Value="_statutFilterEnum"
-                    Variant="Variant.Outlined"
-                    Label="Statut"
-                    Clearable="true"
-                    FullWidth="true">
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)null)">Tous les statuts</MudSelectItem>
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Brouillon)">Brouillon</MudSelectItem>
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.EnAttenteValidation)">En attente</MudSelectItem>
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Valide)">Validé</MudSelectItem>
-                        <MudSelectItem T="ActeStatut?" Value="@((ActeStatut?)ActeStatut.Rejete)">Rejeté</MudSelectItem>
-                    </MudSelect>
-                </div>
-
-                <div class="col-md-4">
+                <div class="filter-type">
                     <MudSelect T="int?" @bind-Value="_selectedTypeId"
-                    Variant="Variant.Outlined"
-                    Label="Type d'acte"
-                    Clearable="true"
-                    FullWidth="true">
-
+                               Placeholder="Tous les types"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true"
+                               FullWidth="true">
                         <MudSelectItem T="int?" Value="@((int?)null)">Tous les types</MudSelectItem>
-
                         @foreach (var type in _acteTypes)
                         {
-                            <MudSelectItem T="int?" Value="@((int?)type.IdAjout)">
-                                @type.NomAct
-                            </MudSelectItem>
+                            <MudSelectItem T="int?" Value="@((int?)type.IdAjout)">@type.NomAct</MudSelectItem>
                         }
                     </MudSelect>
                 </div>
 
-                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <MudSwitch @bind-Value="_showOnlyMine"
-                    Color="Color.Primary"
-                    Label="Voir uniquement mes actes" />
+                @if (!_isAgent)
+                {
+                    <label class="filter-pill-toggle @(_showOnlyMine ? "active" : "")">
+                        <input type="checkbox" @bind="_showOnlyMine" />
+                        <i class="bi @(_showOnlyMine ? "bi-person-fill-check" : "bi-people-fill")"></i>
+                        <span>Mes actes</span>
+                        @if (_showOnlyMine && _currentUserId.HasValue)
+                        {
+                            <span class="filter-pill-count">
+                                @_actes.Count(a => a.IdUser == _currentUserId.Value && a.StatutWorkflow != ActeStatut.Archive)
+                            </span>
+                        }
+                    </label>
+                }
 
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetFilters">
-                        Effacer filtres
-                    </MudButton>
-                </div>
             </div>
+
+            <!-- Séparateur visuel -->
+            <div class="filters-divider"></div>
+
+            <!-- Groupe droite : reset -->
+            <div class="filters-action">
+                <MudTooltip Text="Réinitialiser tous les filtres" Placement="Placement.Top">
+                    <button class="filter-reset-pro" @onclick="ResetFilters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </MudTooltip>
+            </div>
+
         </div>
-    </MudPaper>
 
-    @if (_loading)
-    {
-        <div class="text-center py-5">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-            <div class="text-muted mt-3">Chargement des actes...</div>
-        </div>
-    }
-    else if (!FilteredActes.Any())
-    {
-        <div class="text-center py-5 my-4">
-            <i class="bi bi-folder-x display-1 text-muted"></i>
-            <div class="h5 fw-bold mt-3">Aucun acte trouvé</div>
-            <div class="text-muted mb-3">Change les filtres ou crée un nouvel acte.</div>
-            <MudButton Color="Color.Primary" Variant="Variant.Outlined"
-            StartIcon="@Icons.Material.Filled.Add"
-            OnClick="@(() => NavigationManager.NavigateTo("/choisirAct"))">
-                Créer un acte
-            </MudButton>
-        </div>
-    }
-    else
-    {
-        <MudPaper Class="overflow-hidden shadow-sm rounded-3" Elevation="2">
-            <MudTable Items="FilteredActes"
-            Dense="true"
-            Hover="true"
-            Striped="true"
-            FixedHeader="true"
-            Height="520px"
-            Breakpoint="Breakpoint.Sm"
-            RowsPerPage="10">
-                <HeaderContent>
+        <!-- ═════════════ TABLE ═════════════ -->
+        @if (_loading)
+        {
+            <div class="loading-zone">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                <p>Chargement des actes...</p>
+            </div>
+        }
+        else if (!FilteredActes.Any())
+        {
+            <div class="empty-zone">
+                <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+                <div class="empty-title">Aucun acte trouvé</div>
+                <div class="empty-subtitle">Modifie tes filtres ou crée un nouvel acte</div>
+                <button class="empty-action" @onclick='() => NavigationManager.NavigateTo("/choisirAct")'>
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Créer un acte</span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <MudPaper Class="listact-table-card" Elevation="0">
+                <MudTable Items="FilteredActes"
+                          Hover="true"
+                          Breakpoint="Breakpoint.Sm"
+                          Dense="false"
+                          RowsPerPage="15"
+                          Class="listact-table">
 
-                    <MudTh>Date Création</MudTh>
-                    <MudTh>Dernière Modification</MudTh>
-                    <MudTh>Types Actes</MudTh>
-                    <MudTh>Débiteur</MudTh>
-                    <MudTh>Caution</MudTh>
-                    <MudTh>Statut</MudTh>
-                    <MudTh class="text-end">Actions</MudTh>
-                </HeaderContent>
+                    <HeaderContent>
+                        <MudTh>Acte</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Débiteur</MudTh>
+                        <MudTh>Caution</MudTh>
+                        <MudTh>Statut</MudTh>
+                        <MudTh>Mise à jour</MudTh>
+                        <MudTh Style="text-align:right;">Actions</MudTh>
+                    </HeaderContent>
 
-                <RowTemplate Context="acte">
+                    <RowTemplate Context="acte">
 
-                    <MudTd>
+                        @{
+                            var (statutClass, statutIcon, statutLabel) = GetStatutVisual(acte.StatutWorkflow);
+                        }
 
-                        <div class="text-nowrap">@acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
-                        <div class="text-muted small">@acte.DateCreation.ToLocalTime().ToString("HH:mm")</div>
-                    </MudTd>
+                        <MudTd>
+                            <div class="acte-cell">
+                                <div class="acte-avatar" style="background: @GetAvatarGradient(acte.IdActe);">
+                                    <i class="bi bi-file-earmark-text-fill"></i>
+                                </div>
+                                <div class="acte-info">
+                                    <div class="acte-id">#@acte.IdActe</div>
+                                    <div class="acte-sub">Créé le @acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                </div>
+                            </div>
+                        </MudTd>
 
-                    <MudTd>
-                        <div class="text-nowrap">@acte.DateMaj.ToLocalTime().ToString("dd/MM/yyyy")</div>
-                        <div class="text-muted small">@acte.DateMaj.ToLocalTime().ToString("HH:mm")</div>
-                    </MudTd>
+                        <MudTd>
+                            <span class="type-pill">@acte.NomTypesActe</span>
+                        </MudTd>
 
-                    <MudTd>
-                        <div class="fw-medium">@acte.NomTypesActe</div>
-                    </MudTd>
+                        <MudTd>
+                            <span class="party-name">@GetDebiteurName(acte.IdActe)</span>
+                        </MudTd>
 
-                    <MudTd>
-                        <div class="fw-medium participant-cell">@GetDebiteurName(acte.IdActe)</div>
-                    </MudTd>
+                        <MudTd>
+                            <span class="party-name">@GetCautionName(acte.IdActe)</span>
+                        </MudTd>
 
-                    <MudTd>
-                        <div class="fw-medium participant-cell">@GetCautionName(acte.IdActe)</div>
-                    </MudTd>
-
-                    <MudTd>
-                        <div class="d-flex align-items-center gap-1">
-                            <ActeStatutBadge Statut="acte.StatutWorkflow" />
-
-                            @* Tooltip pour montrer le motif de rejet si l'acte est rejeté *@
-                            @if (acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet))
-                            {
-                                <MudTooltip Text="@($"Motif : {acte.MotifRejet}")" Placement="Placement.Top">
-                                    <MudIcon Icon="@Icons.Material.Filled.Info"
-                                    Size="Size.Small"
-                                    Color="Color.Error" />
-                                </MudTooltip>
-                            }
-                        </div>
-                    </MudTd>
-
-                    <MudTd class="text-end">
-                        <div class="d-inline-flex align-items-center gap-1">
-
-                            <!-- 👁️ APERÇU - toujours visible -->
-                            <MudTooltip Text="Aperçu de l'acte">
-                                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                Color="Color.Secondary"
-                                Size="Size.Small"
-                                OnClick="@(() => PreviewActe(acte))" />
-                            </MudTooltip>
-
-                            <!-- ✏️ MODIFIER -->
-                            <MudTooltip Text="@(CanEditActe(acte) ? "Modifier" : "Modification impossible (acte en cours de validation ou validé)")">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                Color="Color.Primary"
-                                Size="Size.Small"
-                                Disabled="@(!CanEditActe(acte))"
-                                OnClick="@(() => Edit(acte))" />
-                            </MudTooltip>
-
-                            <!-- ⬇️ TÉLÉCHARGER PDF - si PdfGenerePath existe -->
-                            @if (!string.IsNullOrWhiteSpace(acte.PdfGenerePath))
-                            {
-                                <MudTooltip Text="@($"PDF officiel généré le {acte.DateGenerationPdf?.ToLocalTime():dd/MM/yyyy HH:mm}")">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Download"
-                                    Color="Color.Success"
-                                    Size="Size.Small"
-                                    OnClick="@(() => DownloadPdf(acte))" />
-                                </MudTooltip>
-                            }
-
-                            <!-- 📤 UPLOADER SIGNATURE - si Validé et pas encore archivé -->
-                            @if (acte.StatutWorkflow == ActeStatut.Valide)
-                            {
-                                <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
-                                    <MudTooltip Text="Téléverser le document signé">
-                                        <MudIconButton Icon="@Icons.Material.Filled.CloudUpload"
-                                        Color="Color.Tertiary"
-                                        Size="Size.Small"
-                                        OnClick="@(() => OpenUploadDialogAsync(acte))" />
+                        <MudTd>
+                            <div class="status-cell">
+                                <span class="custom-status-badge @statutClass">
+                                    @if (acte.StatutWorkflow == ActeStatut.EnAttenteValidation)
+                                    {
+                                        <span class="status-dot-anim"></span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi @statutIcon"></i>
+                                    }
+                                    <span>@statutLabel</span>
+                                </span>
+                                @if (acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet))
+                                {
+                                    <MudTooltip Text="@($"Motif : {acte.MotifRejet}")" Placement="Placement.Top">
+                                        <span class="status-info-icon">
+                                            <i class="bi bi-info-circle-fill"></i>
+                                        </span>
                                     </MudTooltip>
-                                </AuthorizeView>
-                            }
+                                }
+                            </div>
+                        </MudTd>
 
-                            <!-- 📤 ENVOYER -->
-                            <MudTooltip Text="Envoyer au responsable">
-                                <MudIconButton Icon="@Icons.Material.Filled.Send"
-                                Color="Color.Info"
-                                Size="Size.Small"
-                                Disabled="@(_loading || !CanSendActe(acte))"
-                                OnClick="@(() => SendActeAsync(acte))" />
-                            </MudTooltip>
+                        <MudTd>
+                            <div class="maj-cell">
+                                <div class="maj-relative">@GetRelativeTime(acte.DateMaj)</div>
+                                <div class="maj-absolute">@acte.DateMaj.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </MudTd>
 
-                            <!-- ↻ RÉ-OUVRIR un acte rejeté -->
-                            @if (acte.StatutWorkflow == ActeStatut.Rejete)
-                            {
-                                <MudTooltip Text="Ré-ouvrir l'acte pour modification">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                    Color="Color.Warning"
-                                    Size="Size.Small"
-                                    Disabled="@_loading"
-                                    OnClick="@(() => RouvrirActeAsync(acte))" />
+                        <MudTd Style="text-align:right;">
+                            <div class="actions-group">
+
+                                <MudTooltip Text="Aperçu" Placement="Placement.Top">
+                                    <button class="action-btn action-btn-view" @onclick="@(() => PreviewActe(acte))">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
                                 </MudTooltip>
-                            }
 
-                            <!-- 🗑️ SUPPRIMER -->
-                            <MudTooltip Text="@(CanDeleteActe(acte) ? "Supprimer" : "Suppression impossible")">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                Color="Color.Error"
-                                Size="Size.Small"
-                                Disabled="@(!CanDeleteActe(acte))"
-                                OnClick="@(() => ConfirmDelete(acte))" />
-                            </MudTooltip>
+                                <MudTooltip Text="@(CanEditActe(acte) ? "Modifier" : "Modification impossible")" Placement="Placement.Top">
+                                    <button class="action-btn action-btn-edit"
+                                            @onclick="@(() => Edit(acte))"
+                                            disabled="@(!CanEditActe(acte))">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </MudTooltip>
 
-                        </div>
-                    </MudTd>
+                                @if (!string.IsNullOrWhiteSpace(acte.PdfGenerePath))
+                                {
+                                    <MudTooltip Text="Télécharger PDF" Placement="Placement.Top">
+                                        <button class="action-btn action-btn-download" @onclick="@(() => DownloadPdf(acte))">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                    </MudTooltip>
+                                }
 
-                </RowTemplate>
+                                @* 🔒 Téléverser le document signé : visible UNIQUEMENT si le PDF a été généré
+   (sinon on ne peut pas télécharger pour signer, donc on ne peut pas téléverser non plus) *@
+                                @if (acte.StatutWorkflow == ActeStatut.Valide && !string.IsNullOrWhiteSpace(acte.PdfGenerePath))
+                                {
+                                    <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
+                                        <MudTooltip Text="Téléverser le document signé" Placement="Placement.Top">
+                                            <button class="action-btn action-btn-upload" @onclick="@(() => OpenUploadDialogAsync(acte))">
+                                                <i class="bi bi-cloud-upload-fill"></i>
+                                            </button>
+                                        </MudTooltip>
+                                    </AuthorizeView>
+                                }
 
-                <PagerContent>
-                    <MudTablePager />
-                </PagerContent>
-            </MudTable>
-        </MudPaper>
-    }
+                                <MudTooltip Text="Envoyer au responsable" Placement="Placement.Top">
+                                    <button class="action-btn action-btn-send"
+                                            @onclick="@(() => SendActeAsync(acte))"
+                                            disabled="@(_loading || !CanSendActe(acte))">
+                                        <i class="bi bi-send-fill"></i>
+                                    </button>
+                                </MudTooltip>
+
+                                @if (acte.StatutWorkflow == ActeStatut.Rejete)
+                                {
+                                    <MudTooltip Text="Ré-ouvrir l'acte" Placement="Placement.Top">
+                                        <button class="action-btn action-btn-reopen"
+                                                @onclick="@(() => RouvrirActeAsync(acte))"
+                                                disabled="@_loading">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </MudTooltip>
+                                }
+
+                                <MudTooltip Text="@(CanDeleteActe(acte) ? "Supprimer" : "Suppression impossible")" Placement="Placement.Top">
+                                    <button class="action-btn action-btn-delete"
+                                            @onclick="@(() => ConfirmDelete(acte))"
+                                            disabled="@(!CanDeleteActe(acte))">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </MudTooltip>
+
+                            </div>
+                        </MudTd>
+                    </RowTemplate>
+
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new[]{10, 25, 50}" />
+                    </PagerContent>
+                </MudTable>
+            </MudPaper>
+        }
+
+    </div>
 
 </MudContainer>
 
@@ -386,6 +434,8 @@
     private bool _showOnlyMine = false;
     private int? _currentUserId;
     private bool _isAgent = false;
+    private bool _isResponsable = false;  // 🆕
+    private bool _isAdmin = false;        // 🆕
 
     private string _search = "";
     private ActeStatut? _statutFilterEnum = null;
@@ -413,15 +463,17 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            // Récupère l'ID via le claim NameIdentifier
             var nameIdentifier = user.Claims
                 .FirstOrDefault(c => c.Type.Contains("nameidentifier"))?.Value;
 
             if (int.TryParse(nameIdentifier, out var id))
                 _currentUserId = id;
 
-            // Si l'utilisateur est un Agent, on coche "Mes actes" par défaut
+            // 🆕 Détection des rôles
             _isAgent = user.IsInRole(RoleNames.Agent);
+            _isResponsable = user.IsInRole(RoleNames.Responsable);
+            _isAdmin = user.IsInRole(RoleNames.Admin);
+
             if (_isAgent)
                 _showOnlyMine = true;
         }
@@ -583,6 +635,17 @@
         IEnumerable<TypesActModel> filtered = _actes
             .Where(a => a.StatutWorkflow != ActeStatut.Archive);
 
+        // 🔒 FILTRE PAR RÔLE
+        // - Agent : voit ses propres actes dans tous les statuts (sauf Archive)
+        // - Responsable : voit UNIQUEMENT les actes En attente et Validés
+        // - Admin : voit tout
+        if (_isResponsable && !_isAdmin)
+        {
+            filtered = filtered.Where(a =>
+                a.StatutWorkflow == ActeStatut.EnAttenteValidation
+                || a.StatutWorkflow == ActeStatut.Valide);
+        }
+
         // Tabs (4 panneaux - plus d'archivés)
         filtered = _activeTabIndex switch
         {
@@ -597,9 +660,18 @@
         if (_statutFilterEnum.HasValue)
             filtered = filtered.Where(a => a.StatutWorkflow == _statutFilterEnum.Value);
 
-        // Filtre "Mes actes" (uniquement pour Agent — Admin et Responsable voient tout)
-        if (_showOnlyMine && _currentUserId.HasValue)
+        /// Filtre "Mes actes"
+        // 🔒 SÉCURITÉ : l'Agent ne voit JAMAIS les actes des autres,
+        // même s'il décoche le checkbox
+        if (_isAgent && _currentUserId.HasValue)
+        {
             filtered = filtered.Where(a => a.IdUser == _currentUserId.Value);
+        }
+        else if (_showOnlyMine && _currentUserId.HasValue)
+        {
+            // Admin/Resp : checkbox optionnel
+            filtered = filtered.Where(a => a.IdUser == _currentUserId.Value);
+        }
 
         // Type
         if (_selectedTypeId.HasValue)
@@ -647,7 +719,7 @@
         NavigationManager.NavigateTo($"/saisirPage/{acte.IdAjout}?acteId={acte.IdActe}&returnUrl={returnUrl}");
     }
 
-    
+
 
     private async Task PreviewActe(TypesActModel acte)
     {
@@ -932,79 +1004,1080 @@
         {
             await LoadDataAsync();
         }
-    }
 
-    
+
+    }
 
     private Task<int?> GetCurrentUserIdAsync()
     {
         return Task.FromResult(_currentUserId);
     }
 
+
+    // ════════════════════════════════════════════════
+    // HELPERS pour l'UI moderne (avatars + status badges)
+    // ════════════════════════════════════════════════
+
+    private static string GetInitialsFromText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text == "Non spécifié")
+            return "?";
+
+        // Prendre uniquement la première ligne (au cas où c'est multi-lignes)
+        var firstLine = text.Split('\n')[0].Trim();
+        var parts = firstLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length >= 2)
+            return (parts[0][..1] + parts[1][..1]).ToUpper();
+
+        return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+    }
+
+    private (string cssClass, string icon, string label) GetStatutVisual(ActeStatut statut) => statut switch
+    {
+        ActeStatut.Brouillon => ("status-draft", "bi-pencil-square", "Brouillon"),
+        ActeStatut.EnAttenteValidation => ("status-pending", "bi-hourglass-split", "En attente"),
+        ActeStatut.Valide => ("status-valid", "bi-check-circle-fill", "Validé"),
+        ActeStatut.Rejete => ("status-rejected", "bi-x-circle-fill", "Rejeté"),
+        ActeStatut.Archive => ("status-archived", "bi-archive-fill", "Archivé"),
+        _ => ("status-unknown", "bi-question-circle", "Inconnu")
+    };
+
+
+    // Helper : avatar avec dégradé basé sur l'ID
+    private static string GetAvatarGradient(int id)
+    {
+        var gradients = new[]
+        {
+        "linear-gradient(135deg, #0A2540, #1F3C88)",
+        "linear-gradient(135deg, #0E7C5C, #2F5D50)",
+        "linear-gradient(135deg, #1F3C88, #3F3A8A)",
+        "linear-gradient(135deg, #C9A86A, #B58E50)",
+        "linear-gradient(135deg, #9B1C2D, #7A1623)",
+        "linear-gradient(135deg, #D97706, #B45309)"
+    };
+        return gradients[Math.Abs(id) % gradients.Length];
+    }
+
+    // Helper : temps relatif "il y a Xh"
+    private static string GetRelativeTime(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+
+        if (diff.TotalMinutes < 1) return "À l'instant";
+        if (diff.TotalMinutes < 60) return $"Il y a {(int)diff.TotalMinutes} min";
+        if (diff.TotalHours < 24) return $"Il y a {(int)diff.TotalHours}h";
+        if (diff.TotalDays < 7) return $"Il y a {(int)diff.TotalDays}j";
+        if (diff.TotalDays < 30) return $"Il y a {(int)(diff.TotalDays / 7)} sem";
+
+        return date.ToLocalTime().ToString("dd/MM/yyyy");
+    }
+
+
+    // 🆕 Compte les actes pour chaque onglet, en respectant le filtrage par rôle
+    private int GetCountForTab(int tabIndex)
+    {
+        IEnumerable<TypesActModel> source = _actes
+            .Where(a => a.StatutWorkflow != ActeStatut.Archive);
+
+        // Appliquer le filtre par rôle
+        if (_isResponsable && !_isAdmin)
+        {
+            source = source.Where(a =>
+                a.StatutWorkflow == ActeStatut.EnAttenteValidation
+                || a.StatutWorkflow == ActeStatut.Valide);
+        }
+
+        // Si Agent : restriction à ses propres actes
+        if (_isAgent && _currentUserId.HasValue)
+        {
+            source = source.Where(a => a.IdUser == _currentUserId.Value);
+        }
+
+        return tabIndex switch
+        {
+            0 => source.Count(),  // Tous
+            1 => source.Count(a => a.StatutWorkflow == ActeStatut.Brouillon),
+            2 => source.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation),
+            3 => source.Count(a => a.StatutWorkflow == ActeStatut.Valide),
+            4 => source.Count(a => a.StatutWorkflow == ActeStatut.Rejete),
+            _ => 0
+        };
+    }
+
+
+
 }
 
 <style>
-    .text-gradient-primary {
-        background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-        /* -webkit-background-clip: text;
-                background-clip: text; */
-        -webkit-text-fill-color: transparent;
+    /* ════════════════════════════════════════════════
+               LIST ACTES — DESIGN WORKSPACE PRO
+               ════════════════════════════════════════════════ */
+
+    .listact-page {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
+    /* ═══════════ HEADER DÉGRADÉ MARINE (style validationAct) ═══════════ */
+    .listact-hero {
+        background: radial-gradient(700px 350px at 85% 30%, rgba(201, 168, 106, 0.12), transparent 60%), radial-gradient(500px 300px at 15% 80%, rgba(20, 165, 116, 0.15), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 22px 28px !important;
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.2);
+    }
+
+        /* Filigrane or subtil */
+        .listact-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 106, 0.4) 25%, rgba(201, 168, 106, 0.7) 50%, rgba(201, 168, 106, 0.4) 75%, transparent 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+    .hero-bg-deco {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .hero-icon-wrap {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .meta-strong {
+        color: #FCD34D;
+        font-weight: 800;
+    }
+
+    .meta-sep {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .meta-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: white;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #FCD34D;
+        animation: live-pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes live-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.6);
+        }
+
+        50% {
+            opacity: 0.7;
+            box-shadow: 0 0 0 6px rgba(252, 211, 77, 0);
+        }
+    }
+
+    @@keyframes live-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.5);
+        }
+
+        50% {
+            opacity: 0.7;
+            box-shadow: 0 0 0 6px rgba(110, 231, 183, 0);
+        }
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .hero-btn-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.15s ease;
+    }
+
+        .hero-btn-icon:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #C9A86A;
+        }
+
+        .hero-btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .hero-btn-primary {
+        background: linear-gradient(135deg, #EA580C 0%, #DC2626 60%, #F97316 100%);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 14px rgba(234, 88, 12, 0.45);
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.2px;
+    }
+
+        .hero-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .hero-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(234, 88, 12, 0.6);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+            .hero-btn-primary:hover::before {
+                left: 100%;
+            }
+
+        .hero-btn-primary i {
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .hero-btn-primary:hover i {
+            transform: rotate(90deg);
+        }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ═══════════ STATS CARDS — 5 COLONNES GARANTIES ═══════════ */
+
+    .stats-grid-5 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+    }
+
+    .stat-mini-card {
+        height: 80px;
+    }
+
+        .stat-mini-card .mud-card-content {
+            padding: 14px 16px !important;
+            height: 100%;
+        }
+
+    .stat-mini-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 100%;
+    }
+
+    .stat-mini-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .stat-mini-value {
+        font-size: 1.7rem;
+        font-weight: 800;
+        line-height: 1;
+        color: white;
+    }
+
+    .stat-mini-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-mini-icon {
+        font-size: 2.2rem !important;
+        opacity: 0.35;
+        flex-shrink: 0;
+    }
+
+    /* Effet de levée au hover */
     .hover-lift {
-        transition: all .25s ease;
+        transition: all 0.2s ease;
     }
 
         .hover-lift:hover {
             transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
         }
 
-    .bg-primary-light {
-        background-color: rgba(59,130,246,.12);
-    }
-
-    .bg-success-light {
-        background-color: rgba(34,197,94,.12);
-    }
-
-    .bg-warning-light {
-        background-color: rgba(245,158,11,.12);
-    }
-
-    .bg-info-light {
-        background-color: rgba(14,165,233,.12);
-    }
-
-    .participant-cell {
-        white-space: pre-line;
-        line-height: 1.35;
-    }
-    /* Pour 5 cards alignées */
-    .col-md-2-4 {
-        flex: 0 0 auto;
-        width: 20%;
+    /* Responsive — 3 colonnes en tablette, 2 en mobile */
+    @@media (max-width: 1400px) {
+        .stats-grid-5 {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
 
     @@media (max-width: 768px) {
-        .col-md-2-4 {
-            width: 50%;
+        .stats-grid-5 {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    .bg-default-light {
-        background-color: rgba(108, 117, 125, .12);
+    /* ═══════════ TABS MODERNES ═══════════ */
+    .custom-tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid #E5E7EB;
+        padding: 0 4px;
+        flex-wrap: wrap;
     }
 
-    .bg-secondary-light {
-        background-color: rgba(108, 117, 125, .15);
+    .custom-tab {
+        background: transparent;
+        border: none;
+        padding: 12px 18px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        transition: color 0.15s ease;
+        white-space: nowrap;
     }
 
-    .bg-error-light {
-        background-color: rgba(220, 53, 69, .12);
+        .custom-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 18px;
+            right: 18px;
+            height: 2px;
+            background: #0A2540;
+            border-radius: 2px;
+            transform: scaleX(0);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        .custom-tab:hover {
+            color: #1A1F3A;
+        }
+
+        .custom-tab.active {
+            color: #0A2540;
+        }
+
+            .custom-tab.active::after {
+                transform: scaleX(1);
+            }
+
+    .custom-tab-count {
+        background: #F1F5F9;
+        color: #475569;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        min-width: 22px;
+        text-align: center;
     }
 
-    .text-error {
-        color: #dc3545 !important;
+    .custom-tab.active .custom-tab-count {
+        background: #0A2540;
+        color: white;
     }
 
+    /* ═══════════ FILTRES ÉQUILIBRÉS ═══════════ */
+    .listact-filters {
+        background: white;
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid #E5E7EB;
+        flex-wrap: wrap;
+    }
+
+    /* === Groupe gauche : 3 filtres équilibrés === */
+    .filters-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .filter-search {
+        flex: 2;
+        min-width: 220px;
+        position: relative;
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+
+        .filter-search:focus-within {
+            background: white;
+            border-color: #C9A86A;
+            box-shadow: 0 0 0 4px rgba(201, 168, 106, 0.1);
+        }
+
+    .filter-search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9CA3AF;
+        pointer-events: none;
+    }
+
+    .filter-search-input {
+        width: 100%;
+        padding: 10px 40px;
+        border: none;
+        background: transparent;
+        font-size: 0.9rem;
+        color: #1A1F3A;
+        outline: none;
+        border-radius: 10px;
+    }
+
+        .filter-search-input::placeholder {
+            color: #9CA3AF;
+        }
+
+    .filter-search-clear {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background: #E5E7EB;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+    }
+
+    .filter-type {
+        flex: 1.3;
+        min-width: 180px;
+    }
+
+    /* === Pill "Mes actes" === */
+    .filter-pill-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        padding: 8px 14px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6B7280;
+        transition: all 0.2s ease;
+        margin: 0;
+        user-select: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+        .filter-pill-toggle input {
+            display: none;
+        }
+
+        .filter-pill-toggle:hover {
+            border-color: #0A2540;
+            color: #1A1F3A;
+        }
+
+        .filter-pill-toggle i {
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .filter-pill-toggle:hover i {
+            transform: scale(1.1);
+        }
+
+        .filter-pill-toggle.active {
+            background: linear-gradient(135deg, #0A2540 0%, #1F3C88 100%);
+            border-color: #0A2540;
+            color: white;
+            box-shadow: 0 4px 10px rgba(10, 37, 64, 0.2);
+        }
+
+            .filter-pill-toggle.active i {
+                color: #C9A86A;
+            }
+
+    .filter-pill-count {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        min-width: 22px;
+        text-align: center;
+    }
+
+    /* === Séparateur vertical === */
+    .filters-divider {
+        width: 1px;
+        height: 32px;
+        background: linear-gradient(180deg, transparent 0%, #E5E7EB 30%, #E5E7EB 70%, transparent 100%);
+        flex-shrink: 0;
+    }
+
+    /* === Groupe droite : reset === */
+    .filters-action {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .filter-reset-pro {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #FEF2F2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.25s ease;
+    }
+
+        .filter-reset-pro:hover {
+            background: #DC2626;
+            color: white;
+            transform: rotate(-180deg);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+    /* === Responsive === */
+    @@media (max-width: 900px) {
+        .filters-group {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-search,
+        .filter-type {
+            flex-basis: 100%;
+            min-width: 0;
+        }
+
+        .filters-divider {
+            display: none;
+        }
+    }
+
+    /* ═══════════ TABLE — STYLE USERPAGE ═══════════ */
+    .listact-table-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+
+    .listact-table {
+        background: white !important;
+    }
+
+        /* Header */
+        .listact-table thead th {
+            background: #F8FAFC !important;
+            color: #0A2540 !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #E1E4E8 !important;
+            padding: 14px 16px !important;
+        }
+
+        /* Lignes */
+        .listact-table tbody tr {
+            transition: background 0.15s ease;
+        }
+
+            .listact-table tbody tr:hover {
+                background: #F8FAFC !important;
+            }
+
+        .listact-table tbody td {
+            padding: 14px 16px !important;
+            vertical-align: middle !important;
+        }
+
+    /* === Cellule ACTE (avatar dégradé + ID + sous-info) === */
+    .acte-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .acte-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .acte-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .acte-id {
+        font-weight: 700;
+        color: #0A2540;
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.3px;
+    }
+
+    .acte-sub {
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    /* === Type Pill (badge couleur subtile) === */
+    .type-pill {
+        display: inline-block;
+        background: #EFF6FF;
+        color: #1E40AF;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid #DBEAFE;
+        max-width: 280px;
+        line-height: 1.4;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* === Nom Débiteur / Caution (texte simple multi-ligne) === */
+    .party-name {
+        color: #1A1F3A;
+        font-size: 0.9rem;
+        font-weight: 500;
+        white-space: pre-line;
+        line-height: 1.45;
+        display: block;
+        max-width: 260px;
+        padding: 4px 0;
+    }
+
+    /* === Largeurs minimales garanties pour bien aérer les colonnes === */
+    .listact-table thead th:nth-child(2), /* Type */
+    .listact-table tbody td:nth-child(2) {
+        min-width: 200px;
+        padding-right: 24px !important;
+    }
+
+    .listact-table thead th:nth-child(3), /* Débiteur */
+    .listact-table tbody td:nth-child(3),
+    .listact-table thead th:nth-child(4), /* Caution */
+    .listact-table tbody td:nth-child(4) {
+        min-width: 220px;
+        padding-right: 24px !important;
+    }
+
+    /* Colonne ID/Acte un peu plus compacte pour donner place aux autres */
+    .listact-table thead th:nth-child(1),
+    .listact-table tbody td:nth-child(1) {
+        width: 200px;
+    }
+
+    /* Colonne Statut compacte */
+    .listact-table thead th:nth-child(5),
+    .listact-table tbody td:nth-child(5) {
+        width: 150px;
+    }
+
+    /* Colonne MAJ compacte */
+    .listact-table thead th:nth-child(6),
+    .listact-table tbody td:nth-child(6) {
+        width: 160px;
+    }
+
+    /* === Status cell === */
+    .status-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-info-icon {
+        color: #DC2626;
+        cursor: help;
+        font-size: 1rem;
+    }
+
+    /* Dot animé pour "En attente" */
+    .status-dot-anim {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #D97706;
+        display: inline-block;
+        animation: status-pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes status-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
+        }
+
+        50% {
+            opacity: 0.6;
+            box-shadow: 0 0 0 6px rgba(217, 119, 6, 0);
+        }
+    }
+
+    /* Status badges (inchangé mais ajusté pour le dot) */
+    .custom-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+        .custom-status-badge.status-draft {
+            background: #F3F4F6;
+            color: #4B5563;
+        }
+
+        .custom-status-badge.status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .custom-status-badge.status-valid {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .custom-status-badge.status-rejected {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .custom-status-badge.status-archived {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+    /* === Cellule MAJ (relative + absolue) === */
+    .maj-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .maj-relative {
+        color: #0A2540;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+
+    .maj-absolute {
+        font-size: 0.75rem;
+        color: #9CA3AF;
+        margin-top: 2px;
+    }
+
+    /* Actions */
+    .actions-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        border: 1px solid #E5E7EB;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        transition: all 0.15s ease;
+    }
+
+        .action-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+    .action-btn-view {
+        color: #6B7280;
+    }
+
+        .action-btn-view:hover:not(:disabled) {
+            background: #6B7280;
+            color: white;
+            border-color: #6B7280;
+        }
+
+    .action-btn-edit {
+        color: #1F3C88;
+    }
+
+        .action-btn-edit:hover:not(:disabled) {
+            background: #1F3C88;
+            color: white;
+            border-color: #1F3C88;
+        }
+
+    .action-btn-download {
+        color: #0E7C5C;
+    }
+
+        .action-btn-download:hover:not(:disabled) {
+            background: #0E7C5C;
+            color: white;
+            border-color: #0E7C5C;
+        }
+
+    .action-btn-upload {
+        color: #92400E;
+    }
+
+        .action-btn-upload:hover:not(:disabled) {
+            background: #92400E;
+            color: white;
+            border-color: #92400E;
+        }
+
+    .action-btn-send {
+        color: #0EA5E9;
+    }
+
+        .action-btn-send:hover:not(:disabled) {
+            background: #0EA5E9;
+            color: white;
+            border-color: #0EA5E9;
+        }
+
+    .action-btn-reopen {
+        color: #D97706;
+    }
+
+        .action-btn-reopen:hover:not(:disabled) {
+            background: #D97706;
+            color: white;
+            border-color: #D97706;
+        }
+
+    .action-btn-delete {
+        color: #DC2626;
+    }
+
+        .action-btn-delete:hover:not(:disabled) {
+            background: #DC2626;
+            color: white;
+            border-color: #DC2626;
+        }
+
+    /* Loading / Empty */
+    .loading-zone,
+    .empty-zone {
+        background: white;
+        border-radius: 14px;
+        padding: 80px 20px;
+        text-align: center;
+        border: 1px solid #E5E7EB;
+    }
+
+        .loading-zone p {
+            color: #6B7280;
+            margin-top: 16px;
+        }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #D1D5DB;
+        margin-bottom: 16px;
+    }
+
+    .empty-title {
+        color: #1A1F3A;
+        font-weight: 800;
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+    }
+
+    .empty-subtitle {
+        color: #6B7280;
+        margin-bottom: 24px;
+    }
+
+    .empty-action {
+        background: #0A2540;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+    }
+
+        .empty-action:hover {
+            background: #1A1F3A;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(10, 37, 64, 0.2);
+        }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 1.2rem !important;
+        }
+
+        .hero-meta {
+            font-size: 0.75rem !important;
+        }
+    }
 </style>

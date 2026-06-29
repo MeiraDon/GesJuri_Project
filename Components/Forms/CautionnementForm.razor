@@ -1,108 +1,560 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
 @using GesCPSI_Project.Models
 @using GesCPSI_Project.ViewModels
+@using MudBlazor
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <label class="form-label">Numéro de cautionnement*</label>
-        <InputText class="form-control" @bind-Value="Cautionnement.NumeroCautionmt" />
-        <ValidationMessage For="@(() => Cautionnement.NumeroCautionmt)" />
+<div class="form-modern">
+
+    @* ═══════════════ SECTION 1 — IDENTIFICATION ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-blue">
+                <i class="bi bi-card-text"></i>
+            </div>
+            <div>
+                <div class="section-title">Identification</div>
+                <div class="section-subtitle">Numéro et montants du cautionnement</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-hash"></i>
+                    Numéro de cautionnement
+                    <span class="required-mark">*</span>
+                </label>
+                <InputText class="form-input" @bind-Value="Cautionnement.NumeroCautionmt" placeholder="Ex: CPSI-2026-0042" />
+                <ValidationMessage For="@(() => Cautionnement.NumeroCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-cash-coin"></i>
+                    Montant (chiffres)
+                    <span class="required-mark">*</span>
+                </label>
+                <div class="input-with-suffix">
+                    <InputNumber class="form-input" @bind-Value="Cautionnement.MontantCautionne" placeholder="0" />
+                    <span class="input-suffix">FCFA</span>
+                </div>
+                <ValidationMessage For="@(() => Cautionnement.MontantCautionne)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-full">
+                <label class="form-label">
+                    <i class="bi bi-pencil-square"></i>
+                    Montant (en lettres)
+                    <span class="required-mark">*</span>
+                </label>
+                <InputText class="form-input" @bind-Value="Cautionnement.MontantLettreCautionmt" placeholder="Ex: Cinq cent mille francs CFA" />
+                <div class="form-helper">
+                    <i class="bi bi-info-circle"></i>
+                    Écrivez le montant en toutes lettres comme sur les chèques
+                </div>
+                <ValidationMessage For="@(() => Cautionnement.MontantLettreCautionmt)" class="form-error" />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-6">
-        <label class="form-label">Montant (chiffres)*</label>
-        <InputNumber class="form-control" @bind-Value="Cautionnement.MontantCautionne" />
-        <ValidationMessage For="@(() => Cautionnement.MontantCautionne)" />
+    @* ═══════════════ SECTION 2 — DATES & LIEU ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-amber">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+                <div class="section-title">Dates & Lieu</div>
+                <div class="section-subtitle">Période de validité et lieu de signature</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-pen"></i>
+                    Date signature
+                    <span class="required-mark">*</span>
+                </label>
+                <MudDatePicker @bind-Date="_dateSignature"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="form-datepicker"
+                               PickerVariant="PickerVariant.Dialog" />
+                <ValidationMessage For="@(() => Cautionnement.DateSignatureCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-play-circle"></i>
+                    Date d'effet
+                    <span class="required-mark">*</span>
+                </label>
+                <MudDatePicker @bind-Date="_dateEffet" 
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="form-datepicker"
+                               PickerVariant="PickerVariant.Dialog" />
+                <ValidationMessage For="@(() => Cautionnement.DateEffetCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-third">
+                <label class="form-label">
+                    <i class="bi bi-x-circle"></i>
+                    Date d'expiration
+                    <span class="required-mark">*</span>
+                </label>
+                <MudDatePicker @bind-Date="_dateExpiration" 
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Class="form-datepicker"
+                               PickerVariant="PickerVariant.Dialog" />
+                <ValidationMessage For="@(() => Cautionnement.DateExpirationCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-geo-alt"></i>
+                    Lieu de signature
+                    <span class="required-mark">*</span>
+                </label>
+                <InputText class="form-input" @bind-Value="Cautionnement.LieuSignatureCautionmt" placeholder="Ex: Lomé, Togo" />
+                <ValidationMessage For="@(() => Cautionnement.LieuSignatureCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-circle-fill"></i>
+                    État du cautionnement
+                    <span class="required-mark">*</span>
+                </label>
+                <InputSelect class="form-input form-select-custom" @bind-Value="Cautionnement.EtatCautionmt">
+                    <option value="">Sélectionner un état...</option>
+                    <option value="Actif">🟢 Actif</option>
+                    <option value="En attente">🟡 En attente</option>
+                    <option value="Résilié">🔴 Résilié</option>
+                    <option value="Expiré">⚫ Expiré</option>
+                    <option value="Exécuté">🔵 Exécuté</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => Cautionnement.EtatCautionmt)" class="form-error" />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-12">
-        <label class="form-label">Montant (lettres)*</label>
-        <InputText class="form-control" @bind-Value="Cautionnement.MontantLettreCautionmt" />
-        <ValidationMessage For="@(() => Cautionnement.MontantLettreCautionmt)" />
+    @* ═══════════════ SECTION 3 — CONDITIONS JURIDIQUES ═══════════════ *@
+    <div class="form-section">
+        <div class="form-section-header">
+            <div class="section-icon-wrap section-icon-purple">
+                <i class="bi bi-scale"></i>
+            </div>
+            <div>
+                <div class="section-title">Conditions juridiques</div>
+                <div class="section-subtitle">Clauses et obligations contractuelles</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-field form-field-full">
+                <label class="form-label">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Conditions de révocation
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="3"
+                               @bind-Value="Cautionnement.ConditionsRevocationCautionmt"
+                               placeholder="Ex: En cas de non-paiement des échéances, défaut de déclaration..." />
+                <ValidationMessage For="@(() => Cautionnement.ConditionsRevocationCautionmt)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-bank"></i>
+                    Obligations de la banque
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="3"
+                               @bind-Value="Cautionnement.ObligationsBanque"
+                               placeholder="Ex: Informer la caution de tout incident, fournir les états de compte..." />
+                <ValidationMessage For="@(() => Cautionnement.ObligationsBanque)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-person-check"></i>
+                    Obligations de la caution
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="3"
+                               @bind-Value="Cautionnement.ObligationsCaution"
+                               placeholder="Ex: Payer à première demande, informer de tout changement d'adresse..." />
+                <ValidationMessage For="@(() => Cautionnement.ObligationsCaution)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-arrow-left-right"></i>
+                    Clause de subrogation
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Cautionnement.ClauseSubrogation"
+                               placeholder="Ex: La caution qui paie est subrogée dans les droits de la banque..." />
+                <ValidationMessage For="@(() => Cautionnement.ClauseSubrogation)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-shield-lock"></i>
+                    Clause de non-novation
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Cautionnement.ClauseNonNovation"
+                               placeholder="Ex: Toute modification de la convention principale n'affecte pas la caution..." />
+                <ValidationMessage For="@(() => Cautionnement.ClauseNonNovation)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-house-door"></i>
+                    Élection de domicile
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Cautionnement.ElectionDomicile"
+                               placeholder="Ex: Pour l'exécution du présent acte, les parties élisent domicile..." />
+                <ValidationMessage For="@(() => Cautionnement.ElectionDomicile)" class="form-error" />
+            </div>
+
+            <div class="form-field form-field-half">
+                <label class="form-label">
+                    <i class="bi bi-gavel"></i>
+                    Règlement des différends
+                    <span class="required-mark">*</span>
+                </label>
+                <InputTextArea class="form-input form-textarea" rows="2"
+                               @bind-Value="Cautionnement.ReglementDifferend"
+                               placeholder="Ex: Tout différend sera soumis aux tribunaux de Lomé..." />
+                <ValidationMessage For="@(() => Cautionnement.ReglementDifferend)" class="form-error" />
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Date signature*</label>
-        <InputDate class="form-control" @bind-Value="Cautionnement.DateSignatureCautionmt" />
-        <ValidationMessage For="@(() => Cautionnement.DateSignatureCautionmt)" />
-    </div>
-
-    <div class="col-md-4">
-        <label class="form-label">Date effet*</label>
-        <InputDate class="form-control" @bind-Value="Cautionnement.DateEffetCautionmt" />
-        <ValidationMessage For="@(() => Cautionnement.DateEffetCautionmt)" />
-    </div>
-
-    <div class="col-md-4">
-        <label class="form-label">Date expiration*</label>
-        <InputDate class="form-control" @bind-Value="Cautionnement.DateExpirationCautionmt" />
-        <ValidationMessage For="@(() => Cautionnement.DateExpirationCautionmt)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Lieu de signature*</label>
-        <InputText class="form-control" @bind-Value="Cautionnement.LieuSignatureCautionmt" placeholder="Ex: Abidjan, Plateau" />
-        <ValidationMessage For="@(() => Cautionnement.LieuSignatureCautionmt)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">État du cautionnement*</label>
-        <InputSelect class="form-select" @bind-Value="Cautionnement.EtatCautionmt">
-            <option value="">Sélectionner...</option>
-            <option value="Actif">Actif</option>
-            <option value="En attente">En attente</option>
-            <option value="Résilié">Résilié</option>
-            <option value="Expiré">Expiré</option>
-            <option value="Exécuté">Exécuté</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => Cautionnement.EtatCautionmt)" />
-    </div>
-
-    <div class="col-12">
-        <label class="form-label">Conditions de révocation*</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ConditionsRevocationCautionmt" placeholder="Ex: En cas de non-paiement des échéances, défaut de déclaration..." />
-        <ValidationMessage For="@(() => Cautionnement.ConditionsRevocationCautionmt)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Obligations de la banque*</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ObligationsBanque" placeholder="Ex: Informer la caution de tout incident, fournir les états de compte..." />
-        <ValidationMessage For="@(() => Cautionnement.ObligationsBanque)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Obligations de la caution*</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Cautionnement.ObligationsCaution" placeholder="Ex: Payer à première demande, informer de tout changement d'adresse..." />
-        <ValidationMessage For="@(() => Cautionnement.ObligationsCaution)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Clause de subrogation*</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ClauseSubrogation" placeholder="Ex: La caution qui paie est subrogée dans les droits de la banque..." />
-        <ValidationMessage For="@(() => Cautionnement.ClauseSubrogation)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Clause de non-novation*</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ClauseNonNovation" placeholder="Ex: Toute modification de la convention principale n'affecte pas la caution..." />
-        <ValidationMessage For="@(() => Cautionnement.ClauseNonNovation)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Élection de domicile*</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ElectionDomicile" placeholder="Ex: Pour l'exécution du présent acte, les parties élisent domicile..." />
-        <ValidationMessage For="@(() => Cautionnement.ElectionDomicile)" />
-    </div>
-
-    <div class="col-6">
-        <label class="form-label">Règlement des différends*</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="Cautionnement.ReglementDifferend" placeholder="Ex: Tout différend sera soumis aux tribunaux de [Ville]..." />
-        <ValidationMessage For="@(() => Cautionnement.ReglementDifferend)" />
-    </div>
 </div>
 
 @code {
-    
     [Parameter, EditorRequired]
     public CautionnementViewModel Cautionnement { get; set; } = null!;
+
+    private DateTime? _dateSignature
+    {
+        get => Cautionnement.DateSignatureCautionmt == default ? null : Cautionnement.DateSignatureCautionmt;
+        set => Cautionnement.DateSignatureCautionmt = value ?? DateTime.UtcNow;
+    }
+
+    private DateTime? _dateEffet
+    {
+        get => Cautionnement.DateEffetCautionmt == default ? null : Cautionnement.DateEffetCautionmt;
+        set => Cautionnement.DateEffetCautionmt = value ?? DateTime.UtcNow;
+    }
+
+    private DateTime? _dateExpiration
+    {
+        get => Cautionnement.DateExpirationCautionmt == default ? null : Cautionnement.DateExpirationCautionmt;
+        set => Cautionnement.DateExpirationCautionmt = value ?? DateTime.UtcNow;
+    }
 }
+
+<style>
+    /* ════════════════════════════════════════════════
+           FORMULAIRE MODERNE — DESIGN SECTIONNÉ
+           ════════════════════════════════════════════════ */
+
+    .form-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* ═══════════ SECTION ═══════════ */
+    .form-section {
+        background: #F9FAFB;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
+    }
+
+        .form-section:hover {
+            border-color: #D1D5DB;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+    .form-section-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .section-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-icon-blue {
+        background: linear-gradient(135deg, #1F3C88 0%, #3F3A8A 100%);
+    }
+
+    .section-icon-amber {
+        background: linear-gradient(135deg, #92400E 0%, #C9A86A 100%);
+    }
+
+    .section-icon-purple {
+        background: linear-gradient(135deg, #3F3A8A 0%, #1A1F3A 100%);
+    }
+
+    .section-title {
+        color: #1A1F3A;
+        font-weight: 800;
+        font-size: 1.05rem;
+        line-height: 1.2;
+    }
+
+    .section-subtitle {
+        color: #6B7280;
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+
+    /* ═══════════ GRID DE CHAMPS ═══════════ */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 14px 16px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .form-field-half {
+        grid-column: span 3;
+    }
+
+    .form-field-third {
+        grid-column: span 2;
+    }
+
+    .form-field-full {
+        grid-column: span 6;
+    }
+
+    /* ═══════════ LABEL ═══════════ */
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        color: #374151;
+        font-size: 0.82rem;
+        margin: 0;
+    }
+
+        .form-label i {
+            color: #C9A86A;
+            font-size: 0.9rem;
+        }
+
+    .required-mark {
+        color: #DC2626;
+        font-weight: 900;
+        margin-left: 2px;
+    }
+
+    /* ═══════════ INPUT MODERNE ═══════════ */
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: white;
+        border: 1px solid #D1D5DB;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        color: #1A1F3A;
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: inherit;
+    }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        .form-input:hover {
+            border-color: #9CA3AF;
+        }
+
+        .form-input:focus {
+            border-color: #C9A86A;
+            box-shadow: 0 0 0 4px rgba(201, 168, 106, 0.12);
+            background: white;
+        }
+
+        /* Champs invalides */
+        .form-input.invalid,
+        .form-input.modified.invalid {
+            border-color: #DC2626;
+            background: #FEF2F2;
+        }
+
+            .form-input.invalid:focus {
+                box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+            }
+
+    /* ═══════════ TEXTAREA ═══════════ */
+    .form-textarea {
+        resize: vertical;
+        min-height: 70px;
+        line-height: 1.5;
+        font-family: inherit;
+    }
+
+    /* ═══════════ SELECT ═══════════ */
+    .form-select-custom {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+
+    /* ═══════════ INPUT AVEC SUFFIX (FCFA) ═══════════ */
+    .input-with-suffix {
+        position: relative;
+    }
+
+        .input-with-suffix .form-input {
+            padding-right: 60px;
+        }
+
+    .input-suffix {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6B7280;
+        font-weight: 700;
+        font-size: 0.82rem;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent 0%, white 30%);
+        padding-left: 12px;
+    }
+
+    /* ═══════════ HELPER & ERREUR ═══════════ */
+    .form-helper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #6B7280;
+        font-size: 0.76rem;
+        font-style: italic;
+        margin-top: 2px;
+    }
+
+        .form-helper i {
+            color: #C9A86A;
+            font-size: 0.85rem;
+        }
+
+    .form-error {
+        color: #DC2626;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .form-error:not(:empty)::before {
+            content: '⚠️';
+            font-size: 0.85rem;
+        }
+
+    /* ═══════════ DATE INPUT FIX ═══════════ */
+    input[type="date"].form-input {
+        font-family: inherit;
+        color-scheme: light;
+    }
+
+        input[type="date"].form-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+        }
+
+            input[type="date"].form-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+            }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-field-half,
+        .form-field-third,
+        .form-field-full {
+            grid-column: span 1;
+        }
+
+        .form-section {
+            padding: 16px;
+        }
+
+        .form-section-header {
+            gap: 10px;
+        }
+
+        .section-icon-wrap {
+            width: 36px;
+            height: 36px;
+            font-size: 1.05rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.78rem;
+        }
+    }
+   
+</style>

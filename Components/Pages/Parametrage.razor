@@ -1,0 +1,1364 @@
+﻿@page "/parametres"
+@attribute [Authorize(Roles = RoleNames.Admin)]
+@rendermode InteractiveServer
+
+@using GesCPSI_Project.Models
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Paramètres — GesCPSI</PageTitle>
+
+<div class="settings-cockpit">
+
+    <!-- ═════════════ HEADER CYBER (multicolore unique) ═════════════ -->
+    <div class="cockpit-hero">
+        <div class="cyber-grid"></div>
+        <div class="cyber-orb cyber-orb-1"></div>
+        <div class="cyber-orb cyber-orb-2"></div>
+        <div class="cyber-orb cyber-orb-3"></div>
+
+        <div class="hero-content">
+            <div class="hero-main">
+                <div class="hero-icon-cyber">
+                    <div class="icon-pulse"></div>
+                    <i class="bi bi-sliders"></i>
+                </div>
+                <div>
+                    <div class="hero-eyebrow">
+                        <span class="cyber-dot"></span>
+                        <span>PANNEAU DE CONTRÔLE</span>
+                        <span class="cyber-status">SYSTÈME ACTIF</span>
+                    </div>
+                    <h1 class="hero-title">Paramètres</h1>
+                    <p class="hero-meta">
+                        Configuration globale de l'application
+                        <span class="meta-sep">·</span>
+                        <span class="admin-badge">
+                            <i class="bi bi-shield-fill-check"></i>
+                            Admin
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <div class="system-info">
+                    <div class="system-info-item">
+                        <i class="bi bi-cpu"></i>
+                        <div>
+                            <div class="info-value">v2.4.1</div>
+                            <div class="info-label">Version</div>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <i class="bi bi-hdd-network"></i>
+                        <div>
+                            <div class="info-value">@_uptime</div>
+                            <div class="info-label">Uptime</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═════════════ COCKPIT LAYOUT (sidebar modules + contenu) ═════════════ -->
+    <div class="cockpit-layout">
+
+        <!-- Navigation modules (gauche) -->
+        <aside class="modules-nav">
+            <div class="modules-nav-header">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+                <span>MODULES</span>
+            </div>
+
+            @foreach (var module in _modules)
+            {
+                <button class="module-btn @(_activeModule == module.Id ? "active" : "")"
+                        @onclick="() => SelectModule(module.Id)"
+                        style="--module-color: @module.Color; --module-glow: @module.GlowColor;">
+                    <div class="module-icon">
+                        <i class="bi @module.Icon"></i>
+                    </div>
+                    <div class="module-text">
+                        <div class="module-name">@module.Name</div>
+                        <div class="module-desc">@module.Description</div>
+                    </div>
+                    <div class="module-arrow">
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                    @if (module.HasUpdate)
+                    {
+                        <span class="module-dot"></span>
+                    }
+                </button>
+            }
+        </aside>
+
+        <!-- Panneau de contenu (droite) -->
+        <main class="modules-content">
+
+            @switch (_activeModule)
+            {
+                case "appearance":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #A855F7;">
+                            <div class="panel-icon">
+                                <i class="bi bi-palette-fill"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Apparence</h2>
+                                <p class="panel-subtitle">Personnalisez l'interface utilisateur</p>
+                            </div>
+                            <div class="panel-badge">3 options</div>
+                        </div>
+
+                        <div class="settings-list">
+                            <SettingRow Icon="bi-moon-stars-fill"
+                                       IconColor="#8B5CF6"
+                                       Title="Mode sombre"
+                                       Description="Active le thème sombre pour réduire la fatigue oculaire"
+                                       Type="toggle"
+                                       Value="@_darkMode"
+                                       OnChange="(bool v) => _darkMode = v" />
+
+                            <SettingRow Icon="bi-arrows-collapse"
+                                       IconColor="#A855F7"
+                                       Title="Densité d'affichage"
+                                       Description="Espacement entre les éléments de l'interface"
+                                       Type="select"
+                                       Options="@(new[] { "Compacte", "Confortable", "Spacieuse" })"
+                                       SelectedOption="@_density"
+                                       OnSelectChange="(string v) => _density = v" />
+
+                            <SettingRow Icon="bi-magic"
+                                       IconColor="#C084FC"
+                                       Title="Animations"
+                                       Description="Activer les transitions et animations de l'interface"
+                                       Type="toggle"
+                                       Value="@_animations"
+                                       OnChange="(bool v) => _animations = v" />
+                        </div>
+                    </div>
+                    break;
+
+                case "notifications":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #F59E0B;">
+                            <div class="panel-icon">
+                                <i class="bi bi-bell-fill"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Notifications</h2>
+                                <p class="panel-subtitle">Gérez les alertes et notifications</p>
+                            </div>
+                            <div class="panel-badge">4 options</div>
+                        </div>
+
+                        <div class="settings-list">
+                            <SettingRow Icon="bi-envelope-fill"
+                                       IconColor="#F59E0B"
+                                       Title="Notifications email"
+                                       Description="Recevoir des notifications par email pour les événements importants"
+                                       Type="toggle"
+                                       Value="@_emailNotif"
+                                       OnChange="(bool v) => _emailNotif = v" />
+
+                            <SettingRow Icon="bi-broadcast"
+                                       IconColor="#FBBF24"
+                                       Title="Notifications in-app"
+                                       Description="Afficher les notifications dans l'application"
+                                       Type="toggle"
+                                       Value="@_inAppNotif"
+                                       OnChange="(bool v) => _inAppNotif = v" />
+
+                            <SettingRow Icon="bi-exclamation-triangle-fill"
+                                       IconColor="#EF4444"
+                                       Title="Alertes critiques"
+                                       Description="Recevoir les alertes pour les actes en attente urgente"
+                                       Type="toggle"
+                                       Value="@_criticalAlerts"
+                                       OnChange="(bool v) => _criticalAlerts = v" />
+
+                            <SettingRow Icon="bi-clock-history"
+                                       IconColor="#F97316"
+                                       Title="Fréquence des résumés"
+                                       Description="Période d'envoi du résumé d'activité par email"
+                                       Type="select"
+                                       Options="@(new[] { "Quotidien", "Hebdomadaire", "Mensuel", "Jamais" })"
+                                       SelectedOption="@_summaryFreq"
+                                       OnSelectChange="(string v) => _summaryFreq = v" />
+                        </div>
+                    </div>
+                    break;
+
+                case "security":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #EF4444;">
+                            <div class="panel-icon">
+                                <i class="bi bi-shield-shaded"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Sécurité</h2>
+                                <p class="panel-subtitle">Authentification et accès</p>
+                            </div>
+                            <div class="panel-badge alert">CRITIQUE</div>
+                        </div>
+
+                        <div class="settings-list">
+                            <SettingRow Icon="bi-key-fill"
+                                       IconColor="#DC2626"
+                                       Title="Authentification 2FA"
+                                       Description="Forcer la 2FA pour tous les administrateurs"
+                                       Type="toggle"
+                                       Value="@_twoFA"
+                                       OnChange="(bool v) => _twoFA = v" />
+
+                            <SettingRow Icon="bi-hourglass-split"
+                                       IconColor="#F87171"
+                                       Title="Durée de session (minutes)"
+                                       Description="Déconnexion automatique après inactivité"
+                                       Type="select"
+                                       Options="@(new[] { "15 min", "30 min", "60 min", "2 heures", "Jamais" })"
+                                       SelectedOption="@_sessionDuration"
+                                       OnSelectChange="(string v) => _sessionDuration = v" />
+
+                            <SettingRow Icon="bi-incognito"
+                                       IconColor="#991B1B"
+                                       Title="Politique de mot de passe"
+                                       Description="Minimum 12 caractères, majuscule, chiffre et symbole"
+                                       Type="select"
+                                       Options="@(new[] { "Standard", "Renforcée", "Maximum" })"
+                                       SelectedOption="@_passwordPolicy"
+                                       OnSelectChange="(string v) => _passwordPolicy = v" />
+
+                            <SettingRow Icon="bi-shield-lock-fill"
+                                       IconColor="#7F1D1D"
+                                       Title="Verrouillage après échecs"
+                                       Description="Nombre de tentatives échouées avant verrouillage"
+                                       Type="select"
+                                       Options="@(new[] { "3 tentatives", "5 tentatives", "10 tentatives" })"
+                                       SelectedOption="@_lockoutAttempts"
+                                       OnSelectChange="(string v) => _lockoutAttempts = v" />
+
+                            <SettingRow Icon="bi-list-check"
+                                       IconColor="#DC2626"
+                                       Title="Audit log détaillé"
+                                       Description="Enregistrer toutes les actions des utilisateurs"
+                                       Type="toggle"
+                                       Value="@_auditLog"
+                                       OnChange="(bool v) => _auditLog = v" />
+                        </div>
+                    </div>
+                    break;
+
+                case "workflow":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #10B981;">
+                            <div class="panel-icon">
+                                <i class="bi bi-diagram-3-fill"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Configuration métier</h2>
+                                <p class="panel-subtitle">Workflow des actes et archivage</p>
+                            </div>
+                            <div class="panel-badge">4 options</div>
+                        </div>
+
+                        <div class="settings-list">
+                            <SettingRow Icon="bi-arrow-right-circle-fill"
+                                       IconColor="#10B981"
+                                       Title="Validation automatique"
+                                       Description="Validation auto des actes après X jours"
+                                       Type="toggle"
+                                       Value="@_autoValidation"
+                                       OnChange="(bool v) => _autoValidation = v" />
+
+                            <SettingRow Icon="bi-archive-fill"
+                                       IconColor="#059669"
+                                       Title="Archivage automatique"
+                                       Description="Archiver automatiquement les actes signés"
+                                       Type="select"
+                                       Options="@(new[] { "Immédiat", "Après 7 jours", "Après 30 jours", "Manuel" })"
+                                       SelectedOption="@_autoArchive"
+                                       OnSelectChange="(string v) => _autoArchive = v" />
+
+                            <SettingRow Icon="bi-clock-fill"
+                                       IconColor="#34D399"
+                                       Title="Délai de relance"
+                                       Description="Rappel automatique des actes en attente"
+                                       Type="select"
+                                       Options="@(new[] { "1 jour", "3 jours", "7 jours", "Désactivé" })"
+                                       SelectedOption="@_reminderDelay"
+                                       OnSelectChange="(string v) => _reminderDelay = v" />
+
+                            <SettingRow Icon="bi-file-earmark-pdf-fill"
+                                       IconColor="#047857"
+                                       Title="Format PDF par défaut"
+                                       Description="Qualité de génération des PDFs officiels"
+                                       Type="select"
+                                       Options="@(new[] { "Standard", "Haute qualité", "Archive (PDF/A)" })"
+                                       SelectedOption="@_pdfFormat"
+                                       OnSelectChange="(string v) => _pdfFormat = v" />
+                        </div>
+                    </div>
+                    break;
+
+                case "data":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #06B6D4;">
+                            <div class="panel-icon">
+                                <i class="bi bi-database-fill-gear"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Données & Backup</h2>
+                                <p class="panel-subtitle">Sauvegarde et exports</p>
+                            </div>
+                            <div class="panel-badge">3 options</div>
+                        </div>
+
+                        <div class="settings-list">
+                            <SettingRow Icon="bi-cloud-arrow-up-fill"
+                                       IconColor="#06B6D4"
+                                       Title="Sauvegarde automatique"
+                                       Description="Backup quotidien de la base de données"
+                                       Type="toggle"
+                                       Value="@_autoBackup"
+                                       OnChange="(bool v) => _autoBackup = v" />
+
+                            <SettingRow Icon="bi-calendar-week"
+                                       IconColor="#0891B2"
+                                       Title="Rétention des backups"
+                                       Description="Durée de conservation des sauvegardes"
+                                       Type="select"
+                                       Options="@(new[] { "7 jours", "30 jours", "90 jours", "1 an" })"
+                                       SelectedOption="@_backupRetention"
+                                       OnSelectChange="(string v) => _backupRetention = v" />
+
+                            <SettingRow Icon="bi-trash3-fill"
+                                       IconColor="#0E7490"
+                                       Title="Purge des logs"
+                                       Description="Suppression automatique des anciens logs d'audit"
+                                       Type="select"
+                                       Options="@(new[] { "Jamais", "Après 1 an", "Après 2 ans", "Après 5 ans" })"
+                                       SelectedOption="@_logPurge"
+                                       OnSelectChange="(string v) => _logPurge = v" />
+                        </div>
+
+                        <!-- Actions spéciales -->
+                        <div class="actions-zone">
+                            <h3 class="actions-title">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                Actions immédiates
+                            </h3>
+                            <div class="action-btns-grid">
+                                <button class="action-btn-special btn-backup" @onclick="TriggerBackup">
+                                    <i class="bi bi-cloud-download-fill"></i>
+                                    <span>Backup maintenant</span>
+                                </button>
+                                <button class="action-btn-special btn-export" @onclick="ExportData">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    <span>Exporter données</span>
+                                </button>
+                                <button class="action-btn-special btn-danger" @onclick="ConfirmPurge">
+                                    <i class="bi bi-exclamation-octagon-fill"></i>
+                                    <span>Purger les logs</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case "system":
+                    <div class="module-panel" @key="@_activeModule">
+                        <div class="panel-header" style="--accent: #EC4899;">
+                            <div class="panel-icon">
+                                <i class="bi bi-gear-wide-connected"></i>
+                            </div>
+                            <div>
+                                <h2 class="panel-title">Système</h2>
+                                <p class="panel-subtitle">Informations et maintenance</p>
+                            </div>
+                            <div class="panel-badge">Lecture seule</div>
+                        </div>
+
+                        <!-- Dashboard infos système -->
+                        <div class="system-grid">
+                            <div class="system-card sys-version">
+                                <div class="sys-icon"><i class="bi bi-tag-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Version actuelle</div>
+                                    <div class="sys-value">2.4.1</div>
+                                    <div class="sys-sub">Build 2026.06.15</div>
+                                </div>
+                            </div>
+
+                            <div class="system-card sys-uptime">
+                                <div class="sys-icon"><i class="bi bi-stopwatch-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Uptime serveur</div>
+                                    <div class="sys-value">@_uptime</div>
+                                    <div class="sys-sub">99.98% dispo.</div>
+                                </div>
+                            </div>
+
+                            <div class="system-card sys-db">
+                                <div class="sys-icon"><i class="bi bi-database-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Base de données</div>
+                                    <div class="sys-value">PostgreSQL 16</div>
+                                    <div class="sys-sub">Healthy · 2.4 GB</div>
+                                </div>
+                            </div>
+
+                            <div class="system-card sys-cache">
+                                <div class="sys-icon"><i class="bi bi-lightning-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Cache</div>
+                                    <div class="sys-value">Redis</div>
+                                    <div class="sys-sub">Actif · 12 MB</div>
+                                </div>
+                            </div>
+
+                            <div class="system-card sys-users">
+                                <div class="sys-icon"><i class="bi bi-people-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Sessions actives</div>
+                                    <div class="sys-value">7</div>
+                                    <div class="sys-sub">Sur 15 connectés</div>
+                                </div>
+                            </div>
+
+                            <div class="system-card sys-storage">
+                                <div class="sys-icon"><i class="bi bi-hdd-fill"></i></div>
+                                <div class="sys-content">
+                                    <div class="sys-label">Stockage</div>
+                                    <div class="sys-value">42%</div>
+                                    <div class="sys-sub">8.4 / 20 GB</div>
+                                    <div class="sys-progress">
+                                        <div class="sys-progress-bar" style="width: 42%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions système -->
+                        <div class="actions-zone">
+                            <h3 class="actions-title">
+                                <i class="bi bi-tools"></i>
+                                Maintenance
+                            </h3>
+                            <div class="action-btns-grid">
+                                <button class="action-btn-special btn-info" @onclick="ClearCache">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                    <span>Vider le cache</span>
+                                </button>
+                                <button class="action-btn-special btn-warning" @onclick="RestartServices">
+                                    <i class="bi bi-power"></i>
+                                    <span>Redémarrer services</span>
+                                </button>
+                                <button class="action-btn-special btn-info" @onclick="DownloadLogs">
+                                    <i class="bi bi-download"></i>
+                                    <span>Télécharger logs</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+            }
+
+            <!-- Footer save bar -->
+            <div class="save-bar">
+                <div class="save-bar-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Les modifications sont enregistrées automatiquement</span>
+                </div>
+                <button class="save-all-btn" @onclick="SaveAllSettings">
+                    <i class="bi bi-check2-all"></i>
+                    <span>Tout sauvegarder</span>
+                </button>
+            </div>
+
+        </main>
+
+    </div>
+</div>
+
+@code {
+    // ═══════ MODULES ═══════
+    private record ModuleInfo(string Id, string Name, string Description, string Icon, string Color, string GlowColor, bool HasUpdate);
+
+    private List<ModuleInfo> _modules = new()
+{
+    new("appearance",    "Apparence",        "Thème et interface",         "bi-palette-fill",          "#0E7C5C", "rgba(14, 124, 92, 0.25)",  false),
+    new("notifications", "Notifications",    "Alertes et emails",          "bi-bell-fill",             "#D97706", "rgba(217, 119, 6, 0.25)",  true),
+    new("security",      "Sécurité",         "2FA et accès",               "bi-shield-shaded",         "#9B1C2D", "rgba(155, 28, 45, 0.25)",  true),
+    new("workflow",      "Configuration",    "Workflow des actes",         "bi-diagram-3-fill",        "#14A574", "rgba(20, 165, 116, 0.25)",  false),
+    new("data",          "Données",          "Backup et exports",          "bi-database-fill-gear",    "#0369A1", "rgba(3, 105, 161, 0.25)",   false),
+    new("system",        "Système",          "Infos et maintenance",       "bi-gear-wide-connected",   "#6D28D9", "rgba(109, 40, 217, 0.25)",  false)
+};
+
+    private string _activeModule = "appearance";
+    private string _uptime = "14j 7h";
+
+    // ═══════ APPARENCE ═══════
+    private bool _darkMode = false;
+    private string _density = "Confortable";
+    private bool _animations = true;
+
+    // ═══════ NOTIFICATIONS ═══════
+    private bool _emailNotif = true;
+    private bool _inAppNotif = true;
+    private bool _criticalAlerts = true;
+    private string _summaryFreq = "Hebdomadaire";
+
+    // ═══════ SÉCURITÉ ═══════
+    private bool _twoFA = false;
+    private string _sessionDuration = "60 min";
+    private string _passwordPolicy = "Renforcée";
+    private string _lockoutAttempts = "5 tentatives";
+    private bool _auditLog = true;
+
+    // ═══════ WORKFLOW ═══════
+    private bool _autoValidation = false;
+    private string _autoArchive = "Après 7 jours";
+    private string _reminderDelay = "3 jours";
+    private string _pdfFormat = "Haute qualité";
+
+    // ═══════ DONNÉES ═══════
+    private bool _autoBackup = true;
+    private string _backupRetention = "30 jours";
+    private string _logPurge = "Après 2 ans";
+
+    private void SelectModule(string moduleId)
+    {
+        _activeModule = moduleId;
+    }
+
+    private void SaveAllSettings()
+    {
+        Snackbar.Add("Tous les paramètres ont été sauvegardés", Severity.Success);
+    }
+
+    private async Task TriggerBackup()
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Lancer un backup ?",
+            "Une sauvegarde complète de la base de données va être créée.",
+            yesText: "Lancer",
+            cancelText: "Annuler");
+
+        if (ok == true)
+        {
+            Snackbar.Add("Backup en cours...", Severity.Info);
+        }
+    }
+
+    private void ExportData()
+    {
+        Snackbar.Add("Export des données lancé", Severity.Info);
+    }
+
+    private async Task ConfirmPurge()
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Purger les logs ?",
+            "Cette action est irréversible. Les logs anciens seront définitivement supprimés.",
+            yesText: "Purger",
+            cancelText: "Annuler");
+
+        if (ok == true)
+        {
+            Snackbar.Add("Purge des logs terminée", Severity.Success);
+        }
+    }
+
+    private void ClearCache()
+    {
+        Snackbar.Add("Cache vidé avec succès", Severity.Success);
+    }
+
+    private async Task RestartServices()
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Redémarrer les services ?",
+            "Les services seront indisponibles pendant quelques secondes.",
+            yesText: "Redémarrer",
+            cancelText: "Annuler");
+
+        if (ok == true)
+        {
+            Snackbar.Add("Services redémarrés", Severity.Success);
+        }
+    }
+
+    private void DownloadLogs()
+    {
+        Snackbar.Add("Téléchargement des logs en cours...", Severity.Info);
+    }
+}
+
+
+<style>
+    /* ════════════════════════════════════════════════
+               PARAMÈTRES — DESIGN ÉPURÉ VERT BOA
+               Sobre, professionnel, cohérent dashboard
+               ════════════════════════════════════════════════ */
+    .settings-cockpit {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        padding: 8px;
+        background: radial-gradient(900px 600px at 80% 10%, rgba(20, 165, 116, 0.06), transparent 60%), radial-gradient(700px 500px at 20% 90%, rgba(252, 211, 77, 0.04), transparent 60%), linear-gradient(180deg, #F7FBF9 0%, #ECFDF5 100%);
+        min-height: 100vh;
+    }
+
+    /* ═══════════ HEADER VERT BOA ÉPURÉ ═══════════ */
+    .cockpit-hero {
+        background: radial-gradient(800px 400px at 90% 20%, rgba(252, 211, 77, 0.15), transparent 60%), radial-gradient(600px 300px at 20% 80%, rgba(20, 165, 116, 0.18), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%);
+        padding: 32px 36px;
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(252, 211, 77, 0.15);
+        box-shadow: 0 16px 48px rgba(10, 41, 34, 0.25), inset 0 1px 0 rgba(252, 211, 77, 0.15);
+    }
+
+    /* Grille très subtile */
+    .cyber-grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(rgba(252, 211, 77, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(252, 211, 77, 0.04) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    }
+
+    /* Orbes subtils (très atténués) */
+    .cyber-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+        animation: float-orb 12s ease-in-out infinite;
+    }
+
+    .cyber-orb-1 {
+        width: 240px;
+        height: 240px;
+        background: radial-gradient(circle, #14A574, transparent);
+        top: -60px;
+        right: 10%;
+        opacity: 0.25;
+    }
+
+    .cyber-orb-2 {
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, #FCD34D, transparent);
+        bottom: -80px;
+        left: 5%;
+        opacity: 0.15;
+        animation-delay: 3s;
+    }
+
+    .cyber-orb-3 {
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, #6EE7B7, transparent);
+        top: 30%;
+        right: 30%;
+        opacity: 0.18;
+        animation-delay: 5s;
+    }
+
+    @@keyframes float-orb {
+        0%, 100% {
+            transform: translate(0, 0);
+        }
+
+        50% {
+            transform: translate(20px, -20px);
+        }
+    }
+
+    /* Filigrane doré BOA en bas */
+    .cockpit-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.5) 25%, rgba(252, 211, 77, 0.9) 50%, rgba(252, 211, 77, 0.5) 75%, transparent 100%);
+        box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 24px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    /* Icône vert BOA avec accent doré */
+    .hero-icon-cyber {
+        position: relative;
+        width: 68px;
+        height: 68px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        border: 1.5px solid rgba(252, 211, 77, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.5), inset 0 2px 4px rgba(252, 211, 77, 0.2);
+        z-index: 2;
+    }
+
+    .icon-pulse {
+        position: absolute;
+        inset: -8px;
+        border-radius: 22px;
+        border: 2px solid rgba(252, 211, 77, 0.4);
+        animation: cyber-pulse 2.5s ease-out infinite;
+    }
+
+    @@keyframes cyber-pulse {
+        0% {
+            transform: scale(0.95);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1.4);
+            opacity: 0;
+        }
+    }
+
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #FCD34D;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    .cyber-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6EE7B7;
+        box-shadow: 0 0 8px #6EE7B7;
+        animation: cyber-blink 1.8s ease-in-out infinite;
+    }
+
+    @@keyframes cyber-blink {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .cyber-status {
+        background: rgba(110, 231, 183, 0.2);
+        color: #6EE7B7;
+        padding: 2px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(110, 231, 183, 0.4);
+        font-size: 0.65rem;
+        letter-spacing: 1.5px;
+    }
+
+    .hero-title {
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(180deg, #FFFFFF 0%, #FCD34D 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: 'Georgia', serif;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.88rem;
+        margin: 6px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .meta-sep {
+        color: rgba(252, 211, 77, 0.5);
+    }
+
+    .admin-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(127, 29, 29, 0.5);
+        color: #FCA5A5;
+        padding: 3px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.78rem;
+        border: 1px solid rgba(220, 38, 38, 0.5);
+    }
+
+        .admin-badge i {
+            color: #FCD34D;
+        }
+
+    /* Infos système (droite) */
+    .system-info {
+        display: flex;
+        gap: 12px;
+    }
+
+    .system-info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(252, 211, 77, 0.12);
+        border: 1px solid rgba(252, 211, 77, 0.3);
+        padding: 10px 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+    }
+
+        .system-info-item i {
+            font-size: 1.3rem;
+            color: #FCD34D;
+        }
+
+    .info-value {
+        color: white;
+        font-weight: 800;
+        font-size: 0.95rem;
+        line-height: 1;
+        font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    .info-label {
+        color: rgba(252, 211, 77, 0.85);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 3px;
+    }
+
+    /* ═══════════ COCKPIT LAYOUT ═══════════ */
+    .cockpit-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    /* ═══════════ MODULES NAV (sidebar) ═══════════ */
+    .modules-nav {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 12px;
+        position: sticky;
+        top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 0 4px 14px rgba(10, 41, 34, 0.05);
+    }
+
+    .modules-nav-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px 14px;
+        color: #94A3B8;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        border-bottom: 1px solid #F1F5F9;
+        margin-bottom: 8px;
+    }
+
+        .modules-nav-header i {
+            color: #14A574;
+        }
+
+    .module-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        text-align: left;
+        color: #0A2540;
+    }
+
+        .module-btn:hover {
+            background: #F8FAFC;
+            border-color: #E5E7EB;
+            transform: translateX(2px);
+        }
+
+        .module-btn.active {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-color) 12%, white), color-mix(in srgb, var(--module-color) 5%, white));
+            border-color: color-mix(in srgb, var(--module-color) 35%, transparent);
+            box-shadow: 0 4px 14px var(--module-glow);
+        }
+
+    .module-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #F1F5F9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--module-color);
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        transition: all 0.25s ease;
+    }
+
+    .module-btn.active .module-icon {
+        background: var(--module-color);
+        color: white;
+        box-shadow: 0 4px 12px var(--module-glow);
+    }
+
+    .module-btn:hover .module-icon {
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    .module-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .module-name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0A2540;
+        line-height: 1.2;
+        letter-spacing: -0.1px;
+    }
+
+    .module-desc {
+        font-size: 0.72rem;
+        color: #94A3B8;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+
+    .module-btn.active .module-desc {
+        color: #5E6B7D;
+    }
+
+    .module-arrow {
+        color: #CBD5E1;
+        font-size: 0.85rem;
+        transition: all 0.25s ease;
+    }
+
+    .module-btn:hover .module-arrow {
+        color: var(--module-color);
+        transform: translateX(2px);
+    }
+
+    .module-btn.active .module-arrow {
+        color: var(--module-color);
+    }
+
+    .module-dot {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #F59E0B;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        animation: cyber-blink 1.5s ease-in-out infinite;
+    }
+
+    /* ═══════════ CONTENT PANEL ═══════════ */
+    .modules-content {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        padding: 28px 32px;
+        box-shadow: 0 4px 14px rgba(10, 41, 34, 0.05);
+        min-height: 600px;
+    }
+
+    .module-panel {
+        animation: panel-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @@keyframes panel-enter {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #F1F5F9;
+        margin-bottom: 24px;
+    }
+
+    .panel-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 20%, white), color-mix(in srgb, var(--accent) 8%, white));
+        border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+
+    .panel-title {
+        color: #0A2540;
+        font-size: 1.4rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.3px;
+        line-height: 1;
+    }
+
+    .panel-subtitle {
+        color: #5E6B7D;
+        font-size: 0.88rem;
+        margin: 4px 0 0 0;
+        font-weight: 500;
+    }
+
+    .panel-badge {
+        margin-left: auto;
+        background: #F1F5F9;
+        color: #5E6B7D;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: 1px solid #E2E8F0;
+    }
+
+        .panel-badge.alert {
+            background: #FEF2F2;
+            color: #9B1C2D;
+            border-color: #FECACA;
+        }
+
+    /* ═══════════ SETTINGS LIST (rows) ═══════════ */
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* ═══════════ SYSTEM GRID (module system) ═══════════ */
+    .system-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+
+    .system-card {
+        background: #F8FAFC;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transition: all 0.25s ease;
+    }
+
+        .system-card:hover {
+            transform: translateY(-3px);
+            background: white;
+            border-color: #14A574;
+            box-shadow: 0 8px 20px rgba(20, 165, 116, 0.1);
+        }
+
+    .sys-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ECFDF5, #DCFCE7);
+        border: 1px solid #BBF7D0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0E7C5C;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .sys-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .sys-label {
+        color: #94A3B8;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .sys-value {
+        color: #0A2540;
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1;
+        font-family: 'Monaco', 'Menlo', monospace;
+        letter-spacing: -0.3px;
+    }
+
+    .sys-sub {
+        color: #5E6B7D;
+        font-size: 0.72rem;
+        margin-top: 6px;
+        font-weight: 600;
+    }
+
+    .sys-progress {
+        margin-top: 10px;
+        height: 4px;
+        background: #E5E7EB;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .sys-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #0E7C5C, #14A574, #FCD34D);
+        border-radius: 4px;
+        box-shadow: 0 0 6px rgba(20, 165, 116, 0.4);
+    }
+
+    /* ═══════════ ACTIONS ZONE ═══════════ */
+    .actions-zone {
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px dashed #E5E7EB;
+    }
+
+    .actions-title {
+        color: #0A2540;
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: -0.2px;
+    }
+
+        .actions-title i {
+            color: #FCD34D;
+        }
+
+    .action-btns-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+
+    .action-btn-special {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 11px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.88rem;
+        transition: all 0.25s ease;
+        border: 1.5px solid;
+        background: white;
+        font-family: inherit;
+    }
+
+        .action-btn-special:hover {
+            transform: translateY(-2px);
+        }
+
+    .btn-backup {
+        border-color: #BBF7D0;
+        color: #0E7C5C;
+    }
+
+        .btn-backup:hover {
+            background: #ECFDF5;
+            box-shadow: 0 4px 14px rgba(14, 124, 92, 0.2);
+        }
+
+    .btn-export {
+        border-color: #DDD6FE;
+        color: #6D28D9;
+    }
+
+        .btn-export:hover {
+            background: #F5F3FF;
+            box-shadow: 0 4px 14px rgba(109, 40, 217, 0.15);
+        }
+
+    .btn-danger {
+        border-color: #FECACA;
+        color: #9B1C2D;
+    }
+
+        .btn-danger:hover {
+            background: #FEF2F2;
+            box-shadow: 0 4px 14px rgba(155, 28, 45, 0.15);
+        }
+
+    .btn-info {
+        border-color: #BAE6FD;
+        color: #0369A1;
+    }
+
+        .btn-info:hover {
+            background: #F0F9FF;
+            box-shadow: 0 4px 14px rgba(3, 105, 161, 0.15);
+        }
+
+    .btn-warning {
+        border-color: #FCD34D;
+        color: #92400E;
+    }
+
+        .btn-warning:hover {
+            background: #FEFCE8;
+            box-shadow: 0 4px 14px rgba(252, 211, 77, 0.25);
+        }
+
+    /* ═══════════ SAVE BAR ═══════════ */
+    .save-bar {
+        margin-top: 32px;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #ECFDF5 0%, #DCFCE7 100%);
+        border: 1px solid #BBF7D0;
+        border-radius: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .save-bar-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #047857;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+        .save-bar-info i {
+            color: #14A574;
+        }
+
+    .save-all-btn {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 100%);
+        color: white;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        padding: 11px 22px;
+        border-radius: 11px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.25s ease;
+        box-shadow: 0 6px 18px rgba(14, 124, 92, 0.35);
+    }
+
+        .save-all-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #14A574 0%, #FCD34D 100%);
+            color: #0A2540;
+            box-shadow: 0 10px 24px rgba(252, 211, 77, 0.4);
+        }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @@media (max-width: 1024px) {
+        .cockpit-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .modules-nav {
+            position: static;
+            flex-direction: row;
+            overflow-x: auto;
+        }
+
+        .module-btn {
+            flex-shrink: 0;
+            min-width: 200px;
+        }
+    }
+</style>

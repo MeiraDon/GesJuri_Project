@@ -22,6 +22,8 @@ namespace GesCPSI_Project.Interfaces
 
         /// <summary>Nombre d'actes en attente depuis +3 jours (urgent).</summary>
         public int EnAttenteUrgents { get; set; }
+
+        public int BrouillonsAnciens { get; set; }    // ← NOUVEAU (brouillons > 7 jours par ex.)
     }
 
     /// <summary>Point de la courbe d'évolution mensuelle.</summary>
@@ -58,6 +60,28 @@ namespace GesCPSI_Project.Interfaces
         public ActeStatut? StatutApres { get; set; }
     }
 
+    /// <summary>Point de la courbe d'évolution journalière.</summary>
+    public class DailyDataPoint
+    {
+        public string Label { get; set; } = "";       // ex: "15 jan"
+        public int Count { get; set; }
+        public int Valides { get; set; }
+        public int EnAttente { get; set; }
+        public int Rejetes { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    /// <summary>Point de la courbe d'évolution hebdomadaire.</summary>
+    public class WeeklyDataPoint
+    {
+        public string Label { get; set; } = "";       // ex: "S03"
+        public int Count { get; set; }
+        public int Valides { get; set; }
+        public int EnAttente { get; set; }
+        public int Rejetes { get; set; }
+        public DateTime WeekStart { get; set; }
+    }
+
     public interface IDashboard
     {
         /// <summary>
@@ -68,6 +92,12 @@ namespace GesCPSI_Project.Interfaces
 
         /// <summary>Évolution mensuelle sur les 6 derniers mois.</summary>
         Task<List<MonthlyDataPoint>> GetMonthlyEvolutionAsync(int? restrictToAgentId = null);
+
+        /// <summary>Évolution journalière sur les 30 derniers jours.</summary>
+        Task<List<DailyDataPoint>> GetDailyEvolutionAsync(int? restrictToAgentId = null);
+
+        /// <summary>Évolution hebdomadaire sur les 12 dernières semaines.</summary>
+        Task<List<WeeklyDataPoint>> GetWeeklyEvolutionAsync(int? restrictToAgentId = null);
 
         /// <summary>
         /// Liste des actes prioritaires à traiter.

@@ -15,69 +15,114 @@
 
 <div class="users-admin-page">
 
-    <!-- ============= HEADER ============= -->
-    <div class="page-header">
-        <div>
-            <MudText Typo="Typo.h4" Class="page-title">
-                <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Class="me-2" />
-                Gestion des utilisateurs
-            </MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
-                Créez, modifiez et gérez les comptes utilisateurs de l'application.
-            </MudText>
+    <!-- ═════════════ HEADER "COFFRE-FORT ROYAL" ═════════════ -->
+    <MudPaper Class="users-hero" Elevation="0">
+        <div class="hero-bg-deco"></div>
+        <div class="hero-content">
+            <div class="hero-main">
+                <div class="hero-icon-wrap">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="hero-text">
+                    <h1 class="hero-title">Gestion des utilisateurs</h1>
+                    <p class="hero-meta">
+                        <span class="meta-strong">@_users.Count compte@(_users.Count > 1 ? "s" : "")</span>
+                        <span class="meta-sep">·</span>
+                        <span>cercle restreint</span>
+                        <span class="meta-sep">·</span>
+                        <span class="meta-royal">
+                            <i class="bi bi-shield-fill-check"></i>
+                            Accès souverain
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <MudTooltip Text="Actualiser">
+                    <button class="hero-btn-icon" @onclick="LoadUsersAsync">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </MudTooltip>
+                <button class="hero-btn-primary" @onclick="OpenCreateDialog">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Nouvel utilisateur</span>
+                </button>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- ═════════════ STATS BAR PREMIUM (une seule barre élégante) ═════════════ -->
+    <div class="stats-bar">
+        <div class="stat-item stat-item-total">
+            <div class="stat-item-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count</div>
+                <div class="stat-item-label">Total</div>
+            </div>
         </div>
 
-        <MudButton Color="Color.Primary"
-                   Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.PersonAdd"
-                   Size="Size.Large"
-                   OnClick="OpenCreateDialog"
-                   Class="create-user-btn">
-            Nouvel utilisateur
-        </MudButton>
-    </div>
+        <div class="stat-divider"></div>
 
-    <!-- ============= STATS CARDS ============= -->
-    <div class="stats-row">
-        <MudPaper Class="stat-card stat-total" Elevation="0">
-            <div class="stat-icon">
-                <MudIcon Icon="@Icons.Material.Filled.Group" />
+        <div class="stat-item stat-item-active">
+            <div class="stat-item-icon">
+                <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value">@_users.Count</div>
-                <div class="stat-label">Utilisateurs total</div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count(u => u.IsActive)</div>
+                <div class="stat-item-label">Actifs</div>
             </div>
-        </MudPaper>
+        </div>
 
-        <MudPaper Class="stat-card stat-active" Elevation="0">
-            <div class="stat-icon">
-                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
-            </div>
-            <div class="stat-content">
-                <div class="stat-value">@_users.Count(u => u.IsActive)</div>
-                <div class="stat-label">Actifs</div>
-            </div>
-        </MudPaper>
+        <div class="stat-divider"></div>
 
-        <MudPaper Class="stat-card stat-inactive" Elevation="0">
-            <div class="stat-icon">
-                <MudIcon Icon="@Icons.Material.Filled.Block" />
+        <div class="stat-item stat-item-inactive">
+            <div class="stat-item-icon">
+                <i class="bi bi-slash-circle-fill"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value">@_users.Count(u => !u.IsActive)</div>
-                <div class="stat-label">Désactivés</div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count(u => !u.IsActive)</div>
+                <div class="stat-item-label">Désactivés</div>
             </div>
-        </MudPaper>
+        </div>
 
-        <MudPaper Class="stat-card stat-admin" Elevation="0">
-            <div class="stat-icon">
-                <MudIcon Icon="@Icons.Material.Filled.Shield" />
+        <div class="stat-divider"></div>
+
+        <div class="stat-item stat-item-admin">
+            <div class="stat-item-icon">
+                <i class="bi bi-shield-shaded"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value">@_users.Count(u => u.Role == RoleNames.Admin)</div>
-                <div class="stat-label">Administrateurs</div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count(u => u.Role == RoleNames.Admin)</div>
+                <div class="stat-item-label">Administrateurs</div>
             </div>
-        </MudPaper>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item stat-item-agent">
+            <div class="stat-item-icon">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count(u => u.Role == RoleNames.Agent)</div>
+                <div class="stat-item-label">Agents</div>
+            </div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item stat-item-responsable">
+            <div class="stat-item-icon">
+                <i class="bi bi-check2-square"></i>
+            </div>
+            <div class="stat-item-content">
+                <div class="stat-item-value">@_users.Count(u => u.Role == RoleNames.Responsable)</div>
+                <div class="stat-item-label">Responsables</div>
+            </div>
+        </div>
     </div>
 
     <!-- ============= FILTRES ============= -->
@@ -462,104 +507,474 @@
 }
 
 <style>
-    /* ============================================
-       PAGE UTILISATEURS — DESIGN BOA
-       ============================================ */
+    
+    /* ════════════════════════════════════════════════
+       USERS PAGE — HEADER "COFFRE-FORT ROYAL"
+       ════════════════════════════════════════════════ */
     .users-admin-page {
         padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: radial-gradient(800px 500px at 80% 20%, rgba(20, 165, 116, 0.04), transparent 60%), radial-gradient(600px 400px at 20% 80%, rgba(252, 211, 77, 0.03), transparent 60%), #F5F7FB;
+        min-height: 100vh;
     }
 
-    /* ===== HEADER ===== */
-    .page-header {
+    /* ═══════════ HEADER VERT BOA ÉPURÉ (cohérent avec autres pages) ═══════════ */
+    .users-hero {
+        background: radial-gradient(900px 500px at 88% 15%, rgba(252, 211, 77, 0.15), transparent 60%), radial-gradient(700px 400px at 10% 90%, rgba(20, 165, 116, 0.18), transparent 65%), radial-gradient(500px 300px at 50% 50%, rgba(20, 165, 116, 0.12), transparent 70%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 28px 32px !important;
+        border-radius: 20px !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(10, 41, 34, 0.25), inset 0 1px 0 rgba(252, 211, 77, 0.18), inset 0 0 0 1px rgba(252, 211, 77, 0.08);
+    }
+
+        /* Filigrane doré épais en bas (signature BOA) */
+        .users-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.5) 15%, rgba(252, 211, 77, 0.9) 50%, rgba(252, 211, 77, 0.5) 85%, transparent 100%);
+            box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Filigrane doré en haut */
+        .users-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 10%, rgba(252, 211, 77, 0.7) 50%, rgba(252, 211, 77, 0.4) 90%, transparent 100%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Filigrane doré épais en bas (signature BOA) */
+        .users-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.5) 15%, rgba(252, 211, 77, 0.9) 50%, rgba(252, 211, 77, 0.5) 85%, transparent 100%);
+            box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Filigrane doré en haut */
+        .users-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.4) 10%, rgba(252, 211, 77, 0.7) 50%, rgba(252, 211, 77, 0.4) 90%, transparent 100%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+    /* Veine décorative diagonale */
+    .hero-bg-deco {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(252, 211, 77, 0.18) 30%, rgba(252, 211, 77, 0.3) 50%, rgba(252, 211, 77, 0.18) 70%, transparent 100%);
+        transform: rotate(-2deg);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 24px;
+        align-items: center;
         flex-wrap: wrap;
         gap: 16px;
     }
 
-    .page-title {
-        color: #0A2540 !important;
-        font-weight: 700 !important;
-        display: flex;
-        align-items: center;
-    }
+        /* Ornements aux coins */
+        .hero-content::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 0% 0%, rgba(252, 211, 77, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
 
-    .create-user-btn {
-        text-transform: none !important;
-        font-weight: 600 !important;
-        padding: 10px 24px !important;
-        box-shadow: 0 4px 12px rgba(10, 37, 64, 0.15) !important;
-    }
+        .hero-content::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 100% 100%, rgba(20, 165, 116, 0.45) 0%, transparent 70%);
+            pointer-events: none;
+        }
 
-    /* ===== STATS CARDS ===== */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .stat-card {
-        background: white !important;
-        border: 1px solid #E1E4E8 !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
+    .hero-main {
         display: flex;
         align-items: center;
         gap: 16px;
-        transition: all 0.2s ease;
+        position: relative;
+        z-index: 2;
     }
 
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
-    }
-
-    .stat-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
+    /* ═══ ICÔNE : Vert BOA avec accent doré subtil ═══ */
+    .hero-icon-wrap {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        border: 1.5px solid rgba(252, 211, 77, 0.5);
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
+        font-size: 1.7rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.5), inset 0 2px 4px rgba(252, 211, 77, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(252, 211, 77, 0.3);
+        position: relative;
+    }
+
+        .hero-icon-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 16px;
+            border: 1.5px dashed rgba(252, 211, 77, 0.5);
+            pointer-events: none;
+        }
+
+        .hero-icon-wrap::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 15%;
+            width: 30%;
+            height: 25%;
+            background: rgba(252, 211, 77, 0.25);
+            border-radius: 50%;
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+    /* Titre : dégradé blanc → or BOA */
+    .hero-title {
+        color: white;
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 30px rgba(252, 211, 77, 0.25);
+        background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 60%, #FCD34D 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: 'Georgia', 'Playfair Display', serif;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+        margin: 6px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-family: 'Georgia', serif;
+        font-style: italic;
+    }
+
+    .meta-strong {
+        color: #FCD34D;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(252, 211, 77, 0.25), rgba(252, 211, 77, 0.15));
+        padding: 3px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(252, 211, 77, 0.45);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.25);
+    }
+
+    .meta-sep {
+        color: rgba(252, 211, 77, 0.5);
+        font-weight: 700;
+    }
+
+    
+    /* Badge "Accès souverain" en DORÉ (cohérence vert BOA épuré) */
+    .meta-royal {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, rgba(252, 211, 77, 0.25), rgba(252, 211, 77, 0.15));
+        color: #FCD34D;
+        padding: 3px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        font-style: normal;
+        font-family: 'Inter', sans-serif;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.25);
+    }
+
+        .meta-royal i {
+            color: #FCD34D;
+            text-shadow: 0 0 6px rgba(252, 211, 77, 0.6);
+        }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Bouton icône (rafraîchir) */
+    .hero-btn-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        background: rgba(252, 211, 77, 0.12);
+        border: 1px solid rgba(252, 211, 77, 0.35);
+        color: #FCD34D;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        transition: all 0.25s ease;
+        box-shadow: inset 0 1px 0 rgba(252, 211, 77, 0.15);
+    }
+
+        .hero-btn-icon:hover {
+            background: linear-gradient(135deg, rgba(252, 211, 77, 0.28), rgba(252, 211, 77, 0.18));
+            border-color: rgba(252, 211, 77, 0.6);
+            transform: rotate(60deg);
+            box-shadow: 0 4px 12px rgba(252, 211, 77, 0.3), inset 0 1px 0 rgba(252, 211, 77, 0.25);
+        }
+
+    /* ═══ Bouton "Nouvel utilisateur" : Vert BOA avec accent doré ═══ */
+    .hero-btn-primary {
+        background: linear-gradient(135deg, #0E7C5C 0%, #14A574 50%, #0E7C5C 100%);
+        color: white;
+        border: 1px solid rgba(252, 211, 77, 0.5);
+        padding: 11px 22px;
+        border-radius: 11px;
+        font-weight: 800;
+        font-size: 0.92rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(14, 124, 92, 0.5), inset 0 1px 0 rgba(252, 211, 77, 0.25), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+        letter-spacing: 0.2px;
+    }
+
+        /* Reflet doré qui glisse au hover */
+        .hero-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.4), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .hero-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(14, 124, 92, 0.6), inset 0 1px 0 rgba(252, 211, 77, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #14A574 0%, #FCD34D 50%, #14A574 100%);
+            color: #0A2540;
+            border-color: rgba(252, 211, 77, 0.8);
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+            .hero-btn-primary:hover::before {
+                left: 100%;
+            }
+
+            .hero-btn-primary:hover i {
+                transform: rotate(180deg) scale(1.1);
+                color: #0A2540;
+            }
+
+        .hero-btn-primary i {
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+            color: #FCD34D;
+        }
+
+    /* ═══════════ STATS BAR PREMIUM (1 seule barre élégante) ═══════════ */
+    .stats-bar {
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Petite bande or en haut (signature royale) */
+        .stats-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.4) 30%, rgba(212, 175, 55, 0.4) 70%, transparent 100%);
+        }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+        padding: 4px 8px;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        cursor: default;
+    }
+
+        .stat-item:hover {
+            background: #F8FAFC;
+            transform: translateY(-1px);
+        }
+
+    .stat-item-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.25s ease;
+    }
+
+    .stat-item:hover .stat-item-icon {
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    .stat-item-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .stat-item-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0F172A;
+        line-height: 1;
+        font-feature-settings: "tnum" 1;
+        letter-spacing: -0.5px;
+    }
+
+    .stat-item-label {
+        font-size: 0.72rem;
+        color: #64748B;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 3px;
+        white-space: nowrap;
+    }
+
+    /* Séparateurs élégants entre stats */
+    .stat-divider {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(180deg, transparent 0%, #E2E8F0 30%, #CBD5E1 50%, #E2E8F0 70%, transparent 100%);
         flex-shrink: 0;
     }
 
-    .stat-card.stat-total .stat-icon {
-        background: linear-gradient(135deg, #0A2540, #06182E);
+    /* Couleurs sémantiques des icônes */
+    .stat-item-total .stat-item-icon {
+        background: linear-gradient(135deg, #0A0A14, #1A1A2E);
     }
 
-    .stat-card.stat-active .stat-icon {
-        background: linear-gradient(135deg, #0E7C5C, #2F5D50);
+    .stat-item-total .stat-item-value {
+        color: #1A1A2E;
     }
 
-    .stat-card.stat-inactive .stat-icon {
+    .stat-item-active .stat-item-icon {
+        background: linear-gradient(135deg, #0E7C5C, #14A574);
+    }
+
+    .stat-item-active .stat-item-value {
+        color: #047857;
+    }
+
+    .stat-item-inactive .stat-item-icon {
         background: linear-gradient(135deg, #6B7280, #4B5563);
     }
 
-    .stat-card.stat-admin .stat-icon {
-        background: linear-gradient(135deg, #9B1C2D, #7A1623);
+    .stat-item-inactive .stat-item-value {
+        color: #4B5563;
     }
 
-    .stat-icon .mud-icon-root {
-        font-size: 28px !important;
+    .stat-item-admin .stat-item-icon {
+        background: linear-gradient(135deg, #7F1D1D, #B91C1C);
     }
 
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #0A2540;
-        line-height: 1;
+    .stat-item-admin .stat-item-value {
+        color: #991B1B;
     }
 
-    .stat-label {
-        font-size: 0.85rem;
-        color: #5E6B7D;
-        font-weight: 500;
-        margin-top: 4px;
+    .stat-item-agent .stat-item-icon {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+    }
+
+    .stat-item-agent .stat-item-value {
+        color: #1E40AF;
+    }
+
+    .stat-item-responsable .stat-item-icon {
+        background: linear-gradient(135deg, #C9A86A, #FCD34D);
+    }
+
+    .stat-item-responsable .stat-item-value {
+        color: #92400E;
     }
 
     /* ===== FILTRES ===== */
@@ -667,10 +1082,35 @@
         font-family: 'Inter', sans-serif;
     }
 
-    /* ===== RESPONSIVE ===== */
+    @@media (max-width: 1200px) {
+        .stats-bar
+
+    {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .stat-divider {
+        display: none;
+    }
+
+    .stat-item {
+        flex: 1 1 calc(33.333% - 8px);
+        min-width: 140px;
+        padding: 8px;
+        background: #F8FAFC;
+        border-radius: 10px;
+    }
+
+    }
+
     @@media (max-width: 768px) {
-        .stats-row {
-            grid-template-columns: repeat(2, 1fr);
+        .stat-item {
+            flex: 1 1 calc(50% - 6px);
+        }
+
+        .hero-title {
+            font-size: 1.3rem !important;
         }
 
         .filters-row {
@@ -678,7 +1118,8 @@
             align-items: stretch;
         }
 
-        .filter-role, .filter-status {
+        .filter-role,
+        .filter-status {
             min-width: 100%;
         }
     }

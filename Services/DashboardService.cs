@@ -34,6 +34,7 @@ namespace GesCPSI_Project.Services
             var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var weekStart = DateTime.SpecifyKind(now.Date.AddDays(-(int)now.Date.DayOfWeek), DateTimeKind.Utc);
             var threeDaysAgo = now.AddDays(-3);
+            var sevenDaysAgo = now.AddDays(-7);   // ← NOUVEAU
 
             return new DashboardStats
             {
@@ -53,7 +54,12 @@ namespace GesCPSI_Project.Services
                 EnAttenteUrgents = actes.Count(a =>
                     a.StatutWorkflow == ActeStatut.EnAttenteValidation
                     && a.DateEnvoiValidation.HasValue
-                    && a.DateEnvoiValidation.Value <= threeDaysAgo)
+                    && a.DateEnvoiValidation.Value <= threeDaysAgo),
+
+                // ← NOUVEAU : brouillons qui traînent depuis + de 7 jours
+                BrouillonsAnciens = actes.Count(a =>
+                    a.StatutWorkflow == ActeStatut.Brouillon
+                    && a.DateCreation <= sevenDaysAgo)
             };
         }
 
@@ -63,7 +69,7 @@ namespace GesCPSI_Project.Services
         public async Task<List<MonthlyDataPoint>> GetMonthlyEvolutionAsync(int? restrictToAgentId = null)
         {
             var now = DateTime.UtcNow;
-            var sixMonthsAgo = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-5);
+            var sixMonthsAgo = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-11);
 
             var query = _db.TypesActModels
                 .Where(a => a.DateCreation >= sixMonthsAgo);
@@ -85,7 +91,7 @@ namespace GesCPSI_Project.Services
             var result = new List<MonthlyDataPoint>();
             var frenchCulture = new CultureInfo("fr-FR");
 
-            for (int i = 5; i >= 0; i--)
+            for (int i = 11; i >= 0; i--)
             {
                 var date = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-i);
                 var data = grouped.FirstOrDefault(g => g.Year == date.Year && g.Month == date.Month);
@@ -100,6 +106,100 @@ namespace GesCPSI_Project.Services
 
             return result;
         }
+
+
+        // ============================================================
+        // ÉVOLUTION JOURNALIÈRE (30 derniers jours)
+        // ============================================================
+        public async Task<List<DailyDataPoint>> GetDailyEvolutionAsync(int? restrictToAgentId = null)
+        {
+            var now = DateTime.UtcNow;
+            var thirtyDaysAgo = DateTime.SpecifyKind(now.Date.AddDays(-29), DateTimeKind.Utc); // 30 jours dont aujourd'hui
+
+            var query = _db.TypesActModels
+                .Where(a => a.DateCreation >= thirtyDaysAgo);
+
+            if (restrictToAgentId.HasValue)
+                query = query.Where(a => a.IdUser == restrictToAgentId.Value);
+
+            var grouped = await query
+                .GroupBy(a => a.DateCreation.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Count = g.Count(),
+                    Valides = g.Count(a => a.StatutWorkflow == ActeStatut.Valide),
+                    EnAttente = g.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation),
+                    Rejetes = g.Count(a => a.StatutWorkflow == ActeStatut.Rejete)
+                })
+                .ToListAsync();
+
+            var result = new List<DailyDataPoint>();
+            var frenchCulture = new CultureInfo("fr-FR");
+
+            for (int i = 29; i >= 0; i--)
+            {
+                var date = now.Date.AddDays(-i);
+                var data = grouped.FirstOrDefault(g => g.Date == date);
+
+                result.Add(new DailyDataPoint
+                {
+                    Label = date.ToString("dd MMM", frenchCulture).ToLower(),
+                    Count = data?.Count ?? 0,
+                    Valides = data?.Valides ?? 0,
+                    EnAttente = data?.EnAttente ?? 0,
+                    Rejetes = data?.Rejetes ?? 0,
+                    Date = date
+                });
+            }
+
+            return result;
+        }
+
+        // ============================================================
+        // ÉVOLUTION HEBDOMADAIRE (12 dernières semaines)
+        // ============================================================
+        public async Task<List<WeeklyDataPoint>> GetWeeklyEvolutionAsync(int? restrictToAgentId = null)
+        {
+            var now = DateTime.UtcNow;
+            var twelveWeeksAgo = DateTime.SpecifyKind(now.Date.AddDays(-7 * 11), DateTimeKind.Utc); // 12 semaines
+
+            var query = _db.TypesActModels
+                .Where(a => a.DateCreation >= twelveWeeksAgo);
+
+            if (restrictToAgentId.HasValue)
+                query = query.Where(a => a.IdUser == restrictToAgentId.Value);
+
+            var actes = await query.ToListAsync();
+            var frenchCulture = new CultureInfo("fr-FR");
+            var result = new List<WeeklyDataPoint>();
+
+            for (int i = 11; i >= 0; i--)
+            {
+                // Calcul du début de semaine (lundi)
+                var weekStart = now.Date.AddDays(-7 * i);
+                var daysFromMonday = ((int)weekStart.DayOfWeek + 6) % 7;
+                weekStart = weekStart.AddDays(-daysFromMonday);
+                var weekEnd = weekStart.AddDays(7);
+
+                var weekActes = actes.Where(a => a.DateCreation >= weekStart && a.DateCreation < weekEnd).ToList();
+                var weekNumber = frenchCulture.Calendar.GetWeekOfYear(weekStart, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+
+                result.Add(new WeeklyDataPoint
+                {
+                    Label = $"S{weekNumber:D2}",
+                    Count = weekActes.Count,
+                    Valides = weekActes.Count(a => a.StatutWorkflow == ActeStatut.Valide),
+                    EnAttente = weekActes.Count(a => a.StatutWorkflow == ActeStatut.EnAttenteValidation),
+                    Rejetes = weekActes.Count(a => a.StatutWorkflow == ActeStatut.Rejete),
+                    WeekStart = weekStart
+                });
+            }
+
+            return result;
+        }
+
+
 
         // ============================================================
         // ACTES À TRAITER (adaptatif par rôle)

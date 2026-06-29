@@ -8,6 +8,7 @@
 @using GesCPSI_Project.Components.Dialogs
 @using Microsoft.AspNetCore.Components.Authorization
 @using GesCPSI_Project.Reports
+@using MudBlazor
 
 @inject ITypesAct TypesActService
 @inject IClientAct ClientActService
@@ -25,45 +26,51 @@
 
 <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
 
-    <!-- ============= HEADER ============= -->
-    <MudPaper Class="validation-header" Elevation="0">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="header-icon">
-                    <MudIcon Icon="@Icons.Material.Filled.FactCheck" Style="font-size: 2.5rem; color: white;" />
+    <!-- ============= HEADER COMPACT (harmonisé avec listAct) ============= -->
+    <MudPaper Class="validation-hero" Elevation="0">
+        <div class="hero-bg-deco"></div>
+        <div class="hero-content">
+
+            <div class="hero-main">
+                <div class="hero-icon-wrap">
+                    <i class="bi bi-shield-check"></i>
                 </div>
-                <div>
-                    <MudText Typo="Typo.h4" Style="color:white; font-weight:700;">
-                        Validation des actes
-                    </MudText>
-                    <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.85);">
+                <div class="hero-text">
+                    <h1 class="hero-title">Validation des actes</h1>
+                    <p class="hero-meta">
                         @if (_actesEnAttente.Count == 0)
                         {
-                            <span>Aucun acte en attente de validation</span>
+                            <span class="meta-empty">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Aucun acte en attente
+                            </span>
                         }
                         else
                         {
-                            <span>
-                                <strong>@_actesEnAttente.Count</strong> acte@(_actesEnAttente.Count > 1 ? "s" : "") en attente de votre décision
-                            </span>
+                            <span class="meta-strong">@_actesEnAttente.Count acte@(_actesEnAttente.Count > 1 ? "s" : "")</span>
+                            <span class="meta-sep">·</span>
+                            <span>en attente de votre décision</span>
                         }
-                    </MudText>
+                    </p>
                 </div>
             </div>
 
-            <div class="d-flex gap-2">
-                <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Large">
-                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="me-1" />
-                    @_actesEnAttente.Count en attente
-                </MudChip>
+            <div class="hero-actions">
+                @if (_actesEnAttente.Count > 0)
+                {
+                    <div class="hero-pending-pill">
+                        <span class="pending-dot"></span>
+                        <i class="bi bi-hourglass-split"></i>
+                        <span><strong>@_actesEnAttente.Count</strong> en attente</span>
+                    </div>
+                }
                 <MudTooltip Text="Actualiser">
-                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                                   Color="Color.Inherit"
-                                   Style="color:white;"
-                                   Disabled="@_loading"
-                                   OnClick="ReloadAsync" />
+                    <button class="hero-btn-icon" @onclick="ReloadAsync" disabled="@_loading">
+                        <i class="bi bi-arrow-clockwise @(_loading ? "spinning" : "")"></i>
+                    </button>
                 </MudTooltip>
             </div>
+
         </div>
     </MudPaper>
 
@@ -105,14 +112,20 @@
     else if (!FilteredActes.Any())
     {
         <MudPaper Class="empty-state" Elevation="0">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline"
-                     Style="font-size: 5rem; color: #0E7C5C;" />
-            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#0A2540; font-weight:600;">
-                Tout est à jour ! 🎉
+            <div class="empty-icon-wrap">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <MudText Typo="Typo.h5" Class="mt-3" Style="color:#0A2540; font-weight:700;">
+                Tout est à jour
             </MudText>
             <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">
                 Aucun acte n'est en attente de votre validation pour le moment.
             </MudText>
+
+            <div class="empty-system-status">
+                <span class="status-dot-live"></span>
+                <span>Système actif · En attente de nouvelles soumissions</span>
+            </div>
         </MudPaper>
     }
     else
@@ -256,7 +269,7 @@
     private async Task LoadDataAsync()
     {
         _loading = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);  // 🔧 InvokeAsync au lieu de StateHasChanged
         try
         {
             var allActes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
@@ -273,7 +286,7 @@
         finally
         {
             _loading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);  // 🔧 InvokeAsync au lieu de StateHasChanged
         }
     }
 
@@ -363,9 +376,10 @@
             "Valider cet acte ?",
             new MarkupString(
                 $"Vous êtes sur le point de <strong>valider</strong> l'acte #{acte.IdActe} ({acte.NomTypesActe}).<br/><br/>" +
-                "✅ L'acte sera marqué comme validé.<br/>" +
-                "📄 Le <strong>PDF officiel sera généré automatiquement</strong>.<br/>" +
-                "🖨️ Vous pourrez ensuite l'imprimer pour signature."),
+                "<i class='bi bi-file-earmark-pdf-fill' style='color:#DC2626;'></i> Le <strong>PDF officiel sera généré automatiquement</strong>.<br/>" +
+                "<i class='bi bi-check-circle-fill' style='color:#0E7C5C;'></i> L'acte sera marqué comme validé.<br/>" +
+                "<i class='bi bi-exclamation-triangle-fill' style='color:#D97706;'></i> Si la génération du PDF échoue, <strong>la validation sera annulée</strong>.<br/>" +
+                "<i class='bi bi-printer-fill' style='color:#1F3C88;'></i> Vous pourrez ensuite l'imprimer pour signature."),
             yesText: "Valider et générer PDF",
             cancelText: "Annuler");
 
@@ -376,42 +390,40 @@
 
         try
         {
-            // ============ ÉTAPE 1 : Validation workflow ============
+            Snackbar.Add($"Validation en cours... (génération du PDF officiel)", Severity.Info);
+
+            // ============ Validation workflow + génération PDF (atomique) ============
+            // ValiderAsync génère le PDF en interne :
+            // - Si PDF OK → l'acte est validé ET le PdfGenerePath est sauvé
+            // - Si PDF échoue → l'acte reste En attente, message d'erreur clair
             var workflowResult = await WorkflowService.ValiderAsync(acte.IdActe, _currentUserId.Value);
 
             if (!workflowResult.Success)
             {
+                // Le message d'erreur contient déjà le détail (PDF impossible, etc.)
                 Snackbar.Add(workflowResult.ErrorMessage ?? "Erreur lors de la validation.", Severity.Error);
                 return;
             }
 
-            // ============ ÉTAPE 2 : Génération du PDF ============
-            string? pdfPath = null;
-            try
-            {
-                Snackbar.Add($"Génération du PDF en cours...", Severity.Info);
-                var (jsonPath, generatedPdfPath) = await ReportWorkflow.GenerateAndSaveAsync(acte.IdActe);
-                pdfPath = generatedPdfPath;
-            }
-            catch (Exception pdfEx)
-            {
-                // ⚠️ La validation a réussi mais le PDF a échoué
-                // On informe le Responsable mais on ne casse pas le workflow
-                Snackbar.Add($"Acte validé mais erreur PDF : {pdfEx.Message}", Severity.Warning);
-                await LoadDataAsync();
-                return;
-            }
+            // ============ Succès : acte validé + PDF généré ============
+            Snackbar.Add($"Acte #{acte.IdActe} validé et PDF officiel généré avec succès.", Severity.Success);
 
-            // ============ ÉTAPE 3 : Succès complet ============
-            Snackbar.Add($"Acte #{acte.IdActe} validé et PDF généré avec succès ✅", Severity.Success);
+            // 🔧 Retirer immédiatement l'acte de la liste affichée pour un feedback instantané
+            _actesEnAttente.RemoveAll(a => a.IdActe == acte.IdActe);
+            await InvokeAsync(StateHasChanged);
 
-            // Ouvrir le PDF dans un nouvel onglet automatiquement
-            if (!string.IsNullOrWhiteSpace(pdfPath))
+            // Récupérer le chemin du PDF directement depuis l'acte mis à jour
+            var acteUpdated = await TypesActService.GetByIdAsync(acte.IdActe);
+            if (acteUpdated is not null && !string.IsNullOrWhiteSpace(acteUpdated.PdfGenerePath))
             {
-                var url = pdfPath.StartsWith("/") ? pdfPath : "/" + pdfPath;
+                var url = acteUpdated.PdfGenerePath.StartsWith("/")
+                    ? acteUpdated.PdfGenerePath
+                    : "/" + acteUpdated.PdfGenerePath;
+
                 await JS.InvokeVoidAsync("open", url, "_blank");
             }
 
+            // Rechargement complet depuis la BDD pour s'assurer que tout est synchronisé
             await LoadDataAsync();
         }
         catch (Exception ex)
@@ -458,6 +470,11 @@
             }
 
             Snackbar.Add($"Acte #{acte.IdActe} rejeté. L'agent sera informé.", Severity.Warning);
+
+            // 🔧 Retirer immédiatement l'acte rejeté de la liste affichée
+            _actesEnAttente.RemoveAll(a => a.IdActe == acte.IdActe);
+            await InvokeAsync(StateHasChanged);
+
             await LoadDataAsync();
         }
         catch (Exception ex)
@@ -473,34 +490,240 @@
 }
 
 <style>
-    /* ============= HEADER ============= */
-    .validation-header {
-        background: linear-gradient(135deg, #0A2540 0%, #06182E 60%, #1F3C88 100%) !important;
-        padding: 28px 32px !important;
+    /* ============= HEADER COMPACT (harmonisé avec listAct) ============= */
+    .validation-hero {
+        background: radial-gradient(700px 350px at 85% 30%, rgba(201, 168, 106, 0.12), transparent 60%), radial-gradient(500px 300px at 15% 80%, rgba(20, 165, 116, 0.15), transparent 65%), linear-gradient(135deg, #0A2922 0%, #0E7C5C 60%, #14A574 100%) !important;
+        padding: 22px 28px !important;
         border-radius: 16px !important;
         position: relative;
         overflow: hidden;
         margin-bottom: 8px;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.2);
     }
 
-        .validation-header::before {
+        /* Filigrane or subtil */
+        .validation-hero::after {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(201, 168, 106, 0.15) 0%, transparent 70%);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 106, 0.4) 25%, rgba(201, 168, 106, 0.7) 50%, rgba(201, 168, 106, 0.4) 75%, transparent 100%);
             pointer-events: none;
+            z-index: 2;
         }
 
-    .header-icon {
-        background: rgba(255, 255, 255, 0.12);
-        padding: 12px;
+    .hero-bg-deco {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .hero-icon-wrap {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        width: 52px;
+        height: 52px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .meta-strong {
+        color: #FCA5A5;
+        font-weight: 800;
+        background: rgba(220, 38, 38, 0.25);
+        padding: 2px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(252, 165, 165, 0.4);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .meta-sep {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .meta-empty {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 1px solid rgba(252, 211, 77, 0.3);
+    }
+
+        .meta-empty i {
+            color: white;
+            font-size: 1rem;
+        }
+
+    
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    /* === Pill "X en attente" — ORANGE (urgence/à traiter) === */
+    /* === Pill "X en attente" — BLEU DÉGRADÉ PREMIUM === */
+    .hero-pending-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 60%, #3B82F6 100%);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        box-shadow: 0 4px 14px rgba(30, 64, 175, 0.45);
+        white-space: nowrap;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        line-height: 1;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s ease;
+    }
+
+        .hero-pending-pill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .hero-pending-pill:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(30, 64, 175, 0.6);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+            .hero-pending-pill:hover::before {
+                left: 100%;
+            }
+
+        .hero-pending-pill i {
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .hero-pending-pill strong {
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+    }
+
+    .pending-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        display: inline-block;
+        animation: pending-pulse 1.8s ease-in-out infinite;
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+    }
+
+    @@keyframes pending-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+        }
+
+        50% {
+            opacity: 0.7;
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+        }
+    }
+
+    .hero-btn-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.15s ease;
+    }
+
+        .hero-btn-icon:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #C9A86A;
+        }
+
+        .hero-btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     /* ============= FILTRES ============= */
@@ -601,6 +824,7 @@
     }
 
     /* ============= EMPTY STATE ============= */
+    /* ============= EMPTY STATE ============= */
     .empty-state {
         background: white !important;
         border: 1px solid #E1E4E8 !important;
@@ -609,10 +833,80 @@
         text-align: center;
     }
 
+    .empty-icon-wrap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+        color: #047857;
+        font-size: 3rem;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 24px rgba(14, 124, 92, 0.2), inset 0 0 0 4px white, inset 0 0 0 5px rgba(20, 165, 116, 0.3);
+        position: relative;
+    }
+
+        .empty-icon-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2px dashed rgba(20, 165, 116, 0.3);
+            animation: empty-rotate 20s linear infinite;
+        }
+
+    .empty-system-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 8px 16px;
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        color: #047857;
+        font-weight: 600;
+    }
+
+    .status-dot-live {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #14A574;
+        animation: status-live 1.8s ease-in-out infinite;
+    }
+
+    @@keyframes status-live {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(20, 165, 116, 0.6);
+        }
+
+        50% {
+            box-shadow: 0 0 0 8px rgba(20, 165, 116, 0);
+        }
+    }
+
+    @@keyframes empty-rotate {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
     /* ============= RESPONSIVE ============= */
     @@media (max-width: 768px) {
-        .validation-header {
-            padding: 20px !important;
+        .validation-hero {
+            padding: 18px 20px !important;
+        }
+
+        .hero-title {
+            font-size: 1.2rem !important;
+        }
+
+        .hero-meta {
+            font-size: 0.78rem !important;
         }
 
         .acte-card-content {

@@ -20,11 +20,39 @@ builder.Services.AddMudServices();
 
 builder.Services.AddControllers();
 
+
+
+
+
+
+
 // DbContext PostgreSQL
+// 🔧 Configuration anti-concurrence pour Blazor Server :
+// - AddDbContextFactory : pour créer des DbContext à la demande (utilisé par les services)
+// - AddDbContext en Transient : chaque injection crée une nouvelle instance (Identity compatible)
+builder.Services.AddDbContextFactory<GesDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+}, ServiceLifetime.Scoped);
+
+// Garder l'injection directe de GesDbContext pour Identity et les services existants
+// MAIS en Transient pour éviter les conflits de concurrence Blazor Server
 builder.Services.AddDbContext<GesDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+}, ServiceLifetime.Transient, ServiceLifetime.Transient);
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ============================================================
 // ASP.NET CORE IDENTITY
@@ -95,6 +123,8 @@ builder.Services.AddScoped<IFileUpload, FileUploadService>();
 builder.Services.AddScoped<IAuditLog, AuditLogService>();
 builder.Services.AddScoped<IDashboard, DashboardService>();
 builder.Services.AddScoped<IProfile, ProfileService>();
+
+builder.Services.AddScoped<IRapportService, RapportService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -219,6 +249,26 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+
+// ═══════════ Endpoint de déconnexion (hors Blazor) ═══════════
+app.MapPost("/account/signout", async (
+    HttpContext context,
+    SignInManager<UserModel> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/login");
+}).AllowAnonymous();
+
+app.MapGet("/account/signout", async (
+    HttpContext context,
+    SignInManager<UserModel> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/login");
+}).AllowAnonymous();
+
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // 🆕 Authentication & Authorization (ordre important : AVANT UseAntiforgery)
 app.UseAuthentication();

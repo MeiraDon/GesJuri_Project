@@ -1,0 +1,1043 @@
+﻿@page "/clientsListePage"
+@rendermode InteractiveServer
+
+@using MudBlazor
+@using GesCPSI_Project.Models
+@using GesCPSI_Project.Interfaces
+
+@inject IClient ClientService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Liste des clients — GesCPSI</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="py-4">
+
+    <!-- ═════════════ HEADER COMPACT ═════════════ -->
+    <MudPaper Class="clients-list-hero mb-4" Elevation="0">
+        <div class="hero-bg-deco"></div>
+        <div class="hero-content">
+
+            <div class="hero-main">
+                <div class="hero-icon-wrap">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="hero-text">
+                    <h1 class="hero-title">Liste des clients</h1>
+                    <p class="hero-meta">
+                        <span class="meta-strong">@FilteredClients.Count</span>
+                        @if (FilteredClients.Count != _clients.Count)
+                        {
+                            <span class="meta-light">sur @_clients.Count</span>
+                        }
+                        <span>client@(FilteredClients.Count > 1 ? "s" : "") affiché@(FilteredClients.Count > 1 ? "s" : "")</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <button class="hero-btn-back" @onclick="GoBack">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Retour</span>
+                </button>
+                <button class="hero-btn-primary" @onclick="GoToCreate">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Nouveau client</span>
+                </button>
+            </div>
+
+        </div>
+    </MudPaper>
+
+    <!-- ═════════════ FILTRES ═════════════ -->
+    <MudPaper Class="clients-filters mb-3" Elevation="0">
+
+        <div class="filters-group">
+            <div class="filter-search">
+                <i class="bi bi-search filter-search-icon"></i>
+                <input type="text"
+                       class="filter-search-input"
+                       placeholder="Rechercher par nom, raison sociale, téléphone, pièce..."
+                       @bind="_search"
+                       @bind:event="oninput" />
+                @if (!string.IsNullOrEmpty(_search))
+                {
+                    <button class="filter-search-clear" @onclick='() => _search = ""'>
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                }
+            </div>
+
+            <div class="filter-type-select">
+                <MudSelect T="string" @bind-Value="_typeClientFilter"
+                           Placeholder="Tous les types"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Clearable="true"
+                           FullWidth="true">
+                    <MudSelectItem T="string" Value="@((string?)null)">Tous les types</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Personne Physique")">Personne Physique</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Personne Morale")">Personne Morale</MudSelectItem>
+                </MudSelect>
+            </div>
+        </div>
+
+        <div class="filters-divider"></div>
+
+        <div class="filters-action">
+            <MudTooltip Text="Actualiser" Placement="Placement.Top">
+                <button class="filter-refresh-btn" @onclick="ReloadAsync" disabled="@_loadingClients">
+                    <i class="bi bi-arrow-clockwise @(_loadingClients ? "spinning" : "")"></i>
+                </button>
+            </MudTooltip>
+
+            <MudTooltip Text="Réinitialiser les filtres" Placement="Placement.Top">
+                <button class="filter-reset-btn" @onclick="ResetFilters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </MudTooltip>
+        </div>
+
+    </MudPaper>
+
+    <!-- ═════════════ TABLE ═════════════ -->
+    @if (_loadingClients)
+    {
+        <div class="loading-zone">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <p>Chargement des clients...</p>
+        </div>
+    }
+    else if (!FilteredClients.Any())
+    {
+        <div class="empty-zone">
+            <div class="empty-icon"><i class="bi bi-people"></i></div>
+            <div class="empty-title">Aucun client trouvé</div>
+            <div class="empty-subtitle">Modifie tes filtres ou crée un nouveau client</div>
+            <button class="empty-action" @onclick="GoToCreate">
+                <i class="bi bi-plus-lg"></i>
+                <span>Créer un client</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="clients-table-card" Elevation="0">
+            <MudTable Items="FilteredClients"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Dense="false"
+                      RowsPerPage="15"
+                      Class="clients-table">
+
+                <HeaderContent>
+                    <MudTh>Client</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Compte / RCCM</MudTh>
+                    <MudTh>Pièce d'identité</MudTh>
+                    <MudTh>Téléphone</MudTh>
+                    <MudTh>Nationalité</MudTh>
+                    <MudTh Style="text-align:right;">Actions</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd>
+                        <div class="client-cell">
+                            <div class="client-avatar" style="background: @GetClientAvatarGradient(context);">
+                                <i class="bi @(string.Equals(context.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase) ? "bi-building-fill" : "bi-person-fill")"></i>
+                            </div>
+                            <div class="client-info">
+                                <div class="client-name-row">
+                                    <span class="client-name">@GetClientDisplayName(context)</span>
+                                    @if (IsRecentClient(context))
+                                    {
+                                        <span class="recent-badge">
+                                            <i class="bi bi-stars"></i>
+                                            Nouveau
+                                        </span>
+                                    }
+                                </div>
+                                <div class="client-sub">@GetClientSubTitle(context)</div>
+                            </div>
+                        </div>
+                    </MudTd>
+
+                    <MudTd>
+                        <span class="type-pill @GetTypeClass(context.TypeClient)">
+                            @(string.IsNullOrWhiteSpace(context.TypeClient) ? "-" : context.TypeClient)
+                        </span>
+                    </MudTd>
+
+                    <MudTd>
+                        @if (string.Equals(context.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="cell-multi">
+                                <div class="cell-row">
+                                    <span class="cell-label">RCCM :</span>
+                                    <span class="cell-value">@(string.IsNullOrWhiteSpace(context.NumRCCM) ? "—" : context.NumRCCM)</span>
+                                </div>
+                                <div class="cell-row">
+                                    <span class="cell-label">Compte :</span>
+                                    <span class="cell-value">@(string.IsNullOrWhiteSpace(context.NumCompte) ? "—" : context.NumCompte)</span>
+                                </div>
+                            </div>
+                        }
+                        else if (string.Equals(context.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="cell-row">
+                                <span class="cell-label">N° :</span>
+                                <span class="cell-value">@(string.IsNullOrWhiteSpace(context.NumCompte) ? "—" : context.NumCompte)</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="cell-empty">—</span>
+                        }
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="piece-cell">
+                            <span class="piece-type">@(string.IsNullOrWhiteSpace(context.TypePieceID) ? "—" : context.TypePieceID)</span>
+                            @if (!string.IsNullOrWhiteSpace(context.NumPieceID))
+                            {
+                                <span class="piece-num">@context.NumPieceID</span>
+                            }
+                        </div>
+                    </MudTd>
+
+                    <MudTd>
+                        <div class="phone-cell">
+                            <i class="bi bi-telephone-fill"></i>
+                            <span>@(FirstNonEmpty(context.TelCel, context.TelBur, context.TelDom, "—"))</span>
+                        </div>
+                    </MudTd>
+
+                    <MudTd>
+                        <span class="nat-cell">@(string.IsNullOrWhiteSpace(context.Nationalite) ? "—" : context.Nationalite)</span>
+                    </MudTd>
+
+                    <MudTd Style="text-align:right;">
+                        <div class="actions-group">
+                            <MudTooltip Text="Modifier" Placement="Placement.Top">
+                                <button class="action-btn action-btn-edit" @onclick="@(() => EditClient(context.IdClt))">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                            </MudTooltip>
+
+                            @if (CanSelectClientForWizard)
+                            {
+                                <MudTooltip Text="Sélectionner ce client" Placement="Placement.Top">
+                                    <button class="action-btn action-btn-select" @onclick="@(() => SelectClient(context.IdClt))">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </button>
+                                </MudTooltip>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new[]{10, 25, 50}" />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter, SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? returnUrl { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "role")]
+    public string? role { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "acteId")]
+    public int? acteId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "idAjout")]
+    public int? idAjout { get; set; }
+
+    private List<ClientModel> _clients = new();
+    private bool _loadingClients = true;
+    private string _search = string.Empty;
+    private string? _typeClientFilter = null;
+
+    private bool CanSelectClientForWizard =>
+        acteId.HasValue && acteId.Value > 0 && !string.IsNullOrWhiteSpace(role) && !string.IsNullOrWhiteSpace(returnUrl);
+
+    private List<ClientModel> FilteredClients => GetFilteredClients();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClientsAsync();
+    }
+
+    private async Task LoadClientsAsync()
+    {
+        try
+        {
+            _loadingClients = true;
+            _clients = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erreur chargement : {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingClients = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        await LoadClientsAsync();
+        Snackbar.Add("Liste actualisée", Severity.Success);
+    }
+
+    private List<ClientModel> GetFilteredClients()
+    {
+        IEnumerable<ClientModel> query = _clients;
+
+        if (!string.IsNullOrWhiteSpace(_typeClientFilter))
+        {
+            query = query.Where(c => string.Equals(c.TypeClient, _typeClientFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var s = _search.Trim().ToLowerInvariant();
+            query = query.Where(c =>
+                c.IdClt.ToString().Contains(s) ||
+                GetClientDisplayName(c).ToLowerInvariant().Contains(s) ||
+                (c.NomRaisonsociale ?? "").ToLowerInvariant().Contains(s) ||
+                (c.NumRCCM ?? "").ToLowerInvariant().Contains(s) ||
+                (c.NumCompte ?? "").ToLowerInvariant().Contains(s) ||
+                (c.NomRepresentant ?? "").ToLowerInvariant().Contains(s) ||
+                (c.TelCel ?? "").ToLowerInvariant().Contains(s) ||
+                (c.TelBur ?? "").ToLowerInvariant().Contains(s) ||
+                (c.TypePieceID ?? "").ToLowerInvariant().Contains(s) ||
+                (c.NumPieceID ?? "").ToLowerInvariant().Contains(s) ||
+                (c.Nationalite ?? "").ToLowerInvariant().Contains(s));
+        }
+
+        return query.OrderByDescending(c => c.IdClt).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        _search = string.Empty;
+        _typeClientFilter = null;
+    }
+
+    private void GoBack()
+    {
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            queryParams.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+        if (!string.IsNullOrWhiteSpace(role))
+            queryParams.Add($"role={Uri.EscapeDataString(role)}");
+        if (acteId.HasValue)
+            queryParams.Add($"acteId={acteId.Value}");
+
+        var basePath = idAjout.HasValue && idAjout.Value > 0
+            ? $"/clientPage/{idAjout.Value}"
+            : "/clientPage";
+
+        var url = basePath + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void GoToCreate()
+    {
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            queryParams.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+        if (!string.IsNullOrWhiteSpace(role))
+            queryParams.Add($"role={Uri.EscapeDataString(role)}");
+        if (acteId.HasValue)
+            queryParams.Add($"acteId={acteId.Value}");
+
+        var basePath = idAjout.HasValue && idAjout.Value > 0
+            ? $"/clientPage/{idAjout.Value}"
+            : "/clientPage";
+
+        var url = basePath + (queryParams.Any() ? "?" + string.Join("&", queryParams) : "");
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void EditClient(int id)
+    {
+        var queryParams = new List<string> { $"clientId={id}" };
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            queryParams.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+        if (!string.IsNullOrWhiteSpace(role))
+            queryParams.Add($"role={Uri.EscapeDataString(role)}");
+        if (acteId.HasValue)
+            queryParams.Add($"acteId={acteId.Value}");
+
+        var basePath = idAjout.HasValue && idAjout.Value > 0
+            ? $"/clientPage/{idAjout.Value}"
+            : "/clientPage";
+
+        NavigationManager.NavigateTo($"{basePath}?{string.Join("&", queryParams)}");
+    }
+
+    private void SelectClient(int id)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl)) return;
+        var sep = returnUrl.Contains('?') ? "&" : "?";
+        NavigationManager.NavigateTo($"{returnUrl}{sep}clientId={id}&role={Uri.EscapeDataString(role ?? "")}", forceLoad: true);
+    }
+
+    // ===== Helpers =====
+    private string GetClientDisplayName(ClientModel c)
+    {
+        if (string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(c.NomRaisonsociale) ? "Société non renseignée" : c.NomRaisonsociale!;
+        return $"{c.Nom} {c.Prenoms}".Trim();
+    }
+
+    private string GetClientSubTitle(ClientModel c)
+    {
+        if (string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+            return string.IsNullOrWhiteSpace(c.NomRepresentant) ? "-" : $"Représentant : {c.NomRepresentant}";
+        return string.IsNullOrWhiteSpace(c.ProfessionClt) ? "-" : c.ProfessionClt!;
+    }
+
+    private static string FirstNonEmpty(params string?[] values)
+    {
+        foreach (var v in values)
+            if (!string.IsNullOrWhiteSpace(v)) return v;
+        return "-";
+    }
+
+    private string GetClientAvatarGradient(ClientModel client)
+    {
+        if (string.Equals(client.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase))
+        {
+            var goldGradients = new[]
+            {
+                "linear-gradient(135deg, #C9A86A, #B58E50)",
+                "linear-gradient(135deg, #D97706, #B45309)",
+                "linear-gradient(135deg, #92400E, #78350F)"
+            };
+            return goldGradients[Math.Abs(client.IdClt) % goldGradients.Length];
+        }
+        else
+        {
+            var marineGradients = new[]
+            {
+                "linear-gradient(135deg, #0A2540, #1F3C88)",
+                "linear-gradient(135deg, #1F3C88, #3F3A8A)",
+                "linear-gradient(135deg, #0E7C5C, #047857)",
+                "linear-gradient(135deg, #6366F1, #4F46E5)"
+            };
+            return marineGradients[Math.Abs(client.IdClt) % marineGradients.Length];
+        }
+    }
+
+    private string GetTypeClass(string? type) => type switch
+    {
+        "Personne Physique" => "type-pill-physique",
+        "Personne Morale" => "type-pill-morale",
+        _ => "type-pill-default"
+    };
+
+    private bool IsRecentClient(ClientModel client)
+    {
+        var top3 = _clients.OrderByDescending(c => c.IdClt).Take(3).Select(c => c.IdClt).ToList();
+        return top3.Contains(client.IdClt);
+    }
+}
+
+<style>
+    /* ═══════════ HEADER ROUGE DÉGRADÉ ═══════════ */
+    .clients-list-hero {
+        background: linear-gradient(135deg, #B91C1C 0%, #7F1D1D 60%, #EF4444 100%) !important;
+        padding: 22px 28px !important;
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-bg-deco {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .hero-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .hero-icon-wrap {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .hero-meta {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .meta-strong {
+        color: white;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 1px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .meta-light {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .hero-btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .hero-btn-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+    .hero-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 60%, #3B82F6 100%);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(30, 64, 175, 0.4);
+        position: relative;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+        .hero-btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .hero-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(30, 64, 175, 0.55);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+            .hero-btn-primary:hover::before {
+                left: 100%;
+            }
+
+        .hero-btn-primary i {
+            color: white;
+            font-size: 1rem;
+        }
+
+    /* ═══════════ FILTRES ═══════════ */
+    .clients-filters {
+        background: white !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 14px !important;
+        padding: 14px 16px !important;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .filters-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .filter-search {
+        flex: 2;
+        min-width: 240px;
+        position: relative;
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+    }
+
+        .filter-search:focus-within {
+            background: white;
+            border-color: #0E7C5C;
+            box-shadow: 0 0 0 4px rgba(14, 124, 92, 0.1);
+        }
+
+    .filter-search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9CA3AF;
+    }
+
+    .filter-search-input {
+        width: 100%;
+        padding: 10px 40px;
+        border: none;
+        background: transparent;
+        font-size: 0.9rem;
+        outline: none;
+        border-radius: 10px;
+    }
+
+    .filter-search-clear {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background: #E5E7EB;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+    }
+
+    .filter-type-select {
+        flex: 1.3;
+        min-width: 180px;
+    }
+
+    .filters-divider {
+        width: 1px;
+        height: 32px;
+        background: linear-gradient(180deg, transparent 0%, #E5E7EB 30%, #E5E7EB 70%, transparent 100%);
+    }
+
+    .filters-action {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .filter-refresh-btn,
+    .filter-reset-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.25s ease;
+    }
+
+    .filter-refresh-btn {
+        background: #EFF6FF;
+        color: #1E40AF;
+        border: 1px solid #DBEAFE;
+    }
+
+        .filter-refresh-btn:hover:not(:disabled) {
+            background: #1E40AF;
+            color: white;
+        }
+
+        .filter-refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .filter-reset-btn {
+        background: #FEF2F2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+    }
+
+        .filter-reset-btn:hover {
+            background: #DC2626;
+            color: white;
+            transform: rotate(-180deg);
+        }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ═══════════ TABLE ═══════════ */
+    .clients-table-card {
+        background: white !important;
+        border: 1px solid #E1E4E8 !important;
+        border-radius: 14px !important;
+        overflow: hidden;
+    }
+
+    .clients-table thead th {
+        background: #F8FAFC !important;
+        color: #0A2540 !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.6px;
+        border-bottom: 2px solid #E1E4E8 !important;
+        padding: 14px 16px !important;
+    }
+
+    .clients-table tbody tr:hover {
+        background: #F8FAFC !important;
+    }
+
+    .clients-table tbody td {
+        padding: 14px 16px !important;
+        vertical-align: middle !important;
+    }
+
+    .client-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .client-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .client-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .client-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .client-name {
+        font-weight: 700;
+        color: #0A2540;
+        font-size: 0.95rem;
+    }
+
+    .client-sub {
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    .recent-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%);
+        color: #92400E;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        border: 1px solid #FCD34D;
+        animation: recent-pulse 2.5s ease-in-out infinite;
+    }
+
+    @@keyframes recent-pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 5px rgba(252, 211, 77, 0);
+        }
+    }
+
+    .type-pill {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: 1px solid;
+    }
+
+    .type-pill-physique {
+        background: #DBEAFE;
+        color: #1E40AF;
+        border-color: #93C5FD;
+    }
+
+    .type-pill-morale {
+        background: #FEF3C7;
+        color: #92400E;
+        border-color: #FCD34D;
+    }
+
+    .type-pill-default {
+        background: #F3F4F6;
+        color: #6B7280;
+        border-color: #E5E7EB;
+    }
+
+    .cell-multi {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .cell-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+
+    .cell-label {
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .cell-value {
+        color: #1A1F3A;
+        font-weight: 600;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.82rem;
+    }
+
+    .cell-empty {
+        color: #9CA3AF;
+        font-style: italic;
+    }
+
+    .piece-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .piece-type {
+        background: #F1F5F9;
+        color: #475569;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        width: fit-content;
+        margin-bottom: 4px;
+    }
+
+    .piece-num {
+        color: #0A2540;
+        font-weight: 600;
+        font-size: 0.85rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    .phone-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #0A2540;
+        font-weight: 500;
+        font-size: 0.88rem;
+    }
+
+        .phone-cell i {
+            color: #0E7C5C;
+        }
+
+    .nat-cell {
+        color: #0A2540;
+        font-weight: 500;
+        font-size: 0.88rem;
+    }
+
+    .actions-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #E5E7EB;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.88rem;
+        transition: all 0.15s ease;
+    }
+
+    .action-btn-edit {
+        color: #1F3C88;
+    }
+
+        .action-btn-edit:hover {
+            background: #1F3C88;
+            color: white;
+            border-color: #1F3C88;
+            transform: translateY(-1px);
+        }
+
+    .action-btn-select {
+        color: #0E7C5C;
+    }
+
+        .action-btn-select:hover {
+            background: #0E7C5C;
+            color: white;
+            border-color: #0E7C5C;
+            transform: translateY(-1px);
+        }
+
+    /* ═══════════ LOADING / EMPTY ═══════════ */
+    .loading-zone,
+    .empty-zone {
+        background: white;
+        border-radius: 14px;
+        padding: 80px 20px;
+        text-align: center;
+        border: 1px solid #E5E7EB;
+    }
+
+        .loading-zone p {
+            color: #6B7280;
+            margin-top: 16px;
+        }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #D1D5DB;
+        margin-bottom: 16px;
+    }
+
+    .empty-title {
+        color: #1A1F3A;
+        font-weight: 800;
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+    }
+
+    .empty-subtitle {
+        color: #6B7280;
+        margin-bottom: 24px;
+    }
+
+    .empty-action {
+        background: #0A2540;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+    }
+
+        .empty-action:hover {
+            background: #1A1F3A;
+            transform: translateY(-2px);
+        }
+</style>

@@ -72,14 +72,16 @@ namespace GesCPSI_Project.Services
         {
             var query = _db.AuditLogs.AsQueryable();
 
-            // Filtre par date
             if (filter?.From.HasValue == true)
-                query = query.Where(l => l.DateAction >= filter.From.Value);
+            {
+                var fromUtc = DateTime.SpecifyKind(filter.From.Value.Date, DateTimeKind.Utc);
+                query = query.Where(l => l.DateAction >= fromUtc);
+            }
 
             if (filter?.To.HasValue == true)
             {
-                var to = filter.To.Value.AddDays(1); // inclure toute la journée de fin
-                query = query.Where(l => l.DateAction < to);
+                var toUtc = DateTime.SpecifyKind(filter.To.Value.Date.AddDays(1), DateTimeKind.Utc);
+                query = query.Where(l => l.DateAction < toUtc);
             }
 
             // Filtre par action
@@ -127,10 +129,11 @@ namespace GesCPSI_Project.Services
                 query = query.Where(l => agentActeIds.Contains(l.IdActe));
             }
 
+            // 🔧 Toutes les dates DOIVENT être en UTC pour PostgreSQL (timestamp with time zone)
             var now = DateTime.UtcNow;
-            var today = now.Date;
-            var weekStart = today.AddDays(-(int)today.DayOfWeek);
-            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
+            var weekStart = DateTime.SpecifyKind(now.Date.AddDays(-(int)now.DayOfWeek), DateTimeKind.Utc);
+            var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
             return new AuditLogStats
             {

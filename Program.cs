@@ -15,6 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// 🆕 Enregistrer SignalR pour les notifications temps réel
+builder.Services.AddSignalR();
+
 // MudBlazor
 builder.Services.AddMudServices();
 
@@ -108,6 +111,9 @@ builder.Services.AddScoped<IAutorisation, AutorisationService>();
 builder.Services.AddScoped<IEntiteJur, EntiteJurService>();
 builder.Services.AddScoped<IUser, UserService>();
 builder.Services.AddScoped<IActeWorkflow, ActeWorkflowService>();
+
+// 🆕 Enregistrer le service de notifications SignalR
+builder.Services.AddScoped<INotification, NotificationService>();
 
 //builder.Services.AddScoped<IEmail, EmailService>();
 //ilder.Services.AddScoped<IStorageService, MinioStorageService>();
@@ -280,6 +286,9 @@ app.MapControllers();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// 🆕 Mapper le Hub SignalR pour les notifications
+app.MapHub<GesCPSI_Project.Hubs.NotificationHub>("/notificationHub");
 
 app.Run();
 

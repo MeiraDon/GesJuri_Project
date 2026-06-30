@@ -20,6 +20,7 @@
 @inject IAutorisation AutorisationService
 @inject IEntiteJur EntiteJurService
 @inject IActeWorkflow WorkflowService
+@inject INotification NotificationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
@@ -814,12 +815,12 @@
         var statutValide = acte.StatutWorkflow == ActeStatut.Brouillon
                         || acte.StatutWorkflow == ActeStatut.Rejete;
 
-        // 🆕 Règle 2 : l'agent doit avoir validé l'étape Récap au préalable
+        // Règle 2 : l'agent doit avoir validé l'étape Récap au préalable
         // Sinon, l'acte est considéré comme "incomplet" et ne peut pas être envoyé
         return statutValide && acte.RecapValide;
     }
 
-    // 🆕 Helper : message du tooltip selon l'état du bouton "Envoyer"
+    // Helper : message du tooltip selon l'état du bouton "Envoyer"
     private string GetSendTooltipMessage(TypesActModel acte)
     {
         if (acte.StatutWorkflow != ActeStatut.Brouillon
@@ -889,6 +890,25 @@
             {
                 Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l'envoi.", Severity.Error);
                 return;
+            }
+
+            // NOTIFICATION SIGNALR : prévenir les Responsables en temps réel
+            try
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                var senderName = authState.User.Identity?.Name ?? "Un agent";
+
+                await NotificationService.NotifyActeSoumisAsync(
+                    targetRole: "Responsable",
+                    acteId: acte.IdActe,
+                    acteName: acte.NomTypesActe ?? "Acte CPSI",
+                    senderName: senderName
+                );
+            }
+            catch (Exception notifEx)
+            {
+                // On ne casse pas le workflow si SignalR plante
+                Console.WriteLine($"[SignalR] Erreur notif soumission : {notifEx.Message}");
             }
 
             Snackbar.Add($"Acte #{acte.IdActe} envoyé en validation au Responsable Juridique.", Severity.Success);

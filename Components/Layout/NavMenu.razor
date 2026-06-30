@@ -1,9 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using GesCPSI_Project.Models
 @using GesCPSI_Project.Interfaces
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
 
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IActeWorkflow WorkflowService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
 <div class="sidebar @(IsMiniMode ? "mini-mode" : "")">
 
@@ -55,7 +59,7 @@
                     <div class="nav-text">Validation</div>
                     @if (!IsMiniMode && _pendingCount > 0)
                     {
-                        <div class="nav-badge-pending">@_pendingCount</div>
+                        <div class="nav-badge-pending @(_badgeBump ? "badge-bump" : "")">@_pendingCount</div>
                     }
                 </NavLink>
             </AuthorizeView>
@@ -105,8 +109,6 @@
                     <div class="nav-icon"><i class="bi bi-gear"></i></div>
                     <div class="nav-text">Paramètres</div>
                 </NavLink>
-
-                
             </div>
         </AuthorizeView>
 
@@ -138,6 +140,11 @@
     private string _roleLabel = "—";
 
     private int _pendingCount = 0;
+    private bool _badgeBump = false;  // 🆕 Pour animation visuelle quand notif arrive
+
+    // 🆕 SignalR
+    private HubConnection? _hubConnection;
+    private string? _userRole = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,16 +161,28 @@
                       : _displayName[..1].ToUpper();
 
             if (user.IsInRole(RoleNames.Admin))
+            {
                 _roleLabel = "Administrateur";
+                _userRole = RoleNames.Admin;
+            }
             else if (user.IsInRole(RoleNames.Responsable))
+            {
                 _roleLabel = "Resp. Juridique";
+                _userRole = RoleNames.Responsable;
+            }
             else if (user.IsInRole(RoleNames.Agent))
+            {
                 _roleLabel = "Agent Juridique";
+                _userRole = RoleNames.Agent;
+            }
 
             if (user.IsInRole(RoleNames.Admin) || user.IsInRole(RoleNames.Responsable))
             {
                 await RefreshPendingCountAsync();
             }
+
+            // 🆕 Connexion SignalR pour les notifications temps réel
+            await ConnectToSignalRAsync();
         }
     }
 
@@ -178,6 +197,130 @@
             _pendingCount = 0;
         }
     }
+
+    // ════════════════════════════════════════════════
+    // 🆕 NOTIFICATIONS SIGNALR
+    // ════════════════════════════════════════════════
+
+    private async Task ConnectToSignalRAsync()
+    {
+        try
+        {
+            // Construction de la connexion vers le Hub
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"))
+                .WithAutomaticReconnect()  // Reconnexion auto si la connexion tombe
+                .Build();
+
+            // ═══ ÉCOUTE 1 : Acte soumis (pour les Responsables) ═══
+            _hubConnection.On<dynamic>("ActeSoumis", async (data) =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    // Rafraîchir le compteur depuis la base
+                    await RefreshPendingCountAsync();
+
+                    // Animation du badge (bump)
+                    _badgeBump = true;
+                    StateHasChanged();
+
+                    // Notification visuelle
+                    Snackbar.Add(
+                        $"Nouvel acte à valider !",
+                        Severity.Info,
+                        config =>
+                        {
+                            config.VisibleStateDuration = 5000;
+                            config.ShowCloseIcon = true;
+                            config.Icon = Icons.Material.Filled.NotificationsActive;
+                        });
+
+                    // Désactiver l'animation après 1s
+                    await Task.Delay(1000);
+                    _badgeBump = false;
+                    StateHasChanged();
+                });
+            });
+
+            // ═══ ÉCOUTE 2 : Acte validé (pour les Agents) ═══
+            _hubConnection.On<dynamic>("ActeValide", async (data) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    Snackbar.Add(
+                        $"Un de vos actes a été validé !",
+                        Severity.Success,
+                        config =>
+                        {
+                            config.VisibleStateDuration = 5000;
+                            config.ShowCloseIcon = true;
+                            config.Icon = Icons.Material.Filled.CheckCircle;
+                        });
+                    return Task.CompletedTask;
+                });
+            });
+
+            // ═══ ÉCOUTE 3 : Acte rejeté (pour les Agents) ═══
+            _hubConnection.On<dynamic>("ActeRejete", async (data) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    Snackbar.Add(
+                        $"Un de vos actes a été rejeté.",
+                        Severity.Warning,
+                        config =>
+                        {
+                            config.VisibleStateDuration = 7000;
+                            config.ShowCloseIcon = true;
+                            config.Icon = Icons.Material.Filled.Cancel;
+                        });
+                    return Task.CompletedTask;
+                });
+            });
+
+            // Démarrer la connexion
+            await _hubConnection.StartAsync();
+
+            // Rejoindre le groupe correspondant au rôle de l'utilisateur
+            if (!string.IsNullOrEmpty(_userRole))
+            {
+                await _hubConnection.SendAsync("JoinRoleGroup", _userRole);
+            }
+
+            Console.WriteLine($"[SignalR] Connecté au Hub. Rôle : {_userRole}");
+        }
+        catch (Exception ex)
+        {
+            // On ne casse pas l'app si SignalR plante
+            Console.WriteLine($"[SignalR] Erreur connexion : {ex.Message}");
+        }
+    }
+
+    // ════════════════════════════════════════════════
+    // 🆕 NETTOYAGE — Très important pour éviter les fuites
+    // ════════════════════════════════════════════════
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            try
+            {
+                // Quitter le groupe avant de fermer
+                if (!string.IsNullOrEmpty(_userRole))
+                {
+                    await _hubConnection.SendAsync("LeaveRoleGroup", _userRole);
+                }
+
+                await _hubConnection.DisposeAsync();
+                Console.WriteLine("[SignalR] Connexion fermée proprement.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SignalR] Erreur dispose : {ex.Message}");
+            }
+        }
+    }
 }
 
 <style>
@@ -185,40 +328,31 @@
            VARIABLES BOA — Charte vert profond + or premium
            ════════════════════════════════════════════════════════════════ */
     :root {
-        /* Sidebar */
         --sidebar-width: 46vh;
         --sidebar-collapsed: 40px;
-        /* Verts BOA (palette signature) */
         --boa-green-darkest: #052218;
         --boa-green-deep: #0A2922;
         --boa-green-dark: #0E3D2E;
         --boa-green-mid: #0E7C5C;
         --boa-green-bright: #14A574;
         --boa-green-glow: rgba(20, 165, 116, 0.25);
-        /* Or BOA (accents) */
         --boa-gold: #C9A86A;
         --boa-gold-bright: #E0BD7E;
         --boa-gold-soft: rgba(201, 168, 106, 0.15);
-        /* Textes & utilités */
         --text-primary: #ffffff;
         --text-secondary: rgba(255, 255, 255, 0.78);
         --text-muted: rgba(255, 255, 255, 0.5);
         --border-soft: rgba(255, 255, 255, 0.08);
         --border-gold: rgba(201, 168, 106, 0.25);
-        /* Effets */
         --shadow-deep: 0 14px 40px rgba(0, 0, 0, 0.45);
         --shadow-glow-green: 0 4px 16px rgba(14, 124, 92, 0.4);
         --shadow-glow-gold: 0 4px 16px rgba(201, 168, 106, 0.3);
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        /* Radius */
         --radius-sm: 8px;
         --radius-md: 12px;
         --radius-lg: 16px;
     }
 
-    /* ════════════════════════════════════════════════════════════════
-           SIDEBAR — Fond vert profond avec glow ambiant doré
-           ════════════════════════════════════════════════════════════════ */
     .sidebar {
         height: 100%;
         width: 100%;
@@ -232,7 +366,6 @@
         position: relative;
     }
 
-        /* Filigrane vertical or subtil */
         .sidebar::after {
             content: '';
             position: absolute;
@@ -244,9 +377,6 @@
             pointer-events: none;
         }
 
-    /* ════════════════════════════════════════════════════════════════
-           HEADER — Brand BOA avec touche premium
-           ════════════════════════════════════════════════════════════════ */
     .brand-container {
         display: flex;
         align-items: center;
@@ -259,7 +389,6 @@
         overflow: hidden;
     }
 
-        /* Halo doré subtil */
         .brand-container::before {
             content: '';
             position: absolute;
@@ -297,9 +426,6 @@
         letter-spacing: 0.3px;
     }
 
-    /* ════════════════════════════════════════════════════════════════
-           NAVIGATION
-           ════════════════════════════════════════════════════════════════ */
     .sidebar-nav {
         flex: 1;
         overflow-y: auto;
@@ -342,9 +468,6 @@
             background: linear-gradient(90deg, var(--border-gold) 0%, transparent 100%);
         }
 
-    /* ════════════════════════════════════════════════════════════════
-           NAV ITEMS — Avec effet glow vert au hover
-           ════════════════════════════════════════════════════════════════ */
     .nav-item {
         color: white;
         display: flex;
@@ -360,7 +483,6 @@
         overflow: hidden;
     }
 
-        /* Trail vert au survol */
         .nav-item::before {
             content: '';
             position: absolute;
@@ -389,7 +511,6 @@
                 box-shadow: var(--shadow-glow-green);
             }
 
-        /* État actif : vert dégradé + or sur le côté */
         .nav-item.active {
             background: linear-gradient(90deg, rgba(14, 124, 92, 0.4) 0%, rgba(20, 165, 116, 0.25) 50%, transparent 100%);
             color: white;
@@ -411,9 +532,6 @@
                 color: white;
             }
 
-    /* ════════════════════════════════════════════════════════════════
-           NAV ICONS
-           ════════════════════════════════════════════════════════════════ */
     .nav-icon {
         width: 36px;
         height: 36px;
@@ -442,9 +560,6 @@
         color: white;
     }
 
-    /* ════════════════════════════════════════════════════════════════
-           FOOTER — Profil utilisateur premium
-           ════════════════════════════════════════════════════════════════ */
     .sidebar-footer {
         padding: 12px;
         display: flex;
@@ -490,7 +605,6 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
-    /* === AVATAR — Vert + or avec glow === */
     .avatar {
         width: 42px;
         height: 42px;
@@ -555,9 +669,6 @@
         text-transform: uppercase;
     }
 
-    /* ════════════════════════════════════════════════════════════════
-           BADGE PENDING — Rouge urgent conservé (sémantique cohérente)
-           ════════════════════════════════════════════════════════════════ */
     .nav-badge-pending {
         background: linear-gradient(135deg, #DC2626 0%, #B91C1C 60%, #EF4444 100%);
         color: white;
@@ -575,6 +686,35 @@
         animation: pulse-badge 2s ease-in-out infinite;
         letter-spacing: 0.3px;
         flex-shrink: 0;
+    }
+
+        /* 🆕 Animation BUMP — Le badge "saute" quand une nouvelle notif arrive */
+        .nav-badge-pending.badge-bump {
+            animation: badge-bump 0.6s cubic-bezier(0.36, 0, 0.66, -0.56) !important;
+        }
+
+    @@keyframes badge-bump {
+        0% {
+            transform: scale(1);
+        }
+
+        25% {
+            transform: scale(1.5) rotate(-8deg);
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 60%, #FBBF24 100%);
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.9);
+        }
+
+        50% {
+            transform: scale(1.3) rotate(5deg);
+        }
+
+        75% {
+            transform: scale(1.2) rotate(-3deg);
+        }
+
+        100% {
+            transform: scale(1);
+        }
     }
 
     .nav-icon-dot {
@@ -601,9 +741,6 @@
         }
     }
 
-    /* ════════════════════════════════════════════════════════════════
-           LOGOUT
-           ════════════════════════════════════════════════════════════════ */
     .logout-btn {
         width: 38px;
         height: 38px;
@@ -632,9 +769,6 @@
             border-color: transparent;
         }
 
-    /* ════════════════════════════════════════════════════════════════
-           SCROLLBAR
-           ════════════════════════════════════════════════════════════════ */
     .sidebar-nav::-webkit-scrollbar {
         width: 4px;
     }
@@ -652,9 +786,6 @@
             background: var(--boa-gold);
         }
 
-    /* ════════════════════════════════════════════════════════════════
-           MODE MINI — Drawer fermé
-           ════════════════════════════════════════════════════════════════ */
     .sidebar.mini-mode .brand-info,
     .sidebar.mini-mode .nav-text,
     .sidebar.mini-mode .section-label,

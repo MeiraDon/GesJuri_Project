@@ -483,13 +483,23 @@
                     @* ═══════════ DISCLAIMER FINAL ═══════════ *@
                     <div class="recap-disclaimer">
                         <div class="disclaimer-icon">
-                            <i class="bi bi-info-circle-fill"></i>
+                            <i class="bi bi-exclamation-triangle-fill"></i>
                         </div>
                         <div class="disclaimer-content">
-                            <div class="disclaimer-title">Prêt à valider ?</div>
+                            <div class="disclaimer-title">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                Étape importante : Validation finale
+                            </div>
                             <div class="disclaimer-text">
-                                Une fois validé, cet acte passera en statut <strong>"En attente d'envoi"</strong> au responsable juridique.
-                                Vous pourrez toujours le retrouver dans <strong>/listAct</strong>.
+                                En cliquant sur <strong>"Valider l'acte"</strong>, vous confirmez que toutes les informations sont correctes
+                                et complètes.
+                                <br /><br />
+                                <i class="bi bi-info-circle-fill text-warning"></i>
+                                <strong>Important :</strong> Ce n'est qu'après cette validation que vous pourrez
+                                <strong>envoyer l'acte au responsable juridique</strong> depuis la liste des actes.
+                                <br /><br />
+                                <i class="bi bi-bookmark-check-fill text-success"></i>
+                                Vous pourrez toujours retrouver cet acte dans <strong>la liste des actes</strong>, prêt à être envoyé.
                             </div>
                         </div>
                     </div>
@@ -1164,64 +1174,140 @@ private async Task OnSearchInputAsync(ParticipantRole role, string value)
 
 // =================== PARTICIPANTS ACTIONS ===================
 
-private void ClearParticipant(ParticipantRole role)
-{
-    participants[role].ClientId = null;
-    participants[role].Selected = null;
-    participants[role].Results.Clear();
-    participants[role].InfoMessage = null;
-}
-
-private async Task SearchClientsAsync(ParticipantRole role)
-{
-    var ps = participants[role];
-    ps.InfoMessage = null;
-    ps.Results.Clear();
-
-    var q = (ps.Search ?? "").Trim();
-    if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+    private void ClearParticipant(ParticipantRole role)
     {
-        ps.InfoMessage = "Saisissez au moins 2 caractères.";
-        return;
+        var clientLibere = participants[role].ClientId;
+
+        participants[role].ClientId = null;
+        participants[role].Selected = null;
+        participants[role].Results.Clear();
+        participants[role].InfoMessage = null;
+        participants[role].Search = "";
+
+        // 🆕 INFO : si l'utilisateur avait des recherches en cours sur d'autres rôles,
+        // ils retrouveront automatiquement ce client dans leurs résultats lors de la prochaine recherche
+        if (clientLibere.HasValue)
+        {
+            Snackbar.Add(
+                "Participant désassigné. Ce client est à nouveau disponible pour les autres rôles.",
+                Severity.Info);
+        }
     }
 
-    try
+    private async Task SearchClientsAsync(ParticipantRole role)
     {
-        ps.IsSearching = true;
+        var ps = participants[role];
+        ps.InfoMessage = null;
+        ps.Results.Clear();
 
-        var all = await ClientService.GetAllAsync() ?? new List<ClientModel>();
-        var qq = q.ToLowerInvariant();
+        var q = (ps.Search ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+        {
+            ps.InfoMessage = "Saisissez au moins 2 caractères.";
+            return;
+        }
 
-        ps.Results = all.Where(c =>
-                (DisplayClientName(c).ToLowerInvariant().Contains(qq)) ||
-                (!string.IsNullOrWhiteSpace(c.TelCel) && c.TelCel.ToLowerInvariant().Contains(qq)) ||
-                (!string.IsNullOrWhiteSpace(c.TelBur) && c.TelBur.ToLowerInvariant().Contains(qq)) ||
-                (!string.IsNullOrWhiteSpace(c.TypePieceID) && c.TypePieceID.ToLowerInvariant().Contains(qq)) ||
-                (!string.IsNullOrWhiteSpace(c.NumPieceID) && c.NumPieceID.ToLowerInvariant().Contains(qq))
-            )
-            .OrderBy(c => DisplayClientName(c))
+        try
+        {
+            ps.IsSearching = true;
+
+            var all = await ClientService.GetAllAsync() ?? new List<ClientModel>();
+            var qq = q.ToLowerInvariant();
+
+            // 🆕 RÈGLE D'UNICITÉ : récupérer les IDs des clients déjà sélectionnés
+            // dans LES AUTRES rôles (pas celui qu'on est en train de modifier)
+            var clientsDejaUtilises = participants
+                .Where(kvp => kvp.Key != role && kvp.Value.ClientId.HasValue)
+                .Select(kvp => kvp.Value.ClientId!.Value)
+                .ToHashSet();
+
+            ps.Results = all
+                .Where(c => !clientsDejaUtilises.Contains(c.IdClt))  // 🆕 Exclure les clients déjà utilisés
+                .Where(c =>
+                    (DisplayClientName(c).ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.TelCel) && c.TelCel.ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.TelBur) && c.TelBur.ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.TypePieceID) && c.TypePieceID.ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.NumPieceID) && c.NumPieceID.ToLowerInvariant().Contains(qq))
+                )
+                .OrderBy(c => DisplayClientName(c))
+                .ToList();
+
+            if (ps.Results.Count == 0)
+            {
+                // 🆕 Message plus précis : on indique pourquoi rien n'apparaît
+                var matchesAvantFiltre = all.Count(c =>
+                    (DisplayClientName(c).ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.TelCel) && c.TelCel.ToLowerInvariant().Contains(qq)) ||
+                    (!string.IsNullOrWhiteSpace(c.NumPieceID) && c.NumPieceID.ToLowerInvariant().Contains(qq))
+                );
+
+                if (matchesAvantFiltre > 0 && clientsDejaUtilises.Count > 0)
+                {
+                    ps.InfoMessage = "Aucun résultat disponible : les clients correspondants sont déjà assignés à d'autres rôles dans cet acte.";
+                }
+                else
+                {
+                    ps.InfoMessage = "Client introuvable.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ps.InfoMessage = $"Erreur recherche: {ex.Message}";
+        }
+        finally
+        {
+            ps.IsSearching = false;
+        }
+    }
+
+    private void SelectClient(ParticipantRole role, ClientModel client)
+    {
+        // 🆕 SÉCURITÉ DOUBLE : vérifier que ce client n'est pas déjà assigné à un autre rôle
+        var rolesDejaUtilises = participants
+            .Where(kvp => kvp.Key != role
+                       && kvp.Value.ClientId == client.IdClt)
+            .Select(kvp => GetRoleLabel(kvp.Key))
             .ToList();
 
-        if (ps.Results.Count == 0)
-            ps.InfoMessage = "Client introuvable.";
-    }
-    catch (Exception ex)
-    {
-        ps.InfoMessage = $"Erreur recherche: {ex.Message}";
-    }
-    finally
-    {
-        ps.IsSearching = false;
-    }
-}
+        if (rolesDejaUtilises.Any())
+        {
+            // Cas extrême : si le client apparaît malgré le filtre (concurrence, cache, etc.)
+            Snackbar.Add(
+                $"⚠️ {DisplayClientName(client)} est déjà assigné comme {string.Join(" et ", rolesDejaUtilises)} dans cet acte.",
+                Severity.Warning);
+            return;
+        }
 
-private void SelectClient(ParticipantRole role, ClientModel client)
-{
-    participants[role].Selected = client;
-    participants[role].ClientId = client.IdClt;
-    participants[role].Results.Clear();
-    participants[role].InfoMessage = null;
-}
+        participants[role].Selected = client;
+        participants[role].ClientId = client.IdClt;
+        participants[role].Results.Clear();
+        participants[role].InfoMessage = null;
+
+        // 🆕 Vider aussi la recherche pour que ce soit propre
+        participants[role].Search = "";
+
+        // 🆕 Forcer le rafraîchissement de TOUTES les autres recherches actives
+        // (au cas où l'utilisateur avait déjà des résultats affichés dans d'autres cartes)
+        foreach (var otherRole in participants.Keys.ToList())
+        {
+            if (otherRole != role && participants[otherRole].Selected is null
+                && participants[otherRole].Results.Any())
+            {
+                // Retirer le client fraîchement sélectionné des résultats des autres cartes
+                participants[otherRole].Results.RemoveAll(c => c.IdClt == client.IdClt);
+
+                // Si après filtrage il ne reste plus de résultats, afficher un message
+                if (!participants[otherRole].Results.Any()
+                    && !string.IsNullOrWhiteSpace(participants[otherRole].Search))
+                {
+                    participants[otherRole].InfoMessage =
+                        "Aucun résultat disponible : le ou les clients ont été assignés à d'autres rôles.";
+                }
+            }
+        }
+    }
 
 private async Task OpenCreateClientDialogAsync(ParticipantRole role)
 {
@@ -1519,6 +1605,9 @@ private async Task SaveStepAsync()
                 acte.StatutWorkflow = ActeStatut.Brouillon;
                 acte.Statut = "Brouillon";
                 acte.MotifRejet = null;  // On efface le motif puisque l'acte est corrigé
+                                         // 🆕 Cas Rejeté : l'agent doit repasser par le Récap avant de pouvoir renvoyer
+                                         // On force RecapValide à false pour qu'il revalide toutes les infos
+                acte.RecapValide = false;
 
                 // Logger dans l'audit
                 var userId = await GetCurrentUserIdAsync();
@@ -2067,17 +2156,20 @@ private async Task OnSubmit()
         await UpsertChargeAsync(acteId);
         await UpsertEntiteJurAsync(acteId);
 
-        var acte = await TypesActService.GetByIdAsync(acteId);
-        if (acte is not null)
-        {
-            acte.Statut = "EnAttenteEnvoi";
-            acte.DateMaj = NowUtc();
+            var acte = await TypesActService.GetByIdAsync(acteId);
+            if (acte is not null)
+            {
+                acte.Statut = "EnAttenteEnvoi";
+                acte.DateMaj = NowUtc();
 
-            // await TypesActService.UpdateAsync(acte);
-            var upd = await TypesActService.UpdateAsync(acte);
-            if (!upd.IsSuccess)
-                throw new InvalidOperationException(upd.ErrorMessage ?? "Erreur update acte.");
-        }
+                // 🆕 IMPORTANT : marquer le Récap comme validé
+                // L'agent pourra désormais cliquer sur "Envoyer au responsable" dans /listAct
+                acte.RecapValide = true;
+
+                var upd = await TypesActService.UpdateAsync(acte);
+                if (!upd.IsSuccess)
+                    throw new InvalidOperationException(upd.ErrorMessage ?? "Erreur update acte.");
+            }
 
         successMessage = "L'acte a été validé avec succès et est maintenant en attente d'envoi au responsable.";
         await Task.Delay(1200);

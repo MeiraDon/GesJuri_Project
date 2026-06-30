@@ -383,12 +383,22 @@
                                     </AuthorizeView>
                                 }
 
-                                <MudTooltip Text="Envoyer au responsable" Placement="Placement.Top">
-                                    <button class="action-btn action-btn-send"
-                                            @onclick="@(() => SendActeAsync(acte))"
-                                            disabled="@(_loading || !CanSendActe(acte))">
-                                        <i class="bi bi-send-fill"></i>
-                                    </button>
+                                <MudTooltip Text="@GetSendTooltipMessage(acte)" Placement="Placement.Top">
+                                    <span>
+                                        @* span nécessaire pour que le tooltip fonctionne sur un bouton disabled *@
+                                        <button class="action-btn action-btn-send @(!acte.RecapValide && CanEditActe(acte) ? "action-btn-send-incomplete" : "")"
+                                                @onclick="@(() => SendActeAsync(acte))"
+                                                disabled="@(_loading || !CanSendActe(acte))">
+                                            @if (!acte.RecapValide && CanEditActe(acte))
+                                            {
+                                                <i class="bi bi-exclamation-circle-fill"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-send-fill"></i>
+                                            }
+                                        </button>
+                                    </span>
                                 </MudTooltip>
 
                                 @if (acte.StatutWorkflow == ActeStatut.Rejete)
@@ -800,9 +810,30 @@
 
     private bool CanSendActe(TypesActModel acte)
     {
-        // L'agent peut envoyer ses actes en Brouillon ou ré-envoyer un acte Rejeté
-        return acte.StatutWorkflow == ActeStatut.Brouillon
-            || acte.StatutWorkflow == ActeStatut.Rejete;
+        // Règle 1 : l'acte doit être en Brouillon OU Rejeté
+        var statutValide = acte.StatutWorkflow == ActeStatut.Brouillon
+                        || acte.StatutWorkflow == ActeStatut.Rejete;
+
+        // 🆕 Règle 2 : l'agent doit avoir validé l'étape Récap au préalable
+        // Sinon, l'acte est considéré comme "incomplet" et ne peut pas être envoyé
+        return statutValide && acte.RecapValide;
+    }
+
+    // 🆕 Helper : message du tooltip selon l'état du bouton "Envoyer"
+    private string GetSendTooltipMessage(TypesActModel acte)
+    {
+        if (acte.StatutWorkflow != ActeStatut.Brouillon
+            && acte.StatutWorkflow != ActeStatut.Rejete)
+        {
+            return "L'acte a déjà été envoyé ou n'est pas dans un statut envoyable.";
+        }
+
+        if (!acte.RecapValide)
+        {
+            return "Modifiez l'acte et validez la dernière étape (Récap) avant de pouvoir l'envoyer.";
+        }
+
+        return "Envoyer au responsable juridique";
     }
 
     private bool CanEditActe(TypesActModel acte)
@@ -2080,4 +2111,29 @@
             font-size: 0.75rem !important;
         }
     }
+
+    /* 🆕 Style spécial pour le bouton Envoyer quand le Récap n'est pas validé */
+.action-btn-send-incomplete {
+    color: #F59E0B !important;
+    background: #FEF3C7 !important;
+    border-color: #FDE68A !important;
+    cursor: not-allowed !important;
+    opacity: 0.95;
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+    .action-btn-send-incomplete:disabled {
+        opacity: 0.95 !important; /* Override l'opacité par défaut des boutons disabled */
+    }
+
+@@keyframes pulse-warning {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    }
+
+    50% {
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+    }
+}
+
 </style>

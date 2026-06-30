@@ -58,6 +58,7 @@ namespace GesCPSI_Project.Models
         public ChargeModel? ChargeModel { get; set; }
         public EntiteJurModel? EntiteJurModel { get; set; }
 
+        public bool RecapValide { get; set; } = false;
         // ================= NAVIGATIONS =================
         public ICollection<ClientActModel> ClientActModels { get; set; } = new List<ClientActModel>();
         public ICollection<JournalisationModel> JournalisationModels { get; set; } = new List<JournalisationModel>();

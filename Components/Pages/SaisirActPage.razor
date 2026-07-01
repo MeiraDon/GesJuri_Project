@@ -1235,7 +1235,7 @@ private async Task OnSearchInputAsync(ParticipantRole role, string value)
 
             if (ps.Results.Count == 0)
             {
-                // 🆕 Message plus précis : on indique pourquoi rien n'apparaît
+                // Message plus précis : on indique pourquoi rien n'apparaît
                 var matchesAvantFiltre = all.Count(c =>
                     (DisplayClientName(c).ToLowerInvariant().Contains(qq)) ||
                     (!string.IsNullOrWhiteSpace(c.TelCel) && c.TelCel.ToLowerInvariant().Contains(qq)) ||
@@ -1264,7 +1264,7 @@ private async Task OnSearchInputAsync(ParticipantRole role, string value)
 
     private void SelectClient(ParticipantRole role, ClientModel client)
     {
-        // 🆕 SÉCURITÉ DOUBLE : vérifier que ce client n'est pas déjà assigné à un autre rôle
+        // SÉCURITÉ DOUBLE : vérifier que ce client n'est pas déjà assigné à un autre rôle
         var rolesDejaUtilises = participants
             .Where(kvp => kvp.Key != role
                        && kvp.Value.ClientId == client.IdClt)
@@ -1285,10 +1285,10 @@ private async Task OnSearchInputAsync(ParticipantRole role, string value)
         participants[role].Results.Clear();
         participants[role].InfoMessage = null;
 
-        // 🆕 Vider aussi la recherche pour que ce soit propre
+        // Vider aussi la recherche pour que ce soit propre
         participants[role].Search = "";
 
-        // 🆕 Forcer le rafraîchissement de TOUTES les autres recherches actives
+        // Forcer le rafraîchissement de TOUTES les autres recherches actives
         // (au cas où l'utilisateur avait déjà des résultats affichés dans d'autres cartes)
         foreach (var otherRole in participants.Keys.ToList())
         {
@@ -1311,7 +1311,7 @@ private async Task OnSearchInputAsync(ParticipantRole role, string value)
 
 private async Task OpenCreateClientDialogAsync(ParticipantRole role)
 {
-    // ⚠️ Tu peux garder ce code : il suppose un composant dialog réutilisable.
+    // Tu peux garder ce code : il suppose un composant dialog réutilisable.
     // Exemple attendu: ClientCreateDialog.razor (un seul formulaire client) avec paramètres:
     // - Title
     // - RoleLabel (préselection)
@@ -1330,7 +1330,7 @@ private async Task OpenCreateClientDialogAsync(ParticipantRole role)
         var dialog = await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.ClientCreateDialog>($"Créer un client – {roleLabel}", parameters, options);
         var result = await dialog.Result;
 
-        // ✅ sécurité null
+        // sécurité null
         if (result is null || result.Canceled)
             return;
 
@@ -1561,7 +1561,7 @@ private bool ValidateParticipants()
 
         currentActeId = res.Data.IdActe;
 
-        // 🆕 Tracer la création dans le journal d'audit
+        // Tracer la création dans le journal d'audit
         try
         {
             await WorkflowService.LogCreationAsync(currentActeId.Value, userId.Value);
@@ -1598,14 +1598,14 @@ private async Task SaveStepAsync()
             acte.IdBnq = boaId.Value;
             acte.DateMaj = NowUtc();
 
-            // 🆕 Si l'acte était en Rejeté et que l'utilisateur modifie quelque chose,
+            // Si l'acte était en Rejeté et que l'utilisateur modifie quelque chose,
             // on le repasse automatiquement en Brouillon
             if (_wasRejected && acte.StatutWorkflow == ActeStatut.Rejete)
             {
                 acte.StatutWorkflow = ActeStatut.Brouillon;
                 acte.Statut = "Brouillon";
                 acte.MotifRejet = null;  // On efface le motif puisque l'acte est corrigé
-                                         // 🆕 Cas Rejeté : l'agent doit repasser par le Récap avant de pouvoir renvoyer
+                                         // Cas Rejeté : l'agent doit repasser par le Récap avant de pouvoir renvoyer
                                          // On force RecapValide à false pour qu'il revalide toutes les infos
                 acte.RecapValide = false;
 
@@ -1956,8 +1956,8 @@ private async Task UpsertEntiteJurAsync(int acteId)
 
 // =================== LOAD EXISTING ACTE ===================
 
-    private bool _wasRejected = false;  // 🆕 Flag pour tracer si l'acte était en Rejeté
-    private string? _oldMotifRejet = null;  // 🆕 Pour log dans l'audit
+    private bool _wasRejected = false;  // Flag pour tracer si l'acte était en Rejeté
+    private string? _oldMotifRejet = null;  // Pour log dans l'audit
 
     private async Task LoadExistingActe(int acteId)
     {
@@ -1971,7 +1971,7 @@ private async Task UpsertEntiteJurAsync(int acteId)
             currentActeId = acte.IdActe;
             selectedBanqueId = acte.IdBnq ?? boaBank?.IdBnq;
 
-            // 🆕 Détecter si l'acte était en statut Rejeté
+            // Détecter si l'acte était en statut Rejeté
             if (acte.StatutWorkflow == ActeStatut.Rejete)
             {
                 _wasRejected = true;
@@ -2162,7 +2162,7 @@ private async Task OnSubmit()
                 acte.Statut = "EnAttenteEnvoi";
                 acte.DateMaj = NowUtc();
 
-                // 🆕 IMPORTANT : marquer le Récap comme validé
+                // IMPORTANT : marquer le Récap comme validé
                 // L'agent pourra désormais cliquer sur "Envoyer au responsable" dans /listAct
                 acte.RecapValide = true;
 
@@ -2174,7 +2174,7 @@ private async Task OnSubmit()
         successMessage = "L'acte a été validé avec succès et est maintenant en attente d'envoi au responsable.";
         await Task.Delay(1200);
 
-        // ✅ Retour vers listAct + demande refresh
+        // Retour vers listAct + demande refresh
         var back = string.IsNullOrWhiteSpace(ReturnUrl) ? "/listAct" : ReturnUrl;
         var sep = back.Contains('?') ? "&" : "?";
         NavigationManager.NavigateTo($"{back}{sep}refresh=1", forceLoad: true);

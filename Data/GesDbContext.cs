@@ -34,7 +34,7 @@ namespace GesCPSI_Project.Data
             // ===== TypesActe -> User (1 user peut créer plusieurs actes) =====
             modelBuilder.Entity<TypesActModel>()
                 .HasOne(t => t.UserModel)
-                .WithMany(u => u.ActesSaisis)  // 🔧 ancien : TypesActModels → nouveau : ActesSaisis
+                .WithMany(u => u.ActesSaisis)  //  TypesActModels → nouveau : ActesSaisis
                 .HasForeignKey(t => t.IdUser)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -78,10 +78,10 @@ namespace GesCPSI_Project.Data
             modelBuilder.Entity<ClientModel>()
                 .HasIndex(c => c.NomRaisonsociale);
 
-            // 🔧 IMPORTANT : Identity crée déjà des index sur UserName et NormalizedUserName.
+            // Identity crée déjà des index sur UserName et NormalizedUserName.
             //    Ton ancien index manuel sur NameUser fait doublon → on le SUPPRIME.
             // modelBuilder.Entity<UserModel>()
-            //     .HasIndex(u => u.NameUser);  // ❌ Supprimé : Identity gère ça nativement
+            //     .HasIndex(u => u.NameUser);  //  Identity gère ça nativement
         }
     }
 }

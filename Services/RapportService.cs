@@ -34,7 +34,7 @@ namespace GesCPSI_Project.Services
     int? restrictToAgentId = null,
     string generatedByEmail = "")
         {
-            // 🔧 Conversion FORCÉE en UTC pour PostgreSQL (timestamp with time zone)
+            //Conversion FORCÉE en UTC pour PostgreSQL (timestamp with time zone)
             var dateDebutUtc = DateTime.SpecifyKind(dateDebut.Date, DateTimeKind.Utc);
             var dateFinUtc = DateTime.SpecifyKind(dateFin.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc);
 

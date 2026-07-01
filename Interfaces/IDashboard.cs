@@ -29,7 +29,7 @@ namespace GesCPSI_Project.Interfaces
     /// <summary>Point de la courbe d'évolution mensuelle.</summary>
     public class MonthlyDataPoint
     {
-        public string Label { get; set; } = "";   // ex: "Jan 26"
+        public string Label { get; set; } = "";   // "Jan 26"
         public int Count { get; set; }
         public DateTime MonthStart { get; set; }
     }
@@ -63,7 +63,7 @@ namespace GesCPSI_Project.Interfaces
     /// <summary>Point de la courbe d'évolution journalière.</summary>
     public class DailyDataPoint
     {
-        public string Label { get; set; } = "";       // ex: "15 jan"
+        public string Label { get; set; } = "";       //  "15 jan"
         public int Count { get; set; }
         public int Valides { get; set; }
         public int EnAttente { get; set; }
@@ -74,7 +74,7 @@ namespace GesCPSI_Project.Interfaces
     /// <summary>Point de la courbe d'évolution hebdomadaire.</summary>
     public class WeeklyDataPoint
     {
-        public string Label { get; set; } = "";       // ex: "S03"
+        public string Label { get; set; } = "";      
         public int Count { get; set; }
         public int Valides { get; set; }
         public int EnAttente { get; set; }

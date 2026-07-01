@@ -13,11 +13,11 @@ namespace GesCPSI_Project.Models
         public string NomTypesActe { get; set; } = string.Empty; /*le nom ou types ou titre des actes*/
         public DateTime DateCreation { get; set; } = DateTime.UtcNow;
         public string Statut { get; set; } = "Brouillon"; // Brouillon | Valide
-        // 🆕 Nouveau statut typé avec enum (utilisé par le workflow)
+        // statut typé avec enum (utilisé par le workflow)
         public ActeStatut StatutWorkflow { get; set; } = ActeStatut.Brouillon;
         public DateTime DateMaj { get; set; } = DateTime.UtcNow;
         public string? MotifRejet { get; set; }
-        // 🆕 Date à laquelle l'agent envoie l'acte en validation
+        // Date à laquelle l'agent envoie l'acte en validation
         public DateTime? DateEnvoiValidation { get; set; }
 
         public DateTime? DateValidation { get; set; } 

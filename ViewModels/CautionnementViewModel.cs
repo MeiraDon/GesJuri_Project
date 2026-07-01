@@ -12,7 +12,7 @@ namespace GesCPSI_Project.ViewModels
 
         [Required(ErrorMessage = "Montant obligatoire")]
         [Range(1, double.MaxValue, ErrorMessage = "Le montant doit être supérieur à 0")]
-        public decimal MontantCautionne { get; set; }   // corrigé
+        public decimal MontantCautionne { get; set; }   
 
         [Required(ErrorMessage = "Montant en lettres obligatoire")]
         public string MontantLettreCautionmt { get; set; } = string.Empty;

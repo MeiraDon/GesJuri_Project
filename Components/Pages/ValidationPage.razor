@@ -269,7 +269,7 @@
     private async Task LoadDataAsync()
     {
         _loading = true;
-        await InvokeAsync(StateHasChanged);  // 🔧 InvokeAsync au lieu de StateHasChanged
+        await InvokeAsync(StateHasChanged);  // InvokeAsync au lieu de StateHasChanged
         try
         {
             var allActes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
@@ -286,7 +286,7 @@
         finally
         {
             _loading = false;
-            await InvokeAsync(StateHasChanged);  // 🔧 InvokeAsync au lieu de StateHasChanged
+            await InvokeAsync(StateHasChanged);  // InvokeAsync au lieu de StateHasChanged
         }
     }
 

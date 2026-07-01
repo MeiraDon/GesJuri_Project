@@ -299,7 +299,7 @@
 
     private int _nbPhysiques => _clients.Count(c => string.Equals(c.TypeClient, "Personne Physique", StringComparison.OrdinalIgnoreCase));
     private int _nbMorales => _clients.Count(c => string.Equals(c.TypeClient, "Personne Morale", StringComparison.OrdinalIgnoreCase));
-    private int _nouveauxCeMois => _clients.Count(c => c.IdClt > 0); // ⚠️ adapte si tu as un champ DateCreation
+    private int _nouveauxCeMois => _clients.Count(c => c.IdClt > 0); // adapte si un champ DateCreation
     private string? _dernierClient => _clients.OrderByDescending(c => c.IdClt).FirstOrDefault() is { } c
         ? (!string.IsNullOrWhiteSpace(c.NomRaisonsociale) ? c.NomRaisonsociale : $"{c.Nom} {c.Prenoms}".Trim())
         : null;

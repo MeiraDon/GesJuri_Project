@@ -31,10 +31,10 @@ namespace GesCPSI_Project.ViewModels
         public string? Nationalite { get; set; }
 
         [Required(ErrorMessage = "Adresse obligatoire")]
-        public string? Adressecomplet { get; set; }   // corrigé
+        public string? Adressecomplet { get; set; }   
 
         [Required(ErrorMessage = "Ville obligatoire")]
-        public string? VilleCommune { get; set; }     // corrigé
+        public string? VilleCommune { get; set; }     
 
         [Required(ErrorMessage = "Pays de résidence obligatoire")]
         public string? PaysResidn { get; set; }

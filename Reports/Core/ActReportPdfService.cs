@@ -24,13 +24,13 @@ namespace GesCPSI_Project.Reports
 
         public async Task<string> GeneratePdfAsync(int acteId)
         {
-            // 🔧 ÉTAPE 1 : Récupérer le TemplateType de l'acte
+            // 1 : Récupérer le TemplateType de l'acte
             var templateType = await GetTemplateTypeForActeAsync(acteId);
 
-            // 🔧 ÉTAPE 2 : Choisir le bon fichier .frx selon le TemplateType
+            // 2 : Choisir le bon fichier .frx selon le TemplateType
             var templateFileName = GetTemplateFileName(templateType);
 
-            // ÉTAPE 3 : Construire le chemin complet du template
+            // 3 : Construire le chemin complet du template
             var reportPath = Path.Combine(
                 _env.ContentRootPath,
                 "Reports",
@@ -42,10 +42,10 @@ namespace GesCPSI_Project.Reports
                     $"Template introuvable pour {templateType} : {templateFileName}",
                     reportPath);
 
-            // ÉTAPE 4 : Construire le payload (données à injecter dans le PDF)
+            // 4 : Construire le payload (données à injecter dans le PDF)
             var payload = await BuildPayloadAsync(acteId);
 
-            // ÉTAPE 5 : Préparer le dossier de sortie
+            // 5 : Préparer le dossier de sortie
             var outputFolder = Path.Combine(_env.WebRootPath, "uploads", "actes", "pdf");
             Directory.CreateDirectory(outputFolder);
 
@@ -53,7 +53,7 @@ namespace GesCPSI_Project.Reports
                 outputFolder,
                 $"acte_{acteId}_{DateTime.Now:yyyyMMddHHmmss}.pdf");
 
-            // ÉTAPE 6 : Génération avec FastReport
+            // 6 : Génération avec FastReport
             using var report = new Report();
             report.Load(reportPath);
             report.RegisterData(payload, "Data");
@@ -72,7 +72,7 @@ namespace GesCPSI_Project.Reports
         }
 
         // ════════════════════════════════════════════════════════
-        // 🆕 Récupère le TemplateType de l'acte via sa relation avec AjoutActModel
+        // Récupère le TemplateType de l'acte via sa relation avec AjoutActModel
         // ════════════════════════════════════════════════════════
         private async Task<TemplateType> GetTemplateTypeForActeAsync(int acteId)
         {
@@ -92,7 +92,7 @@ namespace GesCPSI_Project.Reports
         }
 
         // ════════════════════════════════════════════════════════
-        // 🆕 Mappe chaque TemplateType vers son fichier .frx correspondant
+        // Mappe chaque TemplateType vers son fichier .frx correspondant
         // ════════════════════════════════════════════════════════
         private static string GetTemplateFileName(TemplateType templateType)
         {

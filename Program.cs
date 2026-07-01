@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// 🆕 Enregistrer SignalR pour les notifications temps réel
+// Enregistrer SignalR pour les notifications temps réel
 builder.Services.AddSignalR();
 
 // MudBlazor
@@ -30,7 +30,7 @@ builder.Services.AddControllers();
 
 
 // DbContext PostgreSQL
-// 🔧 Configuration anti-concurrence pour Blazor Server :
+// Configuration anti-concurrence pour Blazor Server :
 // - AddDbContextFactory : pour créer des DbContext à la demande (utilisé par les services)
 // - AddDbContext en Transient : chaque injection crée une nouvelle instance (Identity compatible)
 builder.Services.AddDbContextFactory<GesDbContext>(options =>
@@ -112,7 +112,7 @@ builder.Services.AddScoped<IEntiteJur, EntiteJurService>();
 builder.Services.AddScoped<IUser, UserService>();
 builder.Services.AddScoped<IActeWorkflow, ActeWorkflowService>();
 
-// 🆕 Enregistrer le service de notifications SignalR
+// Enregistrer le service de notifications SignalR
 builder.Services.AddScoped<INotification, NotificationService>();
 
 //builder.Services.AddScoped<IEmail, EmailService>();
@@ -276,7 +276,7 @@ app.MapGet("/account/signout", async (
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
-// 🆕 Authentication & Authorization (ordre important : AVANT UseAntiforgery)
+// Authentication & Authorization (ordre important : AVANT UseAntiforgery)
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -287,7 +287,7 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// 🆕 Mapper le Hub SignalR pour les notifications
+// Mapper le Hub SignalR pour les notifications
 app.MapHub<GesCPSI_Project.Hubs.NotificationHub>("/notificationHub");
 
 app.Run();

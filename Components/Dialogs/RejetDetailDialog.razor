@@ -1,0 +1,283 @@
+﻿@using GesCPSI_Project.Models
+@using MudBlazor
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+
+<MudDialog>
+    <TitleContent>
+        <div class="rejet-dialog-title">
+            <div class="rejet-title-icon">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div class="rejet-title-text">
+                <div class="rejet-title-main">Acte rejeté</div>
+                <div class="rejet-title-sub">Acte #@Acte.IdActe — @Acte.NomTypesActe</div>
+            </div>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="rejet-dialog-body">
+
+            @* ═══════════ MOTIF DU REJET (le plus important) ═══════════ *@
+            <div class="rejet-motif-block">
+                <div class="rejet-block-label">
+                    <i class="bi bi-chat-square-quote-fill"></i>
+                    <span>Motif du rejet</span>
+                </div>
+                <div class="rejet-motif-content">
+                    @if (!string.IsNullOrWhiteSpace(Acte.MotifRejet))
+                    {
+                        <p>@Acte.MotifRejet</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Aucun motif précisé.</p>
+                    }
+                </div>
+            </div>
+
+            @* ═══════════ INFORMATIONS COMPLÉMENTAIRES ═══════════ *@
+            <div class="rejet-info-grid">
+                <div class="rejet-info-item">
+                    <div class="rejet-info-label">
+                        <i class="bi bi-calendar-event"></i>
+                        Date du rejet
+                    </div>
+                    <div class="rejet-info-value">
+                        @(Acte.DateRejet.HasValue
+                            ? Acte.DateRejet.Value.ToLocalTime().ToString("dd/MM/yyyy à HH:mm")
+                            : "Non précisée")
+                    </div>
+                </div>
+
+                <div class="rejet-info-item">
+                    <div class="rejet-info-label">
+                        <i class="bi bi-calendar-check"></i>
+                        Créé le
+                    </div>
+                    <div class="rejet-info-value">
+                        @Acte.DateCreation.ToLocalTime().ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+            </div>
+
+            @* ═══════════ APPEL À L'ACTION ═══════════ *@
+            <div class="rejet-action-hint">
+                <i class="bi bi-lightbulb-fill"></i>
+                <div>
+                    <div class="rejet-hint-title">Que faire maintenant ?</div>
+                    <div class="rejet-hint-text">
+                        Cliquez sur <strong>"Corriger l'acte"</strong> pour apporter les modifications
+                        nécessaires. L'acte repassera automatiquement en Brouillon et vous pourrez
+                        le renvoyer en validation.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <button class="rejet-btn-secondary" @onclick="Close">
+            <i class="bi bi-x-lg"></i>
+            <span>Fermer</span>
+        </button>
+        <button class="rejet-btn-primary" @onclick="GoToEdit">
+            <i class="bi bi-pencil-fill"></i>
+            <span>Corriger l'acte</span>
+        </button>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public TypesActModel Acte { get; set; } = default!;
+
+    private void Close() => MudDialog.Cancel();
+
+    private void GoToEdit()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+        var returnUrl = Uri.EscapeDataString("/listAct");
+        NavigationManager.NavigateTo($"/saisirPage/{Acte.IdAjout}?acteId={Acte.IdActe}&returnUrl={returnUrl}");
+    }
+}
+
+<style>
+    .rejet-dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .rejet-title-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    }
+
+    .rejet-title-main {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0A2540;
+        line-height: 1.2;
+    }
+
+    .rejet-title-sub {
+        font-size: 0.82rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    .rejet-dialog-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 8px 0;
+    }
+
+    /* ═══════════ Motif Block ═══════════ */
+    .rejet-motif-block {
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+        border: 1px solid #FECACA;
+        border-left: 4px solid #DC2626;
+        border-radius: 10px;
+        padding: 16px 18px;
+    }
+
+    .rejet-block-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #991B1B;
+        margin-bottom: 10px;
+    }
+
+    .rejet-motif-content p {
+        margin: 0;
+        color: #1A1F3A;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .rejet-motif-content .text-muted {
+        color: #9CA3AF;
+        font-style: italic;
+    }
+
+    /* ═══════════ Info Grid ═══════════ */
+    .rejet-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .rejet-info-item {
+        background: #F8FAFC;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        padding: 12px 14px;
+    }
+
+    .rejet-info-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6B7280;
+        margin-bottom: 4px;
+    }
+
+    .rejet-info-value {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #0A2540;
+    }
+
+    /* ═══════════ Action Hint ═══════════ */
+    .rejet-action-hint {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        background: #EFF6FF;
+        border: 1px solid #DBEAFE;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+        .rejet-action-hint > i {
+            color: #F59E0B;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+    .rejet-hint-title {
+        font-weight: 700;
+        color: #1E40AF;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+    }
+
+    .rejet-hint-text {
+        color: #1E3A8A;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    /* ═══════════ Buttons ═══════════ */
+    .rejet-btn-secondary,
+    .rejet-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .rejet-btn-secondary {
+        background: #F3F4F6;
+        color: #4B5563;
+        border: 1px solid #E5E7EB;
+    }
+
+        .rejet-btn-secondary:hover {
+            background: #E5E7EB;
+            color: #1A1F3A;
+        }
+
+    .rejet-btn-primary {
+        background: linear-gradient(135deg, #1F3C88 0%, #0A2540 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(31, 60, 136, 0.3);
+    }
+
+        .rejet-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(31, 60, 136, 0.4);
+        }
+</style>

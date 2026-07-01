@@ -159,7 +159,10 @@
                         <div class="gauge-label">validé</div>
                     </div>
                 </div>
-                <div class="hero-kpi-sub">@_stats.Valides sur @_stats.Total acte@(_stats.Total > 1 ? "s" : "")</div>
+                <div class="hero-kpi-sub">
+                    @(_stats.Valides + _stats.Archives) réussi@((_stats.Valides + _stats.Archives) > 1 ? "s" : "")
+                    sur @(_stats.Valides + _stats.Archives + _stats.Rejetes) traité@((_stats.Valides + _stats.Archives + _stats.Rejetes) > 1 ? "s" : "")
+                </div>
             </div>
 
         </div>
@@ -761,8 +764,17 @@
     // ═════════ GAUGE ═════════
     private double GetValidationRate()
     {
-        if (_stats.Total == 0) return 0;
-        return Math.Round((double)_stats.Valides / _stats.Total * 100, 1);
+        // Formule métier : on ne compte que les actes qui ont ATTEINT une décision finale
+        // - Validés + Archivés = actes qui ont RÉUSSI le processus de validation
+        // - Rejetés = actes qui ont ÉCHOUÉ le processus
+        // - Brouillons et En attente sont EXCLUS (pas encore décidés)
+
+        var actesReussis = _stats.Valides + _stats.Archives;
+        var actesTraites = actesReussis + _stats.Rejetes;
+
+        if (actesTraites == 0) return 0;
+
+        return Math.Round((double)actesReussis / actesTraites * 100, 1);
     }
 
     private string GetGaugeOffset()

@@ -20,7 +20,7 @@ namespace GesCPSI_Project.ViewModels
         public string NumeroDossier { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Nom du dossier obligatoire")]
-        public string NomDossier { get; set; } = string.Empty;   // ajouté
+        public string NomDossier { get; set; } = string.Empty;   
 
         [Required(ErrorMessage = "Responsable obligatoire")]
         public string Responsable { get; set; } = string.Empty;

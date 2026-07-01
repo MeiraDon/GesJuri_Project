@@ -102,7 +102,7 @@ namespace GesCPSI_Project.Services
         //    var entity = await _context.Set<T>().FindAsync(id);
 
         //    if (entity != null)
-        //        _context.Entry(entity).State = EntityState.Detached; // ✅ important
+        //        _context.Entry(entity).State = EntityState.Detached; // important
 
         //    return entity;
         //}

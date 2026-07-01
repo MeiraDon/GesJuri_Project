@@ -1,0 +1,577 @@
+﻿@using GesCPSI_Project.Models
+@using MudBlazor
+@using static GesCPSI_Project.Components.Pages.ListActPage
+
+<MudDialog>
+    <TitleContent>
+        <div class="send-dialog-title">
+            <div class="send-title-icon">
+                <i class="bi bi-send-fill"></i>
+            </div>
+            <div class="send-title-text">
+                <div class="send-title-main">Envoyer l'acte en validation</div>
+                <div class="send-title-sub">Confirmez avant l'envoi au Responsable</div>
+            </div>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="send-dialog-body">
+
+            @* ═══════════ ALERTE SI ACTE ÉTAIT REJETÉ ═══════════ *@
+            @if (WasRejected)
+            {
+                <div class="send-warning-block">
+                    <div class="send-warning-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div class="send-warning-content">
+                        <div class="send-warning-title">Cet acte avait été rejeté</div>
+                        <div class="send-warning-text">
+                            @if (!string.IsNullOrWhiteSpace(PreviousMotif))
+                            {
+                                <span>Motif précédent : <em>« @PreviousMotif »</em></span>
+                                <br />
+                            }
+                            <strong>Assurez-vous d'avoir bien apporté les corrections nécessaires.</strong>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* ═══════════ MINI RÉCAP DE L'ACTE ═══════════ *@
+            <div class="send-recap-block">
+                <div class="send-block-label">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                    <span>Résumé de l'acte</span>
+                </div>
+                <div class="send-recap-content">
+
+                    <div class="send-recap-item">
+                        <div class="send-recap-key">
+                            <i class="bi bi-hash"></i>
+                            Numéro
+                        </div>
+                        <div class="send-recap-val">
+                            <strong>Acte #@Acte.IdActe</strong>
+                        </div>
+                    </div>
+
+                    <div class="send-recap-item">
+                        <div class="send-recap-key">
+                            <i class="bi bi-tag-fill"></i>
+                            Type
+                        </div>
+                        <div class="send-recap-val">@Acte.NomTypesActe</div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(DebiteurName) && DebiteurName != "Non spécifié")
+                    {
+                        <div class="send-recap-item">
+                            <div class="send-recap-key">
+                                <i class="bi bi-person-fill"></i>
+                                Débiteur
+                            </div>
+                            <div class="send-recap-val">@DebiteurName</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(CautionName) && CautionName != "Non spécifié")
+                    {
+                        <div class="send-recap-item">
+                            <div class="send-recap-key">
+                                <i class="bi bi-person-lock"></i>
+                                Caution
+                            </div>
+                            <div class="send-recap-val">@CautionName</div>
+                        </div>
+                    }
+
+                    @if (MontantCautionne > 0)
+                    {
+                        <div class="send-recap-item send-recap-highlight">
+                            <div class="send-recap-key">
+                                <i class="bi bi-cash-coin"></i>
+                                Montant cautionné
+                            </div>
+                            <div class="send-recap-val send-recap-money">
+                                <strong>@MontantCautionne.ToString("N0") FCFA</strong>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            @* ═══════════ DESTINATAIRES (dynamique) ═══════════ *@
+            <div class="send-recipient-block">
+                <div class="send-block-label">
+                    <i class="bi bi-send-arrow-up"></i>
+                    <span>
+                        @if (Responsables.Count == 0)
+                        {
+                            <span>Destinataire</span>
+                        }
+                        else if (Responsables.Count == 1)
+                        {
+                            <span>Destinataire</span>
+                        }
+                        else
+                        {
+                            <span>Destinataires (@Responsables.Count Responsables)</span>
+                        }
+                    </span>
+                </div>
+
+                @if (Responsables.Count == 0)
+                {
+                    @* Aucun Responsable trouvé - fallback *@
+                    <div class="send-recipient-empty">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            <div class="send-recipient-empty-title">Groupe des Responsables Juridiques</div>
+                            <div class="send-recipient-empty-sub">
+                                L'acte sera envoyé à tous les Responsables Juridiques disponibles
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="send-recipients-list">
+                        @foreach (var resp in Responsables)
+                        {
+                            <div class="send-recipient-card">
+                                <div class="send-recipient-avatar" style="background: @GetAvatarGradient(resp.Nom);">
+                                    @if (!string.IsNullOrWhiteSpace(resp.Initiales))
+                                    {
+                                        <span>@resp.Initiales</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-shield-check"></i>
+                                    }
+                                </div>
+                                <div class="send-recipient-info">
+                                    <div class="send-recipient-name">@resp.Nom</div>
+                                    <div class="send-recipient-email">
+                                        <i class="bi bi-envelope-fill"></i>
+                                        @resp.Email
+                                    </div>
+                                </div>
+                                <div class="send-recipient-role-tag">
+                                    Responsable
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+
+            @* ═══════════ MENTION IMPORTANTE ═══════════ *@
+            <div class="send-notice">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    <strong>Important :</strong> Une fois envoyé, vous ne pourrez plus modifier cet acte
+                    tant qu'@(Responsables.Count > 1 ? "un des Responsables" : "le Responsable") ne l'aura pas validé ou rejeté.
+                </div>
+            </div>
+
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <button class="send-btn-secondary" @onclick="Cancel">
+            <i class="bi bi-x-lg"></i>
+            <span>Annuler</span>
+        </button>
+        <button class="send-btn-primary" @onclick="Confirm">
+            <i class="bi bi-send-fill"></i>
+            <span>
+                @if (Responsables.Count > 1)
+                {
+                    <span>Envoyer aux Responsables</span>
+                }
+                else
+                {
+                    <span>Envoyer au Responsable</span>
+                }
+            </span>
+        </button>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public TypesActModel Acte { get; set; } = default!;
+
+    [Parameter] public string DebiteurName { get; set; } = "Non spécifié";
+    [Parameter] public string CautionName { get; set; } = "Non spécifié";
+    [Parameter] public decimal MontantCautionne { get; set; } = 0;
+    [Parameter] public List<ResponsableInfo> Responsables { get; set; } = new();
+    [Parameter] public bool WasRejected { get; set; } = false;
+    [Parameter] public string? PreviousMotif { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+
+    // Générer un dégradé unique par personne (basé sur son nom)
+    private static string GetAvatarGradient(string name)
+    {
+        var gradients = new[]
+        {
+            "linear-gradient(135deg, #1E40AF, #1E3A8A)",
+            "linear-gradient(135deg, #0E7C5C, #065F46)",
+            "linear-gradient(135deg, #7C3AED, #5B21B6)",
+            "linear-gradient(135deg, #C9A86A, #B58E50)",
+            "linear-gradient(135deg, #DC2626, #991B1B)",
+            "linear-gradient(135deg, #D97706, #B45309)"
+        };
+
+        var hash = Math.Abs(name?.GetHashCode() ?? 0);
+        return gradients[hash % gradients.Length];
+    }
+}
+
+<style>
+    /* ═══════════ TITLE ═══════════ */
+    .send-dialog-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .send-title-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    }
+
+    .send-title-main {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0A2540;
+        line-height: 1.2;
+    }
+
+    .send-title-sub {
+        font-size: 0.82rem;
+        color: #6B7280;
+        margin-top: 2px;
+    }
+
+    /* ═══════════ BODY ═══════════ */
+    .send-dialog-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 8px 0;
+    }
+
+    .send-block-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #6B7280;
+        margin-bottom: 10px;
+    }
+
+    /* ═══════════ WARNING ═══════════ */
+    .send-warning-block {
+        display: flex;
+        gap: 12px;
+        background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+        border: 1px solid #FDE68A;
+        border-left: 4px solid #F59E0B;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .send-warning-icon {
+        color: #D97706;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .send-warning-title {
+        font-weight: 800;
+        color: #92400E;
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+
+    .send-warning-text {
+        color: #78350F;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+        .send-warning-text em {
+            font-style: italic;
+            color: #92400E;
+            font-weight: 600;
+        }
+
+    /* ═══════════ RECAP ═══════════ */
+    .send-recap-block {
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .send-recap-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .send-recap-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+    }
+
+        .send-recap-item:not(:last-child) {
+            border-bottom: 1px dashed #E5E7EB;
+        }
+
+    .send-recap-key {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6B7280;
+        font-size: 0.85rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+        .send-recap-key i {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+    .send-recap-val {
+        color: #0A2540;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-align: right;
+        max-width: 60%;
+        white-space: pre-line;
+        line-height: 1.35;
+    }
+
+    .send-recap-highlight {
+        background: linear-gradient(90deg, transparent 0%, #FEF3C7 50%, transparent 100%);
+        border-radius: 6px;
+        padding: 10px !important;
+        margin: 4px -6px;
+    }
+
+    .send-recap-money {
+        color: #0E7C5C !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    /* ═══════════ RECIPIENTS (NOUVEAU) ═══════════ */
+    .send-recipient-block {
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        border: 1px solid #BFDBFE;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .send-recipients-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .send-recipient-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        border: 1px solid #BFDBFE;
+        border-radius: 10px;
+        padding: 10px 12px;
+        transition: all 0.2s ease;
+    }
+
+        .send-recipient-card:hover {
+            border-color: #1E40AF;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+            transform: translateX(2px);
+        }
+
+    .send-recipient-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .send-recipient-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .send-recipient-name {
+        font-weight: 800;
+        color: #0A2540;
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+
+    .send-recipient-email {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 3px;
+    }
+
+        .send-recipient-email i {
+            font-size: 0.7rem;
+            color: #9CA3AF;
+        }
+
+    .send-recipient-role-tag {
+        background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3);
+    }
+
+    /* Empty state (aucun Responsable trouvé) */
+    .send-recipient-empty {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        background: white;
+        border: 1px solid #BFDBFE;
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+
+        .send-recipient-empty > i {
+            color: #0EA5E9;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+    .send-recipient-empty-title {
+        font-weight: 700;
+        color: #0A2540;
+        font-size: 0.9rem;
+    }
+
+    .send-recipient-empty-sub {
+        color: #6B7280;
+        font-size: 0.8rem;
+        margin-top: 3px;
+    }
+
+    
+
+    @@keyframes pulse-badge {
+        0%, 100% {
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+        }
+
+        50% {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.55);
+        }
+    }
+
+    /* ═══════════ NOTICE ═══════════ */
+    .send-notice {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        background: #F0F9FF;
+        border: 1px solid #BAE6FD;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        color: #075985;
+        line-height: 1.45;
+    }
+
+        .send-notice > i {
+            color: #0284C7;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+    /* ═══════════ BUTTONS ═══════════ */
+    .send-btn-secondary,
+    .send-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .send-btn-secondary {
+        background: #F3F4F6;
+        color: #4B5563;
+        border: 1px solid #E5E7EB;
+    }
+
+        .send-btn-secondary:hover {
+            background: #E5E7EB;
+            color: #1A1F3A;
+        }
+
+    .send-btn-primary {
+        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+        .send-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(14, 165, 233, 0.55);
+        }
+</style>

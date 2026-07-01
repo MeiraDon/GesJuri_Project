@@ -96,7 +96,7 @@ namespace GesCPSI_Project.Services
             if (filter?.ActeId.HasValue == true)
                 query = query.Where(l => l.IdActe == filter.ActeId.Value);
 
-            // 🛡️ Restriction Agent : ne voit que les actions sur SES actes
+            // Restriction Agent : ne voit que les actions sur SES actes
             if (filter?.RestrictToAgentId.HasValue == true)
             {
                 var agentActeIds = await _db.TypesActModels
@@ -129,7 +129,7 @@ namespace GesCPSI_Project.Services
                 query = query.Where(l => agentActeIds.Contains(l.IdActe));
             }
 
-            // 🔧 Toutes les dates DOIVENT être en UTC pour PostgreSQL (timestamp with time zone)
+            // Toutes les dates DOIVENT être en UTC pour PostgreSQL (timestamp with time zone)
             var now = DateTime.UtcNow;
             var today = DateTime.SpecifyKind(now.Date, DateTimeKind.Utc);
             var weekStart = DateTime.SpecifyKind(now.Date.AddDays(-(int)now.DayOfWeek), DateTimeKind.Utc);

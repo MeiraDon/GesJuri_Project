@@ -6,7 +6,7 @@
 @code {
     protected override void OnInitialized()
     {
-        // Redirige vers l'endpoint HTTP (qui fait le vrai SignOut)
+        /* Redirige vers l'endpoint HTTP (qui fait le vrai SignOut) */
         Navigation.NavigateTo("/account/signout", forceLoad: true);
     }
 }

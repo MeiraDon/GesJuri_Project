@@ -45,9 +45,9 @@ namespace GesCPSI_Project.Services
                 existing.JsonSnapshotPath = entity.JsonSnapshotPath;
                 existing.DateGenerationPdf = entity.DateGenerationPdf;
                 existing.DateUploadSignature = entity.DateUploadSignature;
-                // 🆕 Synchroniser le statut workflow (au cas où il change)
+                // Synchroniser le statut workflow (au cas où il change)
                 existing.StatutWorkflow = entity.StatutWorkflow;
-                // 🆕 Synchroniser la nouvelle propriété RecapValide
+                // Synchroniser la nouvelle propriété RecapValide
                 existing.RecapValide = entity.RecapValide;
 
 

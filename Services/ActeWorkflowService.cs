@@ -48,7 +48,7 @@ namespace GesCPSI_Project.Services
 
         /// ============================================================
         // VALIDER : EnAttenteValidation → Valide
-        // ⚠️ La validation échoue si le PDF ne peut pas être généré
+        // La validation échoue si le PDF ne peut pas être généré
         // (un acte validé sans PDF n'a aucun sens métier)
         // ============================================================
         public async Task<WorkflowResult> ValiderAsync(int acteId, int validateurId)
@@ -68,7 +68,7 @@ namespace GesCPSI_Project.Services
             var statutAvant = acte.StatutWorkflow;
 
             // ════════════════════════════════════════════════════════
-            // 🆕 ÉTAPE 1 : GÉNÉRATION DU PDF (BLOQUANT)
+            // ÉTAPE 1 : GÉNÉRATION DU PDF (BLOQUANT)
             // Si le PDF ne se génère pas → on annule la validation
             // ════════════════════════════════════════════════════════
             string pdfPath;
@@ -92,7 +92,7 @@ namespace GesCPSI_Project.Services
             }
             catch (Exception ex)
             {
-                // 🚫 ÉCHEC CRITIQUE : sans PDF, pas de validation
+                // ÉCHEC CRITIQUE : sans PDF, pas de validation
                 Console.WriteLine($"[VALIDATION] ❌ Génération PDF acte #{acteId} échouée : {ex.Message}");
                 return WorkflowResult.Fail(
                     $"Impossible de valider cet acte : la génération du PDF officiel a échoué. " +
@@ -154,6 +154,10 @@ namespace GesCPSI_Project.Services
             acte.ValidateurId = validateurId;
             acte.MotifRejet = motif.Trim();
 
+            // 🆕 RÈGLE MÉTIER : l'agent devra REPASSER par le Récap avant de pouvoir renvoyer
+            // Cela évite qu'il renvoie l'acte tel quel sans avoir corrigé le problème signalé
+            acte.RecapValide = false;
+
             LogAction(acteId, validateurId, "REJET",
                 $"Acte rejeté. Motif : {motif.Trim()}",
                 statutAvant, ActeStatut.Rejete);
@@ -208,6 +212,9 @@ namespace GesCPSI_Project.Services
             acte.StatutWorkflow = ActeStatut.Brouillon;
             acte.Statut = "Brouillon";
             acte.DateMaj = DateTime.UtcNow;
+
+            // RÈGLE MÉTIER : l'agent devra REPASSER par le Récap avant de renvoyer
+            acte.RecapValide = false;
 
             LogAction(acteId, userId, "REOUVERTURE",
                 "Acte ré-ouvert pour modification suite au rejet.",

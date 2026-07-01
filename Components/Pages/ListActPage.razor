@@ -25,6 +25,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject Microsoft.AspNetCore.Identity.UserManager<GesCPSI_Project.Models.UserModel> UserManager
 
 <MudContainer MaxWidth="MaxWidth.False" Class="py-4">
 
@@ -315,25 +316,33 @@
                         </MudTd>
 
                         <MudTd>
-                            <div class="status-cell">
-                                <span class="custom-status-badge @statutClass">
-                                    @if (acte.StatutWorkflow == ActeStatut.EnAttenteValidation)
-                                    {
-                                        <span class="status-dot-anim"></span>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi @statutIcon"></i>
-                                    }
-                                    <span>@statutLabel</span>
-                                </span>
+                            <div class="status-cell-vertical">
+                                <div class="status-badge-row">
+                                    <span class="custom-status-badge @statutClass">
+                                        @if (acte.StatutWorkflow == ActeStatut.EnAttenteValidation)
+                                        {
+                                            <span class="status-dot-anim"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi @statutIcon"></i>
+                                        }
+                                        <span>@statutLabel</span>
+                                    </span>
+                                </div>
+
+                                @*  Motif de rejet visible directement sous le statut *@
                                 @if (acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet))
                                 {
-                                    <MudTooltip Text="@($"Motif : {acte.MotifRejet}")" Placement="Placement.Top">
-                                        <span class="status-info-icon">
-                                            <i class="bi bi-info-circle-fill"></i>
+                                    <div class="rejet-motif-preview" @onclick="@(() => OpenRejetDetailAsync(acte))">
+                                        <i class="bi bi-chat-left-quote-fill rejet-motif-icon"></i>
+                                        <span class="rejet-motif-text">
+                                            @TruncateMotif(acte.MotifRejet, 45)
                                         </span>
-                                    </MudTooltip>
+                                        <span class="rejet-motif-more">
+                                            <i class="bi bi-arrow-right-circle-fill"></i>
+                                        </span>
+                                    </div>
                                 }
                             </div>
                         </MudTd>
@@ -371,8 +380,7 @@
                                     </MudTooltip>
                                 }
 
-                                @* 🔒 Téléverser le document signé : visible UNIQUEMENT si le PDF a été généré
-   (sinon on ne peut pas télécharger pour signer, donc on ne peut pas téléverser non plus) *@
+                                @*Téléverser le document signé : visible UNIQUEMENT si le PDF a été généré (sinon on ne peut pas télécharger pour signer, donc on ne peut pas téléverser non plus) *@
                                 @if (acte.StatutWorkflow == ActeStatut.Valide && !string.IsNullOrWhiteSpace(acte.PdfGenerePath))
                                 {
                                     <AuthorizeView Roles="@($"{RoleNames.Admin},{RoleNames.Responsable}")">
@@ -445,8 +453,8 @@
     private bool _showOnlyMine = false;
     private int? _currentUserId;
     private bool _isAgent = false;
-    private bool _isResponsable = false;  // 🆕
-    private bool _isAdmin = false;        // 🆕
+    private bool _isResponsable = false;  
+    private bool _isAdmin = false;        
 
     private string _search = "";
     private ActeStatut? _statutFilterEnum = null;
@@ -480,7 +488,7 @@
             if (int.TryParse(nameIdentifier, out var id))
                 _currentUserId = id;
 
-            // 🆕 Détection des rôles
+            //  Détection des rôles
             _isAgent = user.IsInRole(RoleNames.Agent);
             _isResponsable = user.IsInRole(RoleNames.Responsable);
             _isAdmin = user.IsInRole(RoleNames.Admin);
@@ -503,7 +511,7 @@
         {
             await LoadDataAsync();
 
-            // ✅ Nettoyage: évite refresh infini au F5
+            //  Nettoyage: évite refresh infini au F5
             NavigationManager.NavigateTo("/listAct", replace: true);
         }
     }
@@ -573,7 +581,7 @@
             _loading = true;
             await SafeStateHasChanged();
 
-            // ✅ IMPORTANT : séquentiel (pas de WhenAll, pas de tasks EF en parallèle)
+            //  IMPORTANT : séquentiel (pas de WhenAll, pas de tasks EF en parallèle)
             _actes = await TypesActService.GetAllAsync() ?? new List<TypesActModel>();
             _acteTypes = await AjoutActService.GetAllAsync() ?? new List<AjoutActModel>();
 
@@ -642,11 +650,11 @@
 
     private List<TypesActModel> GetFilteredActes()
     {
-        // 🆕 EXCLURE les actes archivés (ils ont leur propre page /archives)
+        // EXCLURE les actes archivés (ils ont leur propre page /archives)
         IEnumerable<TypesActModel> filtered = _actes
             .Where(a => a.StatutWorkflow != ActeStatut.Archive);
 
-        // 🔒 FILTRE PAR RÔLE
+        // FILTRE PAR RÔLE
         // - Agent : voit ses propres actes dans tous les statuts (sauf Archive)
         // - Responsable : voit UNIQUEMENT les actes En attente et Validés
         // - Admin : voit tout
@@ -672,7 +680,7 @@
             filtered = filtered.Where(a => a.StatutWorkflow == _statutFilterEnum.Value);
 
         /// Filtre "Mes actes"
-        // 🔒 SÉCURITÉ : l'Agent ne voit JAMAIS les actes des autres,
+        // SÉCURITÉ : l'Agent ne voit JAMAIS les actes des autres,
         // même s'il décoche le checkbox
         if (_isAgent && _currentUserId.HasValue)
         {
@@ -860,17 +868,41 @@
             return;
         }
 
-        var motifText = acte.StatutWorkflow == ActeStatut.Rejete && !string.IsNullOrWhiteSpace(acte.MotifRejet)
-            ? $"\n\n⚠️ Cet acte avait été rejeté.\nMotif précédent : {acte.MotifRejet}\nAssurez-vous que les corrections ont été apportées."
-            : "";
+        // Récupérer les infos pour le mini récap
+        var debiteurName = GetDebiteurName(acte.IdActe);
+        var cautionName = GetCautionName(acte.IdActe);
+        var montantCautionne = await GetMontantCautionneAsync(acte.IdActe);
+        var responsables = await GetResponsablesAsync();
 
-        var ok = await DialogService.ShowMessageBox(
-            "Envoyer l'acte en validation ?",
-            $"L'acte #{acte.IdActe} sera envoyé au Responsable Juridique pour validation.{motifText}\n\nVous ne pourrez plus le modifier tant qu'il n'aura pas été validé ou rejeté.",
-            yesText: "Envoyer",
-            cancelText: "Annuler");
+        var wasRejected = acte.StatutWorkflow == ActeStatut.Rejete;
+        var previousMotif = wasRejected ? acte.MotifRejet : null;
 
-        if (ok != true) return;
+        // Dialogue amélioré avec mini récap
+        var parameters = new DialogParameters
+            {
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.Acte)] = acte,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.DebiteurName)] = debiteurName,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.CautionName)] = cautionName,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.MontantCautionne)] = montantCautionne,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.Responsables)] = responsables,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.WasRejected)] = wasRejected,
+                [nameof(GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog.PreviousMotif)] = previousMotif
+            };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = false,
+                Position = DialogPosition.Center
+            };
+
+        var dialog = await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.SendActeConfirmDialog>(
+            null, parameters, options);
+
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
 
         try
         {
@@ -884,11 +916,11 @@
                 return;
             }
 
-            var result = await WorkflowService.SoumettreAsync(acte.IdActe, userId.Value);
+            var workflowResult = await WorkflowService.SoumettreAsync(acte.IdActe, userId.Value);
 
-            if (!result.Success)
+            if (!workflowResult.Success)
             {
-                Snackbar.Add(result.ErrorMessage ?? "Erreur lors de l'envoi.", Severity.Error);
+                Snackbar.Add(workflowResult.ErrorMessage ?? "Erreur lors de l'envoi.", Severity.Error);
                 return;
             }
 
@@ -907,7 +939,6 @@
             }
             catch (Exception notifEx)
             {
-                // On ne casse pas le workflow si SignalR plante
                 Console.WriteLine($"[SignalR] Erreur notif soumission : {notifEx.Message}");
             }
 
@@ -923,6 +954,102 @@
             _loading = false;
             await SafeStateHasChanged();
         }
+    }
+
+    //  Helper : récupérer le montant cautionné d'un acte
+    private async Task<decimal> GetMontantCautionneAsync(int acteId)
+    {
+        try
+        {
+            var cautions = await CautionnementService.GetAllAsync() ?? new();
+            var caution = cautions.FirstOrDefault(c => c.IdActe == acteId);
+            return caution?.MontantCautionne ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    
+    // Helper : récupérer les noms de tous les Responsables Juridiques
+    private async Task<List<ResponsableInfo>> GetResponsablesAsync()
+    {
+        try
+        {
+            // Récupérer tous les utilisateurs ayant le rôle "Responsable"
+            var responsables = await UserManager.GetUsersInRoleAsync(RoleNames.Responsable);
+
+            return responsables
+                .Where(u => u != null)
+                .Select(u => new ResponsableInfo
+                    {
+                        Nom = FormatUserDisplayName(u),
+                        Email = u.Email ?? "",
+                        Initiales = GetInitialsFromName(u)
+                    })
+                .OrderBy(r => r.Nom)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LIST_ACT] Erreur récupération Responsables : {ex.Message}");
+            return new List<ResponsableInfo>();
+        }
+    }
+
+    //  Formate le nom d'affichage d'un utilisateur
+    private static string FormatUserDisplayName(GesCPSI_Project.Models.UserModel user)
+    {
+        // Adapte selon les propriétés de ton UserModel
+        // Essaie d'abord Nom + Prénoms
+        var nomPrenoms = "";
+
+        // Utilise reflection pour être compatible avec différentes structures
+        var nomProp = user.GetType().GetProperty("Nom")?.GetValue(user) as string
+                      ?? user.GetType().GetProperty("Name")?.GetValue(user) as string
+                      ?? user.GetType().GetProperty("LastName")?.GetValue(user) as string;
+
+        var prenomsProp = user.GetType().GetProperty("Prenoms")?.GetValue(user) as string
+                         ?? user.GetType().GetProperty("Prenom")?.GetValue(user) as string
+                         ?? user.GetType().GetProperty("FirstName")?.GetValue(user) as string;
+
+        if (!string.IsNullOrWhiteSpace(nomProp) || !string.IsNullOrWhiteSpace(prenomsProp))
+        {
+            nomPrenoms = $"{prenomsProp} {nomProp}".Trim();
+        }
+
+        // Sinon, essaie UserName ou Email (sans domaine)
+        if (string.IsNullOrWhiteSpace(nomPrenoms))
+        {
+            var userName = user.UserName ?? user.Email ?? "";
+            if (userName.Contains('@'))
+                userName = userName.Split('@')[0];
+
+            nomPrenoms = char.ToUpper(userName[0]) + userName.Substring(1);
+        }
+
+        return nomPrenoms;
+    }
+
+    // Génère les initiales d'un utilisateur
+    private static string GetInitialsFromName(GesCPSI_Project.Models.UserModel user)
+    {
+        var displayName = FormatUserDisplayName(user);
+        var parts = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length >= 2)
+            return (parts[0][..1] + parts[1][..1]).ToUpper();
+
+        return parts.Length > 0 ? parts[0][..Math.Min(2, parts[0].Length)].ToUpper() : "?";
+    }
+
+    // DTO pour transporter les infos du Responsable
+    public class ResponsableInfo
+    {
+        public string Nom { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Initiales { get; set; } = "";
     }
 
     private async Task ConfirmDelete(TypesActModel acte)
@@ -944,7 +1071,7 @@
 
             Snackbar.Add($"Acte #{acte.IdActe} supprimé.", Severity.Success);
 
-            // ✅ refresh local rapide
+            // refresh local rapide
             _actes.RemoveAll(a => a.IdActe == acte.IdActe);
             _debiteurs.Remove(acte.IdActe);
             _cautions.Remove(acte.IdActe);
@@ -1125,7 +1252,7 @@
     }
 
 
-    // 🆕 Compte les actes pour chaque onglet, en respectant le filtrage par rôle
+    // Compte les actes pour chaque onglet, en respectant le filtrage par rôle
     private int GetCountForTab(int tabIndex)
     {
         IEnumerable<TypesActModel> source = _actes
@@ -1154,6 +1281,48 @@
             4 => source.Count(a => a.StatutWorkflow == ActeStatut.Rejete),
             _ => 0
         };
+    }
+
+
+    // Tronque le motif pour l'aperçu (garde X caractères + "...")
+    private static string TruncateMotif(string? motif, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(motif))
+            return "Aucun motif précisé";
+
+        var cleaned = motif.Trim().Replace("\n", " ").Replace("\r", "");
+        return cleaned.Length <= maxLength
+            ? cleaned
+            : cleaned.Substring(0, maxLength) + "…";
+    }
+
+    //  Ouvre le dialogue de détail du rejet
+    private async Task OpenRejetDetailAsync(TypesActModel acte)
+    {
+        var parameters = new DialogParameters
+            {
+                [nameof(GesCPSI_Project.Components.Dialogs.RejetDetailDialog.Acte)] = acte
+            };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = true,
+                Position = DialogPosition.Center
+            };
+
+        var dialog = await DialogService.ShowAsync<GesCPSI_Project.Components.Dialogs.RejetDetailDialog>(
+            null, parameters, options);
+
+        var result = await dialog.Result;
+
+        // Si l'utilisateur a cliqué "Corriger l'acte", on rafraîchit la liste au retour
+        if (result is not null && !result.Canceled)
+        {
+            await LoadDataAsync();
+        }
     }
 
 
@@ -2132,7 +2301,7 @@
         }
     }
 
-    /* 🆕 Style spécial pour le bouton Envoyer quand le Récap n'est pas validé */
+    /* Style spécial pour le bouton Envoyer quand le Récap n'est pas validé */
 .action-btn-send-incomplete {
     color: #F59E0B !important;
     background: #FEF3C7 !important;
@@ -2146,14 +2315,82 @@
         opacity: 0.95 !important; /* Override l'opacité par défaut des boutons disabled */
     }
 
-@@keyframes pulse-warning {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    @@keyframes pulse-warning {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+        }
     }
 
-    50% {
-        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+
+
+    /* STATUS CELL vertical (badge + motif dessous) */
+    .status-cell-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
     }
-}
+
+    .status-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Motif de rejet - Preview cliquable */
+    .rejet-motif-preview {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+        border: 1px solid #FECACA;
+        border-left: 3px solid #DC2626;
+        border-radius: 6px;
+        padding: 6px 10px;
+        max-width: 280px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.78rem;
+    }
+
+        .rejet-motif-preview:hover {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+            border-color: #DC2626;
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+        }
+
+    .rejet-motif-icon {
+        color: #DC2626;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .rejet-motif-text {
+        color: #991B1B;
+        font-weight: 500;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .rejet-motif-more {
+        color: #DC2626;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        margin-left: auto;
+        transition: transform 0.2s ease;
+    }
+
+    .rejet-motif-preview:hover .rejet-motif-more {
+        transform: translateX(3px);
+    }
 
 </style>

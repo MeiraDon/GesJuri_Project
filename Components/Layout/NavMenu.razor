@@ -140,9 +140,9 @@
     private string _roleLabel = "—";
 
     private int _pendingCount = 0;
-    private bool _badgeBump = false;  // 🆕 Pour animation visuelle quand notif arrive
+    private bool _badgeBump = false;  // Pour animation visuelle quand notif arrive
 
-    // 🆕 SignalR
+    // SignalR
     private HubConnection? _hubConnection;
     private string? _userRole = null;
 
@@ -297,7 +297,7 @@
     }
 
     // ════════════════════════════════════════════════
-    // 🆕 NETTOYAGE — Très important pour éviter les fuites
+    // NETTOYAGE — Très important pour éviter les fuites
     // ════════════════════════════════════════════════
 
     public async ValueTask DisposeAsync()

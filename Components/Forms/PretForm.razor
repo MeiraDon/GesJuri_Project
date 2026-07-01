@@ -34,14 +34,43 @@
                     État du prêt
                     <span class="required-mark">*</span>
                 </label>
-                <InputSelect class="form-input form-select-custom" @bind-Value="Pret.EtatPret">
-                    <option value="">Sélectionner un état...</option>
-                    <option value="En cours">🟢 En cours</option>
-                    <option value="Clôturé">🔵 Clôturé</option>
-                    <option value="En retard">🟡 En retard</option>
-                    <option value="Contentieux">🔴 Contentieux</option>
-                    <option value="Soldé">✅ Soldé</option>
-                </InputSelect>
+                <MudSelect T="string" @bind-Value="Pret.EtatPret"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Placeholder="Sélectionner un état..."
+                           Class="form-mudselect"
+                           Clearable="true">
+                    <MudSelectItem T="string" Value="@("En cours")">
+                        <div class="mud-select-item-content">
+                            <i class="bi bi-play-circle-fill" style="color:#0E7C5C;"></i>
+                            <span>En cours</span>
+                        </div>
+                    </MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Clôturé")">
+                        <div class="mud-select-item-content">
+                            <i class="bi bi-lock-fill" style="color:#0EA5E9;"></i>
+                            <span>Clôturé</span>
+                        </div>
+                    </MudSelectItem>
+                    <MudSelectItem T="string" Value="@("En retard")">
+                        <div class="mud-select-item-content">
+                            <i class="bi bi-exclamation-triangle-fill" style="color:#F59E0B;"></i>
+                            <span>En retard</span>
+                        </div>
+                    </MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Contentieux")">
+                        <div class="mud-select-item-content">
+                            <i class="bi bi-shield-fill-exclamation" style="color:#DC2626;"></i>
+                            <span>Contentieux</span>
+                        </div>
+                    </MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Soldé")">
+                        <div class="mud-select-item-content">
+                            <i class="bi bi-check-circle-fill" style="color:#7C3AED;"></i>
+                            <span>Soldé</span>
+                        </div>
+                    </MudSelectItem>
+                </MudSelect>
                 <ValidationMessage For="@(() => Pret.EtatPret)" class="form-error" />
             </div>
 
@@ -643,5 +672,49 @@
 
     }
 
+
+    /*  Styling harmonisé pour MudSelect avec icônes */
+    .form-mudselect {
+        background: white;
+        border-radius: 10px;
+    }
+
+        .form-mudselect .mud-input-outlined-border {
+            border-radius: 10px !important;
+            border-color: #D1D5DB !important;
+        }
+
+        .form-mudselect .mud-input-slot {
+            font-size: 0.92rem !important;
+            color: #1A1F3A !important;
+        }
+
+        .form-mudselect:hover .mud-input-outlined-border {
+            border-color: #9CA3AF !important;
+        }
+
+        .form-mudselect .mud-input.mud-input-focused .mud-input-outlined-border {
+            border-color: #C9A86A !important;
+            border-width: 2px !important;
+        }
+
+    /* Contenu des items du MudSelect (icône + texte) */
+    .mud-select-item-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 2px 0;
+    }
+
+        .mud-select-item-content i {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .mud-select-item-content span {
+            font-size: 0.9rem;
+            color: #1A1F3A;
+            font-weight: 500;
+        }
     
 </style>
